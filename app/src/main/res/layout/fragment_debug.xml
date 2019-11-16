@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".fragments.FragmentDebug">
+    <data>
+        <variable name="debug" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Debug"/>
+    </data>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vert1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vert2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vert3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="1" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="1" />
+
+    <FrameLayout
+        android:id="@+id/fl11"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl12"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintTop_toTopOf="@+id/horiz1">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl12"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl11"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintTop_toTopOf="@+id/horiz1">
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fl21"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl22"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintTop_toTopOf="@+id/horiz2">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl22"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl21"
+        app:layout_constraintTop_toTopOf="@+id/horiz2">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl31"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl32"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintTop_toTopOf="@+id/horiz3">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl32"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl31"
+        app:layout_constraintTop_toTopOf="@+id/horiz3">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl41"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl42"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintTop_toTopOf="@+id/horiz4">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl42"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl41"
+        app:layout_constraintTop_toTopOf="@+id/horiz4">
+    </FrameLayout>
+    <!--
+    <com.shinelw.library.ColorArcProgressBar
+        android:id="@+id/bar1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@+id/horiz1"
+        app:layout_constraintBottom_toBottomOf="@+id/horiz2"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1"
+        android:layout_gravity="center_horizontal"
+        app:is_need_content="true"
+        app:front_color1="#00ff00"
+        app:front_color2="#ffff00"
+        app:front_color3="#ff0000"
+        app:max_value="100"
+        app:back_width="2dp"
+        app:front_width="10dp"
+        app:text_size="38sp"
+        app:total_engle="270"
+        app:is_need_unit="true"
+        app:string_unit="%"
+        app:is_need_title="true"
+        app:string_title="@string/duty_cycle"
+        app:is_need_dial="false"
+        app:back_color="@android:color/darker_gray"
+        app:current_value="@{(float)debug.dutyCycle}"
+        />
+    -->
+
+    <TextView
+        android:id="@+id/dutyTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/duty_cycle"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz1"
+        app:layout_constraintBottom_toTopOf="@+id/dutyValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1" />
+
+    <TextView
+        android:id="@+id/dutyValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.dutyCycle)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1"
+        app:layout_constraintTop_toBottomOf="@+id/horiz1"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/erpsTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/motor_erps"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz1"
+        app:layout_constraintBottom_toTopOf="@+id/erpsValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2" />
+
+    <TextView
+        android:id="@+id/erpsValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.motorERPS)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2"
+        app:layout_constraintTop_toTopOf="@+id/horiz1"
+        app:layout_constraintVertical_bias="0.6"/>
+
+
+    <TextView
+        android:id="@+id/focTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/foc_angle"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintBottom_toTopOf="@+id/focValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1" />
+
+    <TextView
+        android:id="@+id/focValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.focAngle)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/torqueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/torque_adc"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintBottom_toTopOf="@+id/torqueValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2" />
+
+    <TextView
+        android:id="@+id/torqueValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.torqueSensorValue)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintVertical_bias="0.6"/>
+
+
+    <TextView
+        android:id="@+id/pTorqueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pedal_torque"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintBottom_toTopOf="@+id/pTorqueValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1" />
+
+    <TextView
+        android:id="@+id/pTorqueValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.pTorque)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/cadenceTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cad_pulse"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintBottom_toTopOf="@+id/cadenceValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2" />
+
+    <TextView
+        android:id="@+id/cadenceValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.cadencePulseHighPercentage)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintVertical_bias="0.6"/>
+
+
+    <TextView
+        android:id="@+id/adcTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/adc_value"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintBottom_toTopOf="@+id/adcValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1" />
+
+    <TextView
+        android:id="@+id/adcValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{String.valueOf(debug.adcThrottle)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintEnd_toStartOf="@+id/vert2"
+        app:layout_constraintStart_toStartOf="@+id/vert1"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintVertical_bias="0.6" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

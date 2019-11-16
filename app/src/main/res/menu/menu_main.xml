@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="example.javatpoint.com.optionmenu.MainActivity">
+
+    <item  android:id="@+id/config"
+        android:title="@string/config"/>
+    <item  android:id="@+id/btSetup"
+        android:title="@string/btSetup"/>
+    <item  android:id="@+id/espOTA"
+        android:title="@string/espOTA"/>
+    <item  android:id="@+id/bikeOTA"
+        android:title="@string/bikeOTA"/>
+	<item  android:id="@+id/showVersion"
+        android:title="@string/show_version" />
+</menu>

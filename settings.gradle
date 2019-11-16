@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name='TSDZ2_ESP32'

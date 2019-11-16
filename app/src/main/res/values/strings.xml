@@ -1,0 +1,198 @@
+<resources>
+    <string name="dash">-</string>
+    <string name="brake_letter">B</string>
+    <string name="off">Off</string>
+    <string name="calibration">Cal</string>
+
+    <string name="app_name">TSDZ2_ESP32</string>
+    <string name="status">STATUS</string>
+    <string name="debug">DEBUG</string>
+    <string name="btSetup">Setup Bluetooth</string>
+    <string name="espOTA">ESP32 FW update</string>
+    <string name="bikeOTA">Bike FW update</string>
+    <string name="config">Bike Configuration</string>
+    <string name="show_version">ESP32 version</string>
+    <string name="title_activity_bluetooth_setup">Bluetooth Setup</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="save">Save</string>
+
+    <string name="choose">Choose</string>
+    <string name="scan">Scan</string>
+    <string name="noDeviceSelected">No device selected</string>
+    <string name="notification_title">Bike Connection</string>
+    <string name="bike_connected">Bike connected</string>
+
+    <string name="speed">Speed</string>
+    <string name="cadence">Cadence</string>
+    <string name="motor_temp">Motor Temperature</string>
+    <string name="pedal_power">Pedal Power</string>
+    <string name="motor_current">Motor Current</string>
+    <string name="motor_power">Motor Power</string>
+    <string name="voltage">Battery Volt</string>
+    <string name="energy_used">Energy Used</string>
+    <string name="speedField">%.1f Km/h</string>
+    <string name="cadenceField">%1$d rmp</string>
+    <string name="torqueField">%.1f N/m</string>
+    <string name="temperatureField">%.1f °C</string>
+    <string name="powerField">%1$d W</string>
+    <string name="voltageField">%.1f V</string>
+    <string name="currentField">%.1f A</string>
+    <string name="whField">%1$d Wh</string>
+
+    <string name="tsdz_cfg">Bike Configuration</string>
+    <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
+    <string name="title_activity_stm8_ota">Bike Firmware Update</string>
+    <string name="current_version">Current Version: %1$s</string>
+    <string name="partition_not_found">Error: Loader not found</string>
+    <string name="partition_empty">Loader empty</string>
+    <string name="new_version">New Version: %1$s</string>
+    <string name="file_name">File Name: %1$s</string>
+    <string name="start_update">Start Update</string>
+    <string name="title_select_file">Select the %1$s file</string>
+    <string name="error">Error</string>
+    <string name="fileNotValid">File is not valid</string>
+    <string name="address_not_contiguous">non-contiguous addresses</string>
+    <string name="wrong_start_address">wrong firmware addresses</string>
+    <string name="update_error">Update error!\nphase:%1$d code:%2$d</string>
+    <string name="updateStarted">Waiting upload ...</string>
+    <string name="waiting_sync">Waiting Sync ...</string>
+    <string name="sync_done">Bootloader sync done</string>
+    <string name="bootloader_version">Bootloader version: %1$x</string>
+    <string name="waiting_connection">Waiting Connection ...</string>
+    <string name="update_start_procedure">Update start procedure</string>
+    <string name="update_start_description">1) Switch off the bike display\n2) Wait some seconds\n3) Switch on the display\n4) Press OK when done</string>
+    <string name="uploading">Uploading: %1$d%%</string>
+    <string name="upload_completed">Upload completed</string>
+    <string name="upgrade_ok">Firmware upgraded!</string>
+    <string name="stm8_upgrade_message">Enjoy the new Bike Firmware!</string>
+    <string name="uploaded_bytes">Uploaded %1$d bytes</string>
+    <string name="waitingReboot">ESP32 restarting ...</string>
+    <string name="rebootDone">ESP32 started!</string>
+    <string name="updateError">Update cannot start</string>
+    <string name="upload_error">Upload error: %1$d</string>
+    <string name="upload_block_error">Upload sequence error\n expected %1$d received %2$d</string>
+    <string name="warning">Warning!</string>
+    <string name="exit_warning">OTA in progress!\nConfirm exit?</string>
+    <string name="exit_warning2">Upload in progress!\nConfirm exit?</string>
+    <string name="select_file">Select File</string>
+    <string name="system">System</string>
+    <string name="battery">Battery</string>
+    <string name="assist_levels">Assist Levels</string>
+    <string name="temp_control">Temperature and Throttle</string>
+    <string name="cadence_calib">Cadence sensor calibration</string>
+    <string name="title_activity_system_setup">System Setup</string>
+    <string name="motor">Motor</string>
+    <string name="motor_type">Motor Type</string>
+    <string name="acceleration">Acceleration</string>
+    <string name="temperature">Temperature\nsensor</string>
+    <string name="min">Min:</string>
+    <string name="max">Max:</string>
+    <string name="max_current">Max current (A)</string>
+    <string name="max_power">Max Power (W)</string>
+    <string name="sensors">Sensors</string>
+    <string name="wheel">Wheel</string>
+    <string name="light">Light</string>
+    <string name="ligth_config">Lights Configuration</string>
+    <string name="adv_cad_mode">Cadence sensor\nAdvanced mode</string>
+    <string name="high_percent">High %</string>
+    <string name="assit_wpr">Assist without\npedal rotation</string>
+    <string name="torque_adc_step">Torque sensor ADC step</string>
+    <string name="threshold">Threshold</string>
+    <string name="street_mode">Street Mode</string>
+    <string name="street_mode_throttle">Throttle enabled</string>
+    <string name="max_speed">Max speed (Km/h)</string>
+    <string name="wheel_perimeter">Wheel perim. (mm)</string>
+    <string name="wheel_divisor">OEM wheel div.</string>
+    <string name="range_error">Value must be between %1$d and %2$d</string>
+    <string name="min_max_error">Min should be less than Max</string>
+    <string name="write_cfg_error">Configuration cannot be updated</string>
+    <string name="connection_error">Bike is not connected</string>
+    <string name="title_activity_battery_setup">Battery Setup</string>
+    <string name="cells_nr">Battery cells Nr.</string>
+    <string name="wh_reset_volt">Wh counter reset voltage (Vx10)</string>
+    <string name="volt_cut_off">Battery low Voltage Cut-Off (Vx10)</string>
+    <string name="battery_resist">Battery pack Resistance (mOhm)</string>
+    <string name="cell_overvolt">Battery cell Overvolt (mVx10)</string>
+    <string name="cell_empty">Battery cell Empty (mVx10)</string>
+    <string name="cell_one_bar">Battery cell One bar (mVx10)</string>
+    <string name="cell_all_bars">Battery cell All bars (mVx10)</string>
+    <string name="title_activity_levels_setup">Assist levels Setup</string>
+    <string name="eMTB_mode">eMTB Mode</string>
+    <string name="assist_sensitivity">Assist Sensitivity</string>
+    <string name="power_mode">Power Mode</string>
+    <string name="power_assist_level_1">Power assist level 1</string>
+    <string name="power_assist_level_2">Power assist level 2</string>
+    <string name="power_assist_level_3">Power assist level 3</string>
+    <string name="power_assist_level_4">Power assist level 4</string>
+    <string name="level_error">Assist levels not incremental</string>
+    <string name="torque_mode">Torque Mode</string>
+    <string name="torque_assist_level_1">Torque assist level 1</string>
+    <string name="torque_assist_level_2">Torque assist level 2</string>
+    <string name="torque_assist_level_3">Torque assist level 3</string>
+    <string name="torque_assist_level_4">Torque assist level 4</string>
+    <string name="walk_mode">Walk Mode</string>
+    <string name="walk_assist_level_1">Walk assist level 1</string>
+    <string name="walk_assist_level_2">Walk assist level 2</string>
+    <string name="walk_assist_level_3">Walk assist level 3</string>
+    <string name="walk_assist_level_4">Walk assist level 4</string>
+    <string name="title_activity_temperature_setup">Temperature control Setup</string>
+    <string name="temp_control_title">Temperature Control</string>
+    <string name="control_type">Control Type</string>
+    <string name="warning_temp">Warning Temperature</string>
+    <string name="stop_temp">Shutoff Temperature</string>
+    <string name="throttle_control">Throttle Control</string>
+    <string name="throttle_enabled">Throttle Enabled</string>
+    <string name="title_activity_street_mode_setup">Street mode Setup</string>
+    <string name="title_activity_cadence_sensor_calibration">Cadence sensor calibration</string>
+
+    <string name="duty_cycle">Duty Cycle</string>
+    <string name="motor_erps">Motor ERPS</string>
+    <string name="foc_angle">FOC Angle</string>
+    <string name="torque_adc">Torque ADC</string>
+    <string name="pedal_torque">Pedal Torque</string>
+    <string name="cad_pulse">Cadence High %</string>
+    <string name="adc_value">ADC value</string>
+
+    <string name="success">Success!</string>
+    <string name="update_completed">Firmware update completed.</string>
+
+    <string name="cadenceStartError">Cannot start cadence calibration</string>
+    <string name="cadenceStopError">Cannot stop cadence calibration</string>
+    <string name="cadenceSaveError">Cannot save cadence value</string>
+    <string name="commandError">Command not recognized</string>
+
+    <string-array name="ota_types">
+        <item> Select the App to update </item>
+        <item> Main ESP32 App </item>
+        <item> STM8 Loader App</item>
+    </string-array>
+
+    <string-array name="motor_types">
+        <item> 36V </item>
+        <item> 48V </item>
+        <item> 36V (exp.)</item>
+        <item> 48V (exp.)</item>
+    </string-array>
+
+    <string-array name="ligths_cfg">
+        <item> Solid - Off</item>
+        <item> Flashing - Off</item>
+        <item> Solid - (Flashing)</item>
+        <item> Flashing - (Flashing)</item>
+        <item> Solid - (On)</item>
+        <item> Solid - On</item>
+        <item> Solid - Flashing</item>
+        <item> Flashing - On</item>
+        <item> Flashing - Flashing</item>
+    </string-array>
+
+    <string-array name="temperature_types">
+        <item> None </item>
+        <item> Controller ADC </item>
+        <item> ESP32 </item>
+    </string-array>
+
+</resources>
