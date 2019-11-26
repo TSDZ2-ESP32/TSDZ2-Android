@@ -1,8 +1,13 @@
 package spider65.ebike.tsdz2_esp32.data;
 
-import static spider65.ebike.tsdz2_esp32.utils.Utils.unsignedByteToInt;
+import android.util.Log;
+
+import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 
 public class TSDZ_Status {
+
+    private static final String TAG = "TSDZ_Status";
+
     public RidingMode ridingMode;
     public int assistLevel;
     public float speed;
@@ -63,30 +68,22 @@ public class TSDZ_Status {
 
 
     public void setData(byte[] data) {
-        this.data = data;
-        this.ridingMode = RidingMode.valueOf(unsignedByteToInt(data[0]));
-        this.assistLevel = unsignedByteToInt(data[1]);
-        int val;
-        val = unsignedByteToInt(data[2]);
-        val += unsignedByteToInt(data[3]) << 8;
-        this.speed = ((float)val) / 10;
-        this.cadence = unsignedByteToInt(data[4]);
-        val = unsignedByteToInt(data[5]);
-        val += unsignedByteToInt(data[6]) << 8;
-        this.temperature = ((float)val) / 10;
-        val = unsignedByteToInt(data[7]);
-        val += unsignedByteToInt(data[8]) << 8;
-        this.pPower = val/10 + (val % 10 < 5 ? 0 : 1);
-        val = unsignedByteToInt(data[9]);
-        val += unsignedByteToInt(data[10]) << 8;
-        this.volts = ((float)val) / 1000;
-        this.amperes = ((float)unsignedByteToInt(data[11])) / 10;
-        this.status = unsignedByteToInt(data[12]);
-        this.brake = unsignedByteToInt(data[13]) != 0;
-        if (data.length > 15) {
-            val = unsignedByteToInt(data[14]);
-            val += unsignedByteToInt(data[15]) << 8;
-            this.wattHour = val;
+        if (data.length != STATUS_ADV_SIZE) {
+            Log.e(TAG, "Wrong Debug BT message size!");
+            return;
         }
+        this.data = data;
+        this.ridingMode = RidingMode.valueOf(data[0] & 255);
+        this.assistLevel = (data[1] & 255);
+        this.speed = (float)(((data[3] & 255) << 8) + (data[2] & 255)) / 10;
+        this.cadence = (data[4] & 255);
+        this.temperature = (float)(((data[6] & 255) << 8) + (data[5] & 255)) / 10;
+        this.pPower = ((data[8] & 255) << 8) + ((data[7] & 255));
+        this.pPower = (this.pPower+5)/10;
+        this.volts = (float)(((data[10] & 255) << 8) + (data[9] & 255)) / 1000;
+        this.amperes = (float)(data[11] & 255) / 10;
+        this.status = (data[12] & 255);
+        this.brake = (data[13] & 255) != 0;
+        this.wattHour = ((data[15] & 255) << 8) + ((data[14] & 255));
     }
 }

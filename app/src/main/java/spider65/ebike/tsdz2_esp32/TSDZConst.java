@@ -12,4 +12,7 @@ public interface TSDZConst {
     byte CALIBRATION_START = 0;
     byte CALIBRATION_STOP = 1;
     byte CALIBRATION_SAVE = 2;
+
+    int DEBUG_ADV_SIZE = 12;
+    int STATUS_ADV_SIZE = 16;
 }

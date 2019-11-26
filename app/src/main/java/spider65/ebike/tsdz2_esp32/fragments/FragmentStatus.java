@@ -23,7 +23,7 @@ import android.widget.TextView;
 import org.jetbrains.annotations.NotNull;
 
 
-public class FragmentStatus extends Fragment implements MainFragment{
+public class FragmentStatus extends Fragment implements MainFragment, View.OnLongClickListener {
 
     private static final String TAG = "FragmentStatus";
 
@@ -37,6 +37,8 @@ public class FragmentStatus extends Fragment implements MainFragment{
     private TextView modeLevelTV;
     private TextView statusTV;
     private TextView brakeTV;
+    private TextView speedTV;
+    private TextView cadenceTV;
 
     private FragmentStatusBinding binding;
 
@@ -74,10 +76,13 @@ public class FragmentStatus extends Fragment implements MainFragment{
         binding.setStatus(status);
 
         View view = binding.getRoot();
-        modeLevelTV  = view.findViewById(R.id.modeLevelTV);
-        statusTV  = view.findViewById(R.id.statusTV);
-        brakeTV  = view.findViewById(R.id.brakeTV);
-
+        modeLevelTV = view.findViewById(R.id.modeLevelTV);
+        statusTV = view.findViewById(R.id.statusTV);
+        brakeTV = view.findViewById(R.id.brakeTV);
+        TextView speedTV = view.findViewById(R.id.speedValueTV);
+        cadenceTV = view.findViewById(R.id.cadenceValueTV);
+        speedTV.setOnLongClickListener(this);
+        cadenceTV.setOnLongClickListener(this);
         return view;
     }
 
@@ -159,5 +164,15 @@ public class FragmentStatus extends Fragment implements MainFragment{
             LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mMessageReceiver, mIntentFilter);
         else
             LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mMessageReceiver);
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        switch (v.getId()) {
+            case R.id.speedValueTV:
+            case R.id.cadenceValueTV:
+                break;
+        }
+        return false;
     }
 }

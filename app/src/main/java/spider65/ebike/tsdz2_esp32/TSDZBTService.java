@@ -26,6 +26,7 @@ import java.util.UUID;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import spider65.ebike.tsdz2_esp32.data.LogDataFile;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 
 
@@ -78,6 +79,8 @@ public class TSDZBTService extends Service {
     private BluetoothGattCharacteristic tsdz_debug_char = null;
     private BluetoothGattCharacteristic tsdz_config_char = null;
     private BluetoothGattCharacteristic tsdz_command_char = null;
+
+    private LogDataFile logDataFile;
 
 
     public static TSDZBTService getBluetoothService() {
@@ -169,6 +172,7 @@ public class TSDZBTService extends Service {
         Intent bi = new Intent(SERVICE_STARTED_BROADCAST);
         LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
         mService = this;
+        logDataFile = LogDataFile.getLogDataFile();
     }
 
     private void stopForegroundService()
@@ -263,10 +267,12 @@ public class TSDZBTService extends Service {
                 Intent bi = new Intent(TSDZ_STATUS_BROADCAST);
                 bi.putExtra(VALUE_EXTRA, characteristic.getValue());
                 LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                logDataFile.addStatusData(characteristic.getValue());
             } else if (UUID_DEBUG_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_DEBUG_BROADCAST);
                 bi.putExtra(VALUE_EXTRA, characteristic.getValue());
                 LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                logDataFile.addDebugData(characteristic.getValue());
             } else if (UUID_COMMAND_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_COMMAND_BROADCAST);
                 bi.putExtra(VALUE_EXTRA, characteristic.getValue());

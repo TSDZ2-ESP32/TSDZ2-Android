@@ -259,7 +259,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                 while ((readByte = provider.readByte()) != -1) {
                     address = provider.getAddress();
 
-                    // skip Start Segment Address record type
+                    // complete Start Segment Address record type
                     if (address <= 0x0004)
                         continue;
 

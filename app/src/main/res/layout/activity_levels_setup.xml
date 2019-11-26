@@ -56,24 +56,85 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_margin="5dp">
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="@string/assist_sensitivity" />
+                        android:text="@string/emtb_assit_level_1" />
 
                     <EditText
-                        android:id="@+id/eMTBAssistET"
+                        android:id="@+id/eMTBAssist1ET"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
                         android:layout_marginStart="5dp"
-                        android:ems="3"
-                        android:text="@{String.valueOf(cfg.ui8_eMTB_assist_sensitivity)}"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_eMTB_assist_level[0])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/emtb_assit_level_2" />
+
+                    <EditText
+                        android:id="@+id/eMTBAssist2ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_eMTB_assist_level[1])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/emtb_assit_level_3" />
+
+                    <EditText
+                        android:id="@+id/eMTBAssist3ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_eMTB_assist_level[2])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/emtb_assit_level_4" />
+
+                    <EditText
+                        android:id="@+id/eMTBAssist4ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_eMTB_assist_level[3])}"
                         android:inputType="number" />
                 </LinearLayout>
 
@@ -270,6 +331,104 @@
                         android:layout_marginStart="5dp"
                         android:ems="4"
                         android:text="@{String.valueOf(cfg.ui8_torque_assist_level[3])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="?android:attr/listDivider" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:layout_marginTop="5dp"
+                    android:text="@string/cadence_mode" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/cadence_assist_level_1" />
+
+                    <EditText
+                        android:id="@+id/cadenceAssist1ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_cadence_assist_level[0])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/cadence_assist_level_2" />
+
+                    <EditText
+                        android:id="@+id/cadenceAssist2ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_cadence_assist_level[1])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/cadence_assist_level_3" />
+
+                    <EditText
+                        android:id="@+id/cadenceAssist3ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_cadence_assist_level[2])}"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/cadence_assist_level_4" />
+
+                    <EditText
+                        android:id="@+id/cadenceAssist4ET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_cadence_assist_level[3])}"
                         android:inputType="number" />
                 </LinearLayout>
 

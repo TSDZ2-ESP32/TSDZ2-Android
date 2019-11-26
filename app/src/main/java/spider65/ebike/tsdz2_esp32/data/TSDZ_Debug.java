@@ -1,9 +1,12 @@
 package spider65.ebike.tsdz2_esp32.data;
 
-import static spider65.ebike.tsdz2_esp32.utils.Utils.unsignedByteToInt;
+import android.util.Log;
+
+import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 
 public class TSDZ_Debug {
 
+    private static final String TAG = "TSDZ_Debug";
     public byte[] data;
 
     public int dutyCycle; // D
@@ -31,25 +34,20 @@ public class TSDZ_Debug {
      */
 
     public void setData(byte[] data) {
-        int val;
+        if (data.length != DEBUG_ADV_SIZE) {
+            Log.e(TAG, "Wrong Debug BT message size!");
+            return;
+        }
 
         this.data = data;
 
-        adcThrottle = unsignedByteToInt(data[0]);
-        throttle = unsignedByteToInt(data[1]);
-        val = unsignedByteToInt(data[2]);
-        val += unsignedByteToInt(data[3]) << 8;
-        torqueSensorValue = val;
-        dutyCycle = unsignedByteToInt(data[4]);
-        val = unsignedByteToInt(data[5]);
-        val += unsignedByteToInt(data[6]) << 8;
-        motorERPS = val;
-        focAngle = unsignedByteToInt(data[7]);
-        val = unsignedByteToInt(data[8]);
-        val += unsignedByteToInt(data[9]) << 8;
-        pTorque = (float)val/100;
-        val = unsignedByteToInt(data[10]);
-        val += unsignedByteToInt(data[11]) << 8;
-        cadencePulseHighPercentage = (float)val/10;
+        adcThrottle = (data[0] & 255);
+        throttle = (data[1] & 255);
+        torqueSensorValue = ((data[3] & 255) << 8) + ((data[2] & 255));
+        dutyCycle = (data[4] & 255);
+        motorERPS = ((data[6] & 255) << 8) + ((data[5] & 255));
+        focAngle = (data[7] & 255);
+        pTorque = (float)(((data[9] & 255) << 8) + (data[8] & 255)) / 100;
+        cadencePulseHighPercentage = (float)(((data[11] & 255) << 8) + (data[10] & 255)) / 10;
     }
 }

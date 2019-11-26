@@ -71,11 +71,31 @@ public class LevelsSetupActivity extends AppCompatActivity {
     private void saveCfg() {
         Integer val1,val2,val3,val4;
 
-        if ((val1 = checkRange(binding.eMTBAssistET, 1, 20)) == null) {
-            showDialog(getString(R.string.assist_sensitivity), getString(R.string.range_error, 1, 20));
+        if ((val1 = checkRange(binding.eMTBAssist1ET, 1, 20)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_1), getString(R.string.range_error, 1, 20));
             return;
         }
-        cfg.ui8_eMTB_assist_sensitivity = val1;
+        if ((val2 = checkRange(binding.eMTBAssist2ET, 1, 20)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_2), getString(R.string.range_error, 1, 20));
+            return;
+        }
+        if ((val3 = checkRange(binding.eMTBAssist3ET, 1, 20)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_3), getString(R.string.range_error, 1, 20));
+            return;
+        }
+        if ((val4 = checkRange(binding.eMTBAssist4ET, 1, 20)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_4), getString(R.string.range_error, 1, 20));
+            return;
+        }
+        if (val2>val1 && val3>val2 && val4>val3) {
+            cfg.ui8_eMTB_assist_level[0] = val1;
+            cfg.ui8_eMTB_assist_level[1] = val2;
+            cfg.ui8_eMTB_assist_level[2] = val3;
+            cfg.ui8_eMTB_assist_level[3] = val4;
+        } else {
+            showDialog(getString(R.string.eMTB_mode), getString(R.string.level_error));
+            return;
+        }
 
         if ((val1 = checkRange(binding.powerAssist1ET, 0, 255)) == null) {
             showDialog(getString(R.string.power_assist_level_1), getString(R.string.range_error, 0, 255));
@@ -126,6 +146,32 @@ public class LevelsSetupActivity extends AppCompatActivity {
             cfg.ui8_torque_assist_level[3] = val4;
         } else {
             showDialog(getString(R.string.torque_mode), getString(R.string.level_error));
+            return;
+        }
+
+        if ((val1 = checkRange(binding.cadenceAssist1ET, 0, 255)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_1), getString(R.string.range_error, 0, 255));
+            return;
+        }
+        if ((val2 = checkRange(binding.cadenceAssist2ET, 0, 255)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_2), getString(R.string.range_error, 1, 50));
+            return;
+        }
+        if ((val3 = checkRange(binding.cadenceAssist3ET, 0, 255)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_3), getString(R.string.range_error, 0, 255));
+            return;
+        }
+        if ((val4 = checkRange(binding.cadenceAssist4ET, 0, 255)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_4), getString(R.string.range_error, 0, 255));
+            return;
+        }
+        if (val2>val1 && val3>val2 && val4>val3) {
+            cfg.ui8_cadence_assist_level[0] = val1;
+            cfg.ui8_cadence_assist_level[1] = val2;
+            cfg.ui8_cadence_assist_level[2] = val3;
+            cfg.ui8_cadence_assist_level[3] = val4;
+        } else {
+            showDialog(getString(R.string.cadence_mode), getString(R.string.level_error));
             return;
         }
 

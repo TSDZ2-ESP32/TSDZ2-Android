@@ -2,10 +2,6 @@ package spider65.ebike.tsdz2_esp32.utils;
 
 public class Utils {
 
-    public static int unsignedByteToInt(byte b) {
-        return (int) b & 0xFF;
-    }
-
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
     public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 3];
