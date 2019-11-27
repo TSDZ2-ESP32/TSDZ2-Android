@@ -14,5 +14,8 @@ public interface TSDZConst {
     byte CALIBRATION_SAVE = 2;
 
     int DEBUG_ADV_SIZE = 12;
-    int STATUS_ADV_SIZE = 16;
+    int STATUS_ADV_SIZE = 17;
+
+    int PWM_DUTY_CYCLE_MAX = 254;
+    int WALK_ASSIST_DUTY_CYCLE_MAX = 80;
 }

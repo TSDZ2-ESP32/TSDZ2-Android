@@ -48,7 +48,7 @@ public class TSDZ_Config {
     public int ui8_assist_without_pedal_rotation_threshold;
     public int ui8_lights_configuration;
     public int ui16_wheel_perimeter;
-    public int ui8_oem_wheel_divisor;
+    public boolean ui8_cruise_enabled;
     public int ui16_battery_voltage_reset_wh_counter_x10;
     public int ui8_battery_max_current;
     public int ui8_target_max_battery_power_div25;
@@ -85,7 +85,7 @@ public class TSDZ_Config {
       volatile uint8_t ui8_assist_without_pedal_rotation_threshold;
       volatile uint8_t ui8_lights_configuration;
       volatile uint16_t ui16_wheel_perimeter;
-      volatile uint8_t ui8_oem_wheel_divisor;
+      volatile uint8_t ui8_cruise_enabled;
       volatile uint16_t ui16_battery_voltage_reset_wh_counter_x10;
       volatile uint8_t ui8_battery_max_current;
       volatile uint8_t ui8_target_max_battery_power_div25;
@@ -110,10 +110,10 @@ public class TSDZ_Config {
     } struct_tsdz_cfg;
     */
 
-    public void setData(byte[] data) {
+    public boolean setData(byte[] data) {
         if (data.length != CFG_SIZE) {
             Log.e(TAG, "setData: wrong data size");
-            return;
+            return false;
         }
         ui8_motor_type = (data[0] & 255);
         ui8_motor_temperature_min_value_to_limit = (data[1] & 255);
@@ -127,7 +127,7 @@ public class TSDZ_Config {
         assist_without_pedal_rotation = (ui8_assist_without_pedal_rotation_threshold != 0);
         ui8_lights_configuration = (data[10] & 255);
         ui16_wheel_perimeter = (data[11] & 255) + ((data[12] & 255) << 8);
-        ui8_oem_wheel_divisor = (data[13] & 255);
+        ui8_cruise_enabled = (data[13] & 255) != 0;
         ui16_battery_voltage_reset_wh_counter_x10 = (data[14] & 255) + ((data[15] & 255) << 8);
         ui8_battery_max_current = (data[16] & 255);
         ui8_target_max_battery_power_div25 = (data[17] & 255) * 25;
@@ -159,6 +159,7 @@ public class TSDZ_Config {
             ui8_eMTB_assist_level[i] = (data[45+i] & 255);
         for (int i=0;i<4;i++)
             ui8_walk_assist_level[i] = (data[49+i] & 255);
+        return true;
     }
 
     public byte[] toByteArray() {
@@ -177,7 +178,7 @@ public class TSDZ_Config {
         data[10] = (byte)ui8_lights_configuration;
         data[11] = (byte)ui16_wheel_perimeter;
         data[12] = (byte)(ui16_wheel_perimeter >>> 8);
-        data[13] = (byte)ui8_oem_wheel_divisor;
+        data[13] = (byte) (ui8_cruise_enabled? 1:0);
         data[14] = (byte)ui16_battery_voltage_reset_wh_counter_x10;
         data[15] = (byte)(ui16_battery_voltage_reset_wh_counter_x10 >>> 8);
         data[16] = (byte)ui8_battery_max_current;
@@ -191,9 +192,9 @@ public class TSDZ_Config {
         data[24] = (byte)(ui8_li_io_cell_full_bars_x100 - 200);
         data[25] = (byte)(ui8_li_io_cell_one_bar_x100 - 200);
         data[26] = (byte)(ui8_li_io_cell_empty_x100 - 200);
-        data[27] = (byte)(ui8_street_mode_enabled? 0x01:0x00);
-        data[28] = (byte)(ui8_street_mode_power_limit_enabled? 0x01:0x00);
-        data[29] = (byte)(ui8_street_mode_throttle_enabled? 0x01:0x00);
+        data[27] = (byte)(ui8_street_mode_enabled? 1:0);
+        data[28] = (byte)(ui8_street_mode_power_limit_enabled? 1:0);
+        data[29] = (byte)(ui8_street_mode_throttle_enabled? 1:0);
         data[30] = (byte)(ui8_street_mode_power_limit_div25/25);
         data[31] = (byte)ui8_street_mode_speed_limit;
         data[32] = temperature_control == TempControl.tempESP ? (byte)1:(byte)0;

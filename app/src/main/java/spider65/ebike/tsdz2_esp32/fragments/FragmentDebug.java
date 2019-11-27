@@ -106,8 +106,8 @@ public class FragmentDebug extends Fragment implements MainFragment {
                 byte[] debugVal = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                 //Log.d(TAG, "value = " + Utils.bytesToHex(debugVal));
                 if (debugData.data == null || !Arrays.equals(debugData.data, debugVal)) {
-                    debugData.setData(debugVal);
-                    binding.invalidateAll();
+                    if (debugData.setData(debugVal))
+                        binding.invalidateAll();
                     //refresh();
                 }
             }

@@ -256,7 +256,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
                     android:layout_marginTop="5dp"
-                    android:text="@string/wheel" />
+                    android:text="@string/wheel_cruise" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -279,26 +279,65 @@
                         android:inputType="number" />
                 </LinearLayout>
 
+                <CheckBox
+                    android:id="@+id/cruiseModeCB"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="5dp"
+                    android:checked="@{cfg.ui8_cruise_enabled}"
+                    android:text="@string/cruise_mode_enabled" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="?android:attr/listDivider" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:layout_marginTop="5dp"
+                    android:text="@string/street_mode" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_margin="5dp"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <CheckBox
+                        android:id="@+id/streetPowerCB"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/wheel_divisor" />
+                        android:layout_gravity="center_vertical"
+                        android:checked="@={cfg.ui8_street_mode_power_limit_enabled}"
+                        android:onCheckedChanged="@{handler::onCheckedChanged}"
+                        android:text="@string/max_power" />
 
                     <EditText
-                        android:id="@+id/oemWheelDivET"
+                        android:id="@+id/streetPowerET"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:layout_marginStart="5dp"
+                        android:text="@{String.valueOf(cfg.ui8_street_mode_power_limit_div25)}"
                         android:ems="3"
-                        android:text="@{String.valueOf(cfg.ui8_oem_wheel_divisor)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        android:enabled="@{cfg.ui8_street_mode_power_limit_enabled}" />
                 </LinearLayout>
+
+                <CheckBox
+                    android:id="@+id/streetThrottleCB"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="5dp"
+                    android:enabled="@{cfg.throttleEnabled}"
+                    android:checked="@{cfg.ui8_street_mode_throttle_enabled &amp;&amp; cfg.throttleEnabled}"
+                    android:text="@string/street_mode_throttle" />
 
                 <View
                     android:layout_width="match_parent"

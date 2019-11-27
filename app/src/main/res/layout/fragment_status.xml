@@ -345,34 +345,66 @@
         android:background="@drawable/border"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/modeLevelTV"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="32sp"
+            android:orientation="horizontal"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/dash" />
+            android:background="@drawable/border">
+            <TextView
+                android:id="@+id/modeLevelTV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:drawableStart="@mipmap/off_mode_icon"
+                android:text="@string/dash"
+                android:textSize="28sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:background="@drawable/border">
+            <TextView
+                android:id="@+id/statusTV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="invisible"
+                android:drawableStart="@mipmap/error_icon"
+                android:textSize="28sp"
+                android:gravity="center"
+                android:text="@string/dash" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/border">
+            <ImageView
+                android:id="@+id/brakeIV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="invisible"
+                android:src="@mipmap/brake_icon" />
+            <ImageView
+                android:id="@+id/streetModeIV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/bike_icon" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/statusTV"
+            android:id="@+id/dummy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="32sp"
-            android:layout_weight="1"
+            android:textSize="28sp"
             android:gravity="center"
-            android:text="@string/dash" />
+            android:layout_weight="4"
+            android:text="" />
 
-        <TextView
-            android:id="@+id/brakeTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="32sp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:layout_marginEnd="50dp"
-            android:text="@string/dash"
-        />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

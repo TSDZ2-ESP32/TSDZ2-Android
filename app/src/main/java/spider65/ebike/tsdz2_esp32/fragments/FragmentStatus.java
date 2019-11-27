@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +37,9 @@ public class FragmentStatus extends Fragment implements MainFragment, View.OnLon
 
     private TextView modeLevelTV;
     private TextView statusTV;
-    private TextView brakeTV;
-    private TextView speedTV;
-    private TextView cadenceTV;
+    private ImageView brakeIV;
+    private ImageView streetModeIV;
+
 
     private FragmentStatusBinding binding;
 
@@ -78,45 +79,60 @@ public class FragmentStatus extends Fragment implements MainFragment, View.OnLon
         View view = binding.getRoot();
         modeLevelTV = view.findViewById(R.id.modeLevelTV);
         statusTV = view.findViewById(R.id.statusTV);
-        brakeTV = view.findViewById(R.id.brakeTV);
-        TextView speedTV = view.findViewById(R.id.speedValueTV);
-        cadenceTV = view.findViewById(R.id.cadenceValueTV);
-        speedTV.setOnLongClickListener(this);
-        cadenceTV.setOnLongClickListener(this);
+        brakeIV = view.findViewById(R.id.brakeIV);
+        streetModeIV = view.findViewById(R.id.streetModeIV);
+
         return view;
     }
 
     private void refreshView() {
         if (status.brake)
-            brakeTV.setText(R.string.brake_letter);
+            brakeIV.setVisibility(View.VISIBLE);
         else
-            brakeTV.setText(R.string.dash);
-        if (status.status != 0)
-            statusTV.setText("E" + String.valueOf(status.status));
+            brakeIV.setVisibility(View.INVISIBLE);
+
+        if (status.status != 0) {
+            statusTV.setVisibility(View.VISIBLE);
+            statusTV.setText(String.valueOf(status.status));
+        } else
+            statusTV.setVisibility(View.INVISIBLE);
+
+        if (status.streetMode)
+            brakeIV.setVisibility(View.VISIBLE);
         else
-            statusTV.setText("OK");
+            brakeIV.setVisibility(View.INVISIBLE);
+
         switch (status.ridingMode) {
             case OFF_MODE:
-                modeLevelTV.setText(R.string.off);
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
+                modeLevelTV.setText("0");
                 break;
             case eMTB_ASSIST_MODE:
-                modeLevelTV.setText("E - " + status.assistLevel);
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.emtb_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(status.assistLevel);
                 break;
             case WALK_ASSIST_MODE:
-                modeLevelTV.setText("W - " + status.assistLevel);
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.walk_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(status.assistLevel);
                 break;
             case POWER_ASSIST_MODE:
-                modeLevelTV.setText("P - " + status.assistLevel);
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.power_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(status.assistLevel);
                 break;
             case TORQUE_ASSIST_MODE:
-                modeLevelTV.setText("T - " + status.assistLevel);
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.torque_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(status.assistLevel);
                 break;
             case CADENCE_ASSIST_MODE:
-                modeLevelTV.setText("C - " + status.assistLevel);
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cadence_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(status.assistLevel);
                 break;
             case CRUISE_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cruise_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(status.assistLevel);
                 break;
             case CADENCE_SENSOR_CALIBRATION_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
                 modeLevelTV.setText(R.string.calibration);
                 break;
         }
@@ -149,8 +165,8 @@ public class FragmentStatus extends Fragment implements MainFragment, View.OnLon
             if (TSDZBTService.TSDZ_STATUS_BROADCAST.equals(intent.getAction())) {
                 byte[] statusVal = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                 //Log.d(TAG, "value = " + Utils.bytesToHex(statusVal));
-                status.setData(statusVal);
-                refreshView();
+                if (status.setData(statusVal))
+                    refreshView();
             }
         }
     };

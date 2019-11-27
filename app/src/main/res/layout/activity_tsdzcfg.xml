@@ -68,13 +68,6 @@
                 android:text="@string/temp_control" />
 
             <Button
-                android:id="@+id/street_mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="@string/street_mode" />
-
-            <Button
                 android:id="@+id/cadence_sensor"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

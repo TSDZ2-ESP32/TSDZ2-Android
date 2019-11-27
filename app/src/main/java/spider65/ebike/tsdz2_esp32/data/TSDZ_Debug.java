@@ -33,10 +33,10 @@ public class TSDZ_Debug {
     } struct_tsdz_debug;
      */
 
-    public void setData(byte[] data) {
+    public boolean setData(byte[] data) {
         if (data.length != DEBUG_ADV_SIZE) {
             Log.e(TAG, "Wrong Debug BT message size!");
-            return;
+            return false;
         }
 
         this.data = data;
@@ -49,5 +49,6 @@ public class TSDZ_Debug {
         focAngle = (data[7] & 255);
         pTorque = (float)(((data[9] & 255) << 8) + (data[8] & 255)) / 100;
         cadencePulseHighPercentage = (float)(((data[11] & 255) << 8) + (data[10] & 255)) / 10;
+        return true;
     }
 }

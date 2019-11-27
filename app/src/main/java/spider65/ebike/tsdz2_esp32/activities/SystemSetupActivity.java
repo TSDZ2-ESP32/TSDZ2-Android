@@ -80,6 +80,9 @@ public class SystemSetupActivity extends AppCompatActivity {
             case R.id.assistCB:
                 binding.assistWPRET.setEnabled(checked);
                 break;
+            case R.id.streetPowerCB:
+                binding.streetPowerET.setEnabled(checked);
+                break;
         }
     }
 
@@ -106,8 +109,6 @@ public class SystemSetupActivity extends AppCompatActivity {
             return;
         }
         cfg.ui8_target_max_battery_power_div25 = val;
-
-        cfg.ui8_lights_configuration = binding.lightConfigSP.getSelectedItemPosition();
 
         checked = binding.cadenceModeCB.isChecked();
         if (checked) {
@@ -141,11 +142,23 @@ public class SystemSetupActivity extends AppCompatActivity {
         }
         cfg.ui16_wheel_perimeter = val;
 
-        if ((val = checkRange(binding.oemWheelDivET, 50, 200)) == null) {
-            showDialog(getString(R.string.wheel_divisor), getString(R.string.range_error, 50, 200));
-            return;
+        checked = binding.cruiseModeCB.isChecked();
+        cfg.ui8_cruise_enabled = checked;
+
+        checked = binding.streetPowerCB.isChecked();
+        if (checked) {
+            if ((val = checkRange(binding.streetPowerET, 50, 1000)) == null) {
+                showDialog(getString(R.string.max_power), getString(R.string.range_error, 50, 1000));
+                return;
+            }
+            cfg.ui8_street_mode_power_limit_div25 = val;
         }
-        cfg.ui8_oem_wheel_divisor = val;
+        cfg.ui8_street_mode_power_limit_enabled = checked;
+
+        checked = binding.streetThrottleCB.isChecked();
+        cfg.ui8_street_mode_throttle_enabled = checked;
+
+        cfg.ui8_lights_configuration = binding.lightConfigSP.getSelectedItemPosition();
 
         TSDZBTService service = TSDZBTService.getBluetoothService();
         if (service != null && service.getConnectionStatus() == TSDZBTService.ConnectionState.CONNECTED)
@@ -153,6 +166,7 @@ public class SystemSetupActivity extends AppCompatActivity {
         else {
             showDialog(getString(R.string.error), getString(R.string.connection_error));
         }
+
     }
 
     Integer checkRange(EditText et, int min, int max) {

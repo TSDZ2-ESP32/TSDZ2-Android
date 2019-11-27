@@ -19,6 +19,7 @@ public class TSDZ_Status {
     public int status;
     public boolean brake;
     public int wattHour;
+    public boolean streetMode;
 
     public byte[] data;
 
@@ -67,10 +68,10 @@ public class TSDZ_Status {
     */
 
 
-    public void setData(byte[] data) {
+    public boolean setData(byte[] data) {
         if (data.length != STATUS_ADV_SIZE) {
-            Log.e(TAG, "Wrong Debug BT message size!");
-            return;
+            Log.e(TAG, "Wrong Status BT message size!");
+            return false;
         }
         this.data = data;
         this.ridingMode = RidingMode.valueOf(data[0] & 255);
@@ -85,5 +86,7 @@ public class TSDZ_Status {
         this.status = (data[12] & 255);
         this.brake = (data[13] & 255) != 0;
         this.wattHour = ((data[15] & 255) << 8) + ((data[14] & 255));
+        this.streetMode = (data[16] & 255) != 0;
+        return true;
     }
 }

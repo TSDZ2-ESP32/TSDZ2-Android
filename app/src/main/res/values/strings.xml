@@ -93,7 +93,7 @@
     <string name="max_current">Max current (A)</string>
     <string name="max_power">Max Power (W)</string>
     <string name="sensors">Sensors</string>
-    <string name="wheel">Wheel</string>
+    <string name="wheel_cruise">Wheel / Cruise</string>
     <string name="light">Light</string>
     <string name="ligth_config">Lights Configuration</string>
     <string name="adv_cad_mode">Cadence sensor\nAdvanced mode</string>
@@ -102,6 +102,7 @@
     <string name="torque_adc_step">Torque sensor ADC step</string>
     <string name="threshold">Threshold</string>
     <string name="street_mode">Street Mode</string>
+    <string name="cruise_mode_enabled">Cruise mode enabled</string>
     <string name="street_mode_throttle">Throttle enabled</string>
     <string name="max_speed">Max speed (Km/h)</string>
     <string name="wheel_perimeter">Wheel perim. (mm)</string>

@@ -24,8 +24,6 @@ public class TSDZCfgActivity extends AppCompatActivity {
         b.setOnClickListener((View) -> setupLevels());
         b = findViewById(R.id.temperature_control);
         b.setOnClickListener((View) -> setupTemperature());
-        b = findViewById(R.id.street_mode);
-        b.setOnClickListener((View) -> setupStreetMode());
         b = findViewById(R.id.cadence_sensor);
         b.setOnClickListener((View) -> cadenceSensorCalib());
     }
@@ -46,10 +44,6 @@ public class TSDZCfgActivity extends AppCompatActivity {
 
     private void setupTemperature() {
         Intent intent = new Intent(this, TemperatureSetupActivity.class);
-        startActivity(intent);    }
-
-    private void setupStreetMode() {
-        Intent intent = new Intent(this, StreetModeSetupActivity.class);
         startActivity(intent);    }
 
     private void cadenceSensorCalib() {

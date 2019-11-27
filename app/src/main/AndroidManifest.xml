@@ -27,10 +27,6 @@
             android:label="@string/title_activity_temperature_setup"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activities.StreetModeSetupActivity"
-            android:label="@string/title_activity_street_mode_setup"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".activities.CadenceSensorCalibrationActivity"
             android:label="@string/title_activity_cadence_sensor_calibration"
             android:theme="@style/AppTheme.NoActionBar" />
