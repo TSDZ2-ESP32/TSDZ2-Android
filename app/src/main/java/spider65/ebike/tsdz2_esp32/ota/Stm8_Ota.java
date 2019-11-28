@@ -408,9 +408,11 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         if (title != null)
             builder.setTitle(title);
         builder.setMessage(message);
-        builder.setPositiveButton(android.R.string.ok, null);
-        if (exit)
-            builder.setOnCancelListener( (dialog) -> Stm8_Ota.this.finish());
+        if (exit) {
+            builder.setOnCancelListener((dialog) -> Stm8_Ota.this.finish());
+            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> Stm8_Ota.this.finish());
+        } else
+            builder.setPositiveButton(android.R.string.ok, null);
         builder.show();
     }
 

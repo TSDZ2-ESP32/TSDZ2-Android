@@ -6,20 +6,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import spider65.ebike.tsdz2_esp32.MyApp;
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.databinding.FragmentDebugBinding;
-import spider65.ebike.tsdz2_esp32.utils.Utils;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -31,21 +32,15 @@ import java.util.Arrays;
  * Use the {@link FragmentDebug#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentDebug extends Fragment implements MainFragment {
+public class FragmentDebug extends Fragment {
 
     private static final String TAG = "FragmentDebug";
 
-    private OnFragmentInteractionListener mListener;
-
-    IntentFilter mIntentFilter = new IntentFilter();
+    private IntentFilter mIntentFilter = new IntentFilter();
 
     private TSDZ_Debug debugData = new TSDZ_Debug();
 
     private FragmentDebugBinding binding;
-
-    public FragmentDebug() {
-        // Required empty public constructor
-    }
 
     /**
      * Use this factory method to create a new instance of
@@ -56,22 +51,22 @@ public class FragmentDebug extends Fragment implements MainFragment {
         return new FragmentDebug();
     }
 
+
+    public FragmentDebug() {
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mMessageReceiver);
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView");
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(
                 inflater, R.layout.fragment_debug, container, false);
@@ -80,22 +75,17 @@ public class FragmentDebug extends Fragment implements MainFragment {
     }
 
     @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-        mListener.onFragmentInteraction(2);
+    public void onResume() {
+        Log.d(TAG, "onResume");
+        super.onResume();
+        LocalBroadcastManager.getInstance(MyApp.getInstance()).registerReceiver(mMessageReceiver, mIntentFilter);
     }
 
     @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
+    public void onPause() {
+        Log.d(TAG, "onPause");
+        super.onPause();
+        LocalBroadcastManager.getInstance(MyApp.getInstance()).unregisterReceiver(mMessageReceiver);
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -108,39 +98,8 @@ public class FragmentDebug extends Fragment implements MainFragment {
                 if (debugData.data == null || !Arrays.equals(debugData.data, debugVal)) {
                     if (debugData.setData(debugVal))
                         binding.invalidateAll();
-                    //refresh();
                 }
             }
         }
     };
-
-    private void refresh() {
-
-    }
-
-    @Override
-    public void selected(boolean visibile) {
-        // Log.d(TAG, "selected = " + visibile);
-        if (visibile)
-            LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mMessageReceiver, mIntentFilter);
-        else
-            LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mMessageReceiver);
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    /*
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
-    }
-     */
 }

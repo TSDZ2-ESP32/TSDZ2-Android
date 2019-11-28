@@ -8,14 +8,13 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import spider65.ebike.tsdz2_esp32.fragments.FragmentDebug;
 import spider65.ebike.tsdz2_esp32.fragments.FragmentStatus;
-import spider65.ebike.tsdz2_esp32.fragments.MainFragment;
 
 /**
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
  * one of the sections/tabs/pages.
  */
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
+    private static final String TAG = "SectionsPagerAdapter";
     private static final Fragment[] TAB_FRAGMENTS = new Fragment[]{FragmentStatus.newInstance(), FragmentDebug.newInstance()};
     private final Context mContext;
 
@@ -39,14 +38,5 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @Override
     public int getCount() {
         return TAB_FRAGMENTS.length;
-    }
-
-    void selected(int position) {
-        for (int i=0; i<TAB_FRAGMENTS.length; i++) {
-            if (i == position)
-                ((MainFragment)TAB_FRAGMENTS[i]).selected(true);
-            else
-                ((MainFragment)TAB_FRAGMENTS[i]).selected(false);
-        }
     }
 }

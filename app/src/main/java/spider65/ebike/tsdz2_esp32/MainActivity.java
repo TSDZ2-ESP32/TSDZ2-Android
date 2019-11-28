@@ -26,7 +26,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
 import spider65.ebike.tsdz2_esp32.ota.Esp32_Ota;
-import spider65.ebike.tsdz2_esp32.fragments.OnFragmentInteractionListener;
 import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
 
 import android.util.Log;
@@ -36,7 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity implements OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private TextView mTitle;
@@ -55,9 +54,11 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
         Log.d(TAG, "onCreate");
 
         setContentView(R.layout.activity_main);
+
         sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
         ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
+        /*
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -82,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
             public void onPageScrollStateChanged(int state) {
             }
         });
+        //sectionsPagerAdapter.selected(viewPager.getCurrentItem());
+        */
 
         TabLayout tabs = findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
@@ -190,11 +193,6 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    @Override
-    public void onFragmentInteraction(int fragment) {
-        // TODO
     }
 
     @Override

@@ -402,7 +402,7 @@
             android:layout_height="wrap_content"
             android:textSize="28sp"
             android:gravity="center"
-            android:layout_weight="4"
+            android:layout_weight="3.5"
             android:text="" />
 
     </LinearLayout>
