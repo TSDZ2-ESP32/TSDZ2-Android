@@ -75,7 +75,7 @@ public class TSDZBTService extends Service {
     private boolean stopped = false;
     private int connectionRetry = 0;
 
-    private BluetoothGattCharacteristic tsdz_staus_char = null;
+    private BluetoothGattCharacteristic tsdz_status_char = null;
     private BluetoothGattCharacteristic tsdz_debug_char = null;
     private BluetoothGattCharacteristic tsdz_config_char = null;
     private BluetoothGattCharacteristic tsdz_command_char = null;
@@ -226,20 +226,24 @@ public class TSDZBTService extends Service {
                         List<BluetoothGattCharacteristic> lc = s.getCharacteristics();
                         for (BluetoothGattCharacteristic c:lc) {
                             if (c.getUuid().equals(UUID_STATUS_CHARACTERISTIC)) {
-                                tsdz_staus_char = c;
-                                setCharacteristicNotification(c,true);
+                                tsdz_status_char = c;
+                                Log.d(TAG, "UUID_STATUS_CHARACTERISTIC enable notifications");
+                                //setCharacteristicNotification(c,true);
                             } else if(c.getUuid().equals(UUID_DEBUG_CHARACTERISTIC)) {
                                 tsdz_debug_char = c;
-                                setCharacteristicNotification(c,true);
+                                Log.d(TAG, "UUID_DEBUG_CHARACTERISTIC enable notifications");
+                                //setCharacteristicNotification(c,true);
                             } else if(c.getUuid().equals(UUID_CONFIG_CHARACTERISTIC)) {
                                 tsdz_config_char = c;
                             } else if(c.getUuid().equals(UUID_COMMAND_CHARACTERISTIC)) {
                                 tsdz_command_char = c;
-                                setCharacteristicNotification(c,true);
+                                Log.d(TAG, "UUID_COMMAND_CHARACTERISTIC enable notifications");
+                                //setCharacteristicNotification(c,true);
                             }
                         }
                     }
                 }
+                setCharacteristicNotification(tsdz_status_char,true);
                 Intent bi = new Intent(CONNECTION_SUCCESS_BROADCAST);
                 LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
             } else {
@@ -248,8 +252,26 @@ public class TSDZBTService extends Service {
         }
 
         @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor,
+                                      int status) {
+            Log.d(TAG, "onDescriptorWrite:" + descriptor.getCharacteristic().getUuid().toString() +
+                    " - " + descriptor.getUuid().toString());
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (descriptor.getUuid().equals(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG))) {
+                    boolean enable = (descriptor.getValue()[0] & 0x01) == 1;
+                    Log.d(TAG, "onDescriptorWrite: value = " + descriptor.getValue()[0]);
+                    if (descriptor.getCharacteristic().getUuid().equals(UUID_STATUS_CHARACTERISTIC))
+                        setCharacteristicNotification(tsdz_debug_char,enable);
+                    else if (descriptor.getCharacteristic().getUuid().equals(UUID_DEBUG_CHARACTERISTIC))
+                        setCharacteristicNotification(tsdz_command_char,enable);
+                }
+            }
+        }
+
+        @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
                                          int status) {
+            //Log.d(TAG, "onCharacteristicRead:" + characteristic.getUuid().toString());
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
                     Intent bi = new Intent(TSDZ_CFG_READ_BROADCAST);
@@ -263,6 +285,7 @@ public class TSDZBTService extends Service {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            //Log.d(TAG, "onCharacteristicChanged:" + characteristic.getUuid().toString());
             if (UUID_STATUS_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_STATUS_BROADCAST);
                 bi.putExtra(VALUE_EXTRA, characteristic.getValue());
@@ -283,6 +306,7 @@ public class TSDZBTService extends Service {
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
                                          int status) {
+            //Log.d(TAG, "onCharacteristicWrite:" + characteristic.getUuid().toString());
             if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_CFG_WRITE_BROADCAST);
                 if (status == BluetoothGatt.GATT_SUCCESS)

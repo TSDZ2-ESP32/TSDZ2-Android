@@ -14,4 +14,6 @@
         android:title="@string/bikeOTA"/>
 	<item  android:id="@+id/showVersion"
         android:title="@string/show_version" />
+    <item  android:id="@+id/esp32Config"
+        android:title="@string/esp32_config" />
 </menu>

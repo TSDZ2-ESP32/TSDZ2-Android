@@ -1,5 +1,10 @@
 package spider65.ebike.tsdz2_esp32.utils;
 
+import android.widget.EditText;
+
+import spider65.ebike.tsdz2_esp32.MyApp;
+import spider65.ebike.tsdz2_esp32.R;
+
 public class Utils {
 
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -12,5 +17,14 @@ public class Utils {
             hexChars[j * 3 + 2] = ' ';
         }
         return new String(hexChars);
+    }
+
+    public static Integer checkRange(EditText et, int min, int max) {
+        int val = Integer.parseInt(et.getText().toString());
+        if (val < min || val > max) {
+            et.setError(MyApp.getInstance().getString(R.string.range_error, min, max));
+            return null;
+        }
+        return val;
     }
 }

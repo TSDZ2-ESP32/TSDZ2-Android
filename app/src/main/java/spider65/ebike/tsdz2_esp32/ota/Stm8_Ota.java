@@ -187,9 +187,14 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     }
 
     private void startAP() {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (!wifiManager.isWifiEnabled()) {
+            showDialog(getString(R.string.error), getString(R.string.enable_wifi), true);
+            return;
+        }
         if (Build.VERSION.SDK_INT >= 26) {
             prevSet = getAddresses();
-            WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if (hotSpotCallback == null)
                 hotSpotCallback = new HotSpotCallback();
             wifiManager.startLocalOnlyHotspot(hotSpotCallback, null);

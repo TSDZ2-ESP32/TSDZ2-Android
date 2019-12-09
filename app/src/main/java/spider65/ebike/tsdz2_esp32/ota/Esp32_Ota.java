@@ -239,9 +239,13 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     }
 
     private void startAP() {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (!wifiManager.isWifiEnabled()) {
+            showDialog(getString(R.string.error), getString(R.string.enable_wifi), true);
+            return;
+        }
         if (Build.VERSION.SDK_INT >= 26) {
             prevSet = getAddresses();
-            WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if (hotSpotCallback == null)
                 hotSpotCallback = new HotSpotCallback();
             wifiManager.startLocalOnlyHotspot(hotSpotCallback, null);
@@ -420,6 +424,19 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         builder.show();
     }
 
+    private void showDialog (String title, String message, boolean exit) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if (title != null)
+            builder.setTitle(title);
+        builder.setMessage(message);
+        if (exit) {
+            builder.setOnCancelListener((dialog) -> Esp32_Ota.this.finish());
+            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> Esp32_Ota.this.finish());
+        } else
+            builder.setPositiveButton(android.R.string.ok, null);
+        builder.show();
+    }
+
     Set<String> getAddresses() {
         Set<String> set = new HashSet<>();
         try {
@@ -461,10 +478,17 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     private class HotSpotCallback extends WifiManager.LocalOnlyHotspotCallback {
         @Override
         public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
+            Log.d(TAG, "onStarted");
             WifiConfiguration cfg = reservation.getWifiConfiguration();
             Esp32_Ota.this.reservation = reservation;
             ssid = cfg.SSID;
             pwd = cfg.preSharedKey;
+        }
+        public void onFailed(int reason) {
+            Log.d(TAG, "onFailed:" + reason);
+        }
+        public void onStopped() {
+            Log.d(TAG, "onStopped");
         }
     }
 
@@ -521,7 +545,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                             break;
                         case CMD_ESP_OTA_STATUS:
                             if (data[1] != 0) {
-                                showDialog(getString(R.string.rebootDone), getString(R.string.update_error, data[1]));
+                                showDialog(getString(R.string.rebootDone), getString(R.string.upload_error, data[1]));
                                 stopUpdate();
                             } else
                                 messageTV.setText(getString(R.string.waitingReboot));

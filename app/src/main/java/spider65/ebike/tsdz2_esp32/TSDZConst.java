@@ -8,10 +8,17 @@ public interface TSDZConst {
     byte CMD_ESP_OTA_STATUS = 0x05;
     byte CMD_STM_OTA_STATUS = 0x06;
     byte CMD_CADENCE_CALIBRATION = 0x07;
+    byte CMD_ESP32_CONFIG = 0x08;
 
     byte CALIBRATION_START = 0;
     byte CALIBRATION_STOP = 1;
     byte CALIBRATION_SAVE = 2;
+
+    byte CONFIG_GET = 0;
+    byte CONFIG_SET = 1;
+
+    byte MIN_DS18B20_PIN = 3;
+    byte MAX_DS18B20_PIN = 31;
 
     int DEBUG_ADV_SIZE = 12;
     int STATUS_ADV_SIZE = 17;

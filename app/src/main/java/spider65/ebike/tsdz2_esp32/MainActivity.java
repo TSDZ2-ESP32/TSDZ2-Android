@@ -24,6 +24,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
+import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
 import spider65.ebike.tsdz2_esp32.ota.Esp32_Ota;
 import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
@@ -157,11 +158,13 @@ public class MainActivity extends AppCompatActivity {
             menu.findItem(R.id.espOTA).setEnabled(true);
             menu.findItem(R.id.showVersion).setEnabled(true);
             menu.findItem(R.id.config).setEnabled(true);
+            menu.findItem(R.id.esp32Config).setEnabled(true);
         } else {
             menu.findItem(R.id.bikeOTA).setEnabled(false);
             menu.findItem(R.id.espOTA).setEnabled(false);
             menu.findItem(R.id.showVersion).setEnabled(false);
             menu.findItem(R.id.config).setEnabled(false);
+            menu.findItem(R.id.esp32Config).setEnabled(false);
         }
         return true;
     }
@@ -188,8 +191,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
             case R.id.showVersion:
-                TSDZBTService.getBluetoothService().writeCommand(new byte[] {(byte)0x02});
-                return true;											
+                TSDZBTService.getBluetoothService().writeCommand(new byte[] {TSDZConst.CMD_GET_APP_VERSION});
+                return true;
+            case R.id.esp32Config:
+                intent = new Intent(this, ESP32ConfigActivity.class);
+                startActivity(intent);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
