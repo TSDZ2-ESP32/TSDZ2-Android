@@ -1,6 +1,7 @@
 package spider65.ebike.tsdz2_esp32.ota;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,10 +24,12 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -34,8 +37,6 @@ import android.widget.TextView;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -64,8 +65,11 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_ESP_OTA_STATUS;
 public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamListener {
 
     private static final String TAG = "Esp32_Ota";
+    private static final String APP_NAME = "tsdz2_esp32";
 
     private File updateFile = null;
+    Esp32AppImageTool.EspImageInfo imageInfo = null;
+
     private WifiManager.LocalOnlyHotspotReservation reservation = null;
     private boolean wifiState;
 
@@ -298,33 +302,54 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
 
     void checkFile(File f) {
         try {
-            updateFile = f;
-            InputStream inStream = new FileInputStream(f);
-            // check magic byte (byte[0]) and if length is almost 64k
-            if ((inStream.read() != 0xE9) || (inStream.available() < 0x10000)) {
-                showDialog(getString(R.string.error), getString(R.string.fileNotValid));
-                inStream.close();
+            Log.i(TAG, "Filename: " + f.getName());
+            imageInfo = Esp32AppImageTool.checkFile(f);
+            if (imageInfo == null) {
+                showDialog(getString(R.string.error), getString(R.string.fileNotValid), false);
                 return;
             }
-            byte[] data = new byte[47];
-            int len = 0;
-            // version string is at offset 48 (first byte already read)
-            while (len < 47)
-                len += inStream.read(data, len, 47-len);
-            len = 0;
-            while (len < 32)
-                len += inStream.read(data, len, 32-len);
-            int i;
-            for (i=0; i<data.length; i++) {
-                if (data[i] == 0)
-                    break;
+            if (!imageInfo.appName.equals(APP_NAME)) {
+                showDialog(getString(R.string.error), getString(R.string.wrong_app_name), false);
+                imageInfo = null;
+                return;
             }
-            inStream.close();
-            String version = new String(copyOfRange(data, 0, i), StandardCharsets.UTF_8);
-            newVerTV.setText(getString(R.string.new_version, version));
+
+            updateFile = f;
+            newVerTV.setText(getString(R.string.new_version, imageInfo.appVersion));
             startUpdateBT.setEnabled(true);
             fileNameTV.setText(getString(R.string.file_name, updateFile.getName()));
-            Log.i(TAG, "Filename: " + updateFile.getName());
+            if (imageInfo.signed) {
+                showDialog(getString(R.string.warning), getString(R.string.cannot_change_pin, imageInfo.btPin), false);
+            } else {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(getString(R.string.pin_change,imageInfo.btPin));
+                builder.setNegativeButton(R.string.no, null);
+                builder.setPositiveButton(R.string.yes, (DialogInterface dialog, int which) -> {
+                        dialog.dismiss();
+
+                        //new InputPINDialog(Esp32_Ota.this).show();
+
+                        final AlertDialog.Builder b2 = new AlertDialog.Builder(this);
+                        b2.setMessage(getString(R.string.bt_pin_input));
+                        final View v = getLayoutInflater().inflate( R.layout.dialog_input_pin, null);
+                        final EditText input = v.findViewById(R.id.pinET);
+                        b2.setView(v);
+                        b2.setNegativeButton(R.string.cancel, null);
+                        b2.setPositiveButton(R.string.ok, (DialogInterface d2, int w2) -> {
+                            int pin = Integer.parseInt(input.getText().toString());
+                            Log.d(TAG, "New pin is " + pin);
+                            d2.dismiss();
+                            if (!Esp32AppImageTool.updateFile(updateFile, imageInfo, pin)) {
+                                showDialog(getString(R.string.error), getString(R.string.image_update_error), false);
+                            }
+                        });
+                        Dialog d = b2.show();
+                        TextView messageText = d.findViewById(android.R.id.message);
+                        messageText.setGravity(Gravity.CENTER);
+                    }
+                );
+                builder.show();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -372,7 +397,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             httpdServer.start();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
-            showDialog(getString(R.string.error), e.getMessage());
+            showDialog(getString(R.string.error), e.getMessage(), false);
             return;
         }
         String hostAddress = getNewAddresses(prevSet);
@@ -413,15 +438,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         startUpdateBT.setEnabled(true);
         progressBar.setVisibility(INVISIBLE);
         messageTV.setText("");
-    }
-
-    private void showDialog (String title, String message) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if (title != null)
-            builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setPositiveButton(android.R.string.ok, null);
-        builder.show();
     }
 
     private void showDialog (String title, String message, boolean exit) {
@@ -508,7 +524,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                             // check if update started
                             if (data[1] != (byte)0x0) {
                                 stopUpdate();
-                                showDialog(getString(R.string.error), getString(R.string.updateError));
+                                showDialog(getString(R.string.error), getString(R.string.updateError), false);
                             }
                             break;
                         // Get Version response
@@ -534,9 +550,9 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                             if (updateInProgress) {
                                 stopUpdate();
                                 if (updateType == UpdateType.mainApp)
-                                    showDialog(getString(R.string.rebootDone), getString(R.string.new_version, mainAppVersion));
+                                    showDialog(getString(R.string.rebootDone), getString(R.string.new_version, mainAppVersion), false);
                                 else if (updateType == UpdateType.loader)
-                                    showDialog(getString(R.string.rebootDone), getString(R.string.new_version, loaderVersion));
+                                    showDialog(getString(R.string.rebootDone), getString(R.string.new_version, loaderVersion), false);
                             }
                             if (updateType == UpdateType.mainApp)
                                 currVerTV.setText(getString(R.string.current_version, mainAppVersion));
@@ -545,7 +561,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                             break;
                         case CMD_ESP_OTA_STATUS:
                             if (data[1] != 0) {
-                                showDialog(getString(R.string.rebootDone), getString(R.string.upload_error, data[1]));
+                                showDialog(getString(R.string.rebootDone), getString(R.string.upload_error, data[1]), false);
                                 stopUpdate();
                             } else
                                 messageTV.setText(getString(R.string.waitingReboot));

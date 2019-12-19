@@ -16,6 +16,8 @@
     <string name="title_activity_bluetooth_setup">Bluetooth Setup</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="save">Save</string>
@@ -74,7 +76,7 @@
     <string name="rebootDone">ESP32 started!</string>
     <string name="updateError">Update cannot start</string>
     <string name="upload_error">Update error: %1$d</string>
-    <string name="warning">Warning!</string>
+    <string name="warning">Warning</string>
     <string name="exit_warning">OTA in progress!\nConfirm exit?</string>
     <string name="exit_warning2">Upload in progress!\nConfirm exit?</string>
     <string name="select_file">Select File</string>
@@ -179,6 +181,13 @@
     <string name="ds18b2_pin_nr">DS18B20 GPIO Pin</string>
     <string name="lcd_uart_alt_pins">LCD UART alt. pins (32,33)</string>
     <string name="enable_wifi">Wifi is disabled\nEnable Wifi and try again</string>
+
+    <string name="cannot_change_pin">Image is signed\n cannot change BT PIN %1$d</string>
+    <string name="wrong_app_name">Bin image App Name is wrong</string>
+    <string name="pin_change">Image BT Pin is %1$d\ndo you want to change it? </string>
+    <string name="bt_pin_input">Insert the new BT Pin (6 digits) </string>
+    <string name="image_update_error">Error updating bin image</string>
+
 
 
     <string-array name="ota_types">
