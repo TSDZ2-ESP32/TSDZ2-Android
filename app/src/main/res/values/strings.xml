@@ -187,6 +187,7 @@
     <string name="pin_change">Image BT Pin is %1$d\ndo you want to change it? </string>
     <string name="bt_pin_input">Insert the new BT Pin (6 digits) </string>
     <string name="image_update_error">Error updating bin image</string>
+    <string name="pin_input_error">PIN is empty</string>
 
 
 

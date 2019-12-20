@@ -17,6 +17,39 @@ class Esp32AppImageTool {
 
     private static final String TAG = "Esp32AppImageTool";
 
+    /*
+    Image format is:
+    ---------------------------
+    esp_image_header_t
+    esp_image_segment_header_t 1
+    segment data n
+    .
+    .
+    .
+    esp_image_segment_header_t n
+    segment data n
+    crc (1 byte, padded with zeros until its size is one byte less than a multiple of 16 bytes.
+         xor of segment data of all segments and the 0xEF byte)
+    SHA256 hash (optional 32 bytes)
+    ECDSA signature (optional 68 bytes)
+    ---------------------------
+
+    First segment data format:
+    ---------------------------
+    esp_app_desc_t
+    CUSTOM FIXED DATA (data in this position must declared as: const __attribute__((section(".rodata_custom_desc"))) <type> <name> = <value>
+                       E.g. const __attribute__((section(".rodata_custom_desc"))) uint32_t bt_passkey = 123456;
+    ---------------------------
+     */
+    private static final int ESP_IMAGE_HEADER_SIZE = 24;
+    private static final int ESP_IMAGE_SEGMENT_HEADER_SIZE = 8; // uint32_t load addr + uint32_t data length
+    private static final int ESP_APP_DESC_SIZE = 256;
+
+    private static final int ESP_MAGIC_BYTE = 0xE9; // first byte of ESP32 bin app image
+    private static final int SEG_COUNT_POS = 1; // position of the segments count info (1 byte)
+    private static final int SHA_FLAG_POS = 23; // position of SHA256 flag (1 byte, if value=1 SHA256 is appended at end of file)
+    private static final int APP_VERSION_POS = 48; // position of app version string and app name string (32 bytes each, 0 padded)
+
     static class EspImageInfo {
         boolean signed;
         boolean shaPresent;
@@ -32,9 +65,10 @@ class Esp32AppImageTool {
     private static long readUnsignedIntLittleEndian(RandomAccessFile raf) throws IOException {
         byte[] data = new byte[4];
         raf.readFully(data);
-        ByteBuffer bb = ByteBuffer.wrap(data);
-        bb.order(ByteOrder.LITTLE_ENDIAN);
-        return bb.getInt() & 0xffffffffL;
+        return ((long)data[0]&0xff) |
+                (((long)data[1] & 0xff) << 8) |
+                (((long)data[2] & 0xff) << 16) |
+                (((long)data[3] & 0xff) << 24);
     }
 
     private static byte calcCRC(File f) throws IOException{
@@ -42,9 +76,9 @@ class Esp32AppImageTool {
         RandomAccessFile raf = null;
         try {
             raf = new RandomAccessFile(f, "r");
-            raf.seek(1);
+            raf.seek(SEG_COUNT_POS);
             int segmentCount = raf.readUnsignedByte();
-            long pos = 24;
+            long pos = ESP_IMAGE_HEADER_SIZE;
             for (int i = 0; i < segmentCount; i++) {
                 raf.seek(pos + 4); // esp_image_segment_header_t.data_len
                 long segSize = readUnsignedIntLittleEndian(raf); // read current segment size
@@ -52,7 +86,7 @@ class Esp32AppImageTool {
                 raf.readFully(tmp);
                 for (int j = 0; j < segSize; j++)
                     crc ^= tmp[j];
-                pos += 8 + segSize; // add sizeof(esp_image_segment_header_t) + segSize
+                pos += ESP_IMAGE_SEGMENT_HEADER_SIZE + segSize; // add sizeof(esp_image_segment_header_t) + segSize
             }
         } catch (IOException e) {
             throw e;
@@ -109,7 +143,7 @@ class Esp32AppImageTool {
             for (int i=0;i<4;i++) {
                 pinData[i] = (byte)((btPin >>> (i*8)) & 0xff);
             }
-            raf.seek(0x120);
+            raf.seek(ESP_IMAGE_HEADER_SIZE + ESP_IMAGE_SEGMENT_HEADER_SIZE + ESP_APP_DESC_SIZE);
             raf.write(pinData);
             byte crc = calcCRC(f);
             raf.seek(imageInfo.crcPos);
@@ -137,21 +171,20 @@ class Esp32AppImageTool {
         EspImageInfo info = new EspImageInfo();
 
         RandomAccessFile raf = null;
-        byte crcCalc = (byte)0xef;
         try {
             raf = new RandomAccessFile(f,"r");
-            if (raf.read() != 0xE9) {
+            if (raf.read() != ESP_MAGIC_BYTE) {
                 Log.d(TAG,"Wrong Magic byte");
                 return null;
             }
-            raf.seek(1);
+            raf.seek(SEG_COUNT_POS);
             int segmentCount = raf.readUnsignedByte();
-            raf.seek(23);
+            raf.seek(SHA_FLAG_POS);
             // check if SHA256 hash is present after checksum
             info.shaPresent = (raf.readUnsignedByte() == 1);
             // read app version string
             byte[] data = new byte[32];
-            raf.seek(48);
+            raf.seek(APP_VERSION_POS);
             raf.readFully(data);
             for (int i=0; i<data.length; i++) {
                 if (data[i] == 0) {
@@ -168,15 +201,14 @@ class Esp32AppImageTool {
                 }
             }
             // Read custom data (BT Pairing PIN)
-            raf.seek(0x120);
+            raf.seek(ESP_IMAGE_HEADER_SIZE + ESP_IMAGE_SEGMENT_HEADER_SIZE + ESP_APP_DESC_SIZE);
             info.btPin = readUnsignedIntLittleEndian(raf);
             // Calculate CRC of all segments data
-            raf.seek(24 + 4);
-            info.dataLength = 24;  // first esp_image_segment_header_t position
+            info.dataLength = ESP_IMAGE_HEADER_SIZE;  // first esp_image_segment_header_t position
             for (int i=0; i<segmentCount; i++) {
                 raf.seek(info.dataLength+4); // esp_image_segment_header_t.data_len
                 long segSize = readUnsignedIntLittleEndian(raf); // read current segment size
-                info.dataLength += 8 + segSize; // add sizeof(esp_image_segment_header_t) + segSize
+                info.dataLength += ESP_IMAGE_SEGMENT_HEADER_SIZE + segSize; // add sizeof(esp_image_segment_header_t) + segSize
             }
 
             // CRC position (file is padded with zeros until is one byte less than a multiple of 16 bytes)

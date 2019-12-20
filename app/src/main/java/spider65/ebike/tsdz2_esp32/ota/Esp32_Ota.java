@@ -65,7 +65,8 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_ESP_OTA_STATUS;
 public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamListener {
 
     private static final String TAG = "Esp32_Ota";
-    private static final String APP_NAME = "tsdz2_esp32";
+    private static final String MAIN_APP_NAME = "tsdz2_esp32";
+    private static final String LOADER_APP_NAME = "tsdz2_stm8_ota";
 
     private File updateFile = null;
     Esp32AppImageTool.EspImageInfo imageInfo = null;
@@ -308,7 +309,8 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                 showDialog(getString(R.string.error), getString(R.string.fileNotValid), false);
                 return;
             }
-            if (!imageInfo.appName.equals(APP_NAME)) {
+            if ((updateType == UpdateType.mainApp && !imageInfo.appName.equals(MAIN_APP_NAME)) ||
+                    (updateType == UpdateType.loader && !imageInfo.appName.equals(LOADER_APP_NAME))) {
                 showDialog(getString(R.string.error), getString(R.string.wrong_app_name), false);
                 imageInfo = null;
                 return;
@@ -318,37 +320,12 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             newVerTV.setText(getString(R.string.new_version, imageInfo.appVersion));
             startUpdateBT.setEnabled(true);
             fileNameTV.setText(getString(R.string.file_name, updateFile.getName()));
-            if (imageInfo.signed) {
-                showDialog(getString(R.string.warning), getString(R.string.cannot_change_pin, imageInfo.btPin), false);
-            } else {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setMessage(getString(R.string.pin_change,imageInfo.btPin));
-                builder.setNegativeButton(R.string.no, null);
-                builder.setPositiveButton(R.string.yes, (DialogInterface dialog, int which) -> {
-                        dialog.dismiss();
-
-                        //new InputPINDialog(Esp32_Ota.this).show();
-
-                        final AlertDialog.Builder b2 = new AlertDialog.Builder(this);
-                        b2.setMessage(getString(R.string.bt_pin_input));
-                        final View v = getLayoutInflater().inflate( R.layout.dialog_input_pin, null);
-                        final EditText input = v.findViewById(R.id.pinET);
-                        b2.setView(v);
-                        b2.setNegativeButton(R.string.cancel, null);
-                        b2.setPositiveButton(R.string.ok, (DialogInterface d2, int w2) -> {
-                            int pin = Integer.parseInt(input.getText().toString());
-                            Log.d(TAG, "New pin is " + pin);
-                            d2.dismiss();
-                            if (!Esp32AppImageTool.updateFile(updateFile, imageInfo, pin)) {
-                                showDialog(getString(R.string.error), getString(R.string.image_update_error), false);
-                            }
-                        });
-                        Dialog d = b2.show();
-                        TextView messageText = d.findViewById(android.R.id.message);
-                        messageText.setGravity(Gravity.CENTER);
-                    }
-                );
-                builder.show();
+            if (updateType == UpdateType.mainApp) {
+                if (imageInfo.signed) {
+                    showDialog(getString(R.string.warning), getString(R.string.cannot_change_pin, imageInfo.btPin), false);
+                } else {
+                    showPinChangeDialog();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -450,7 +427,41 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             builder.setPositiveButton(android.R.string.ok, (dialog, which) -> Esp32_Ota.this.finish());
         } else
             builder.setPositiveButton(android.R.string.ok, null);
-        builder.show();
+        builder.show().setCanceledOnTouchOutside(false);
+    }
+
+    private void showPinChangeDialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(getString(R.string.pin_change,imageInfo.btPin));
+        builder.setNegativeButton(R.string.no, null);
+        builder.setPositiveButton(R.string.yes, (DialogInterface dialog, int which) -> {
+                dialog.dismiss();
+                final AlertDialog.Builder b2 = new AlertDialog.Builder(this);
+                b2.setMessage(getString(R.string.bt_pin_input));
+                final View v = getLayoutInflater().inflate( R.layout.dialog_input_pin, null);
+                final EditText input = v.findViewById(R.id.pinET);
+                b2.setView(v);
+                b2.setNegativeButton(R.string.cancel, null);
+                b2.setPositiveButton(R.string.ok, (DialogInterface d2, int w2) -> {
+                    String s = input.getText().toString();
+                    if (s.length() < 1){
+                        showDialog(getString(R.string.error), getString(R.string.pin_input_error), false);
+                    } else {
+                        d2.dismiss();
+                        int pin = Integer.parseInt(input.getText().toString());
+                        Log.d(TAG, "New pin is " + pin);
+                        if (!Esp32AppImageTool.updateFile(updateFile, imageInfo, pin)) {
+                            showDialog(getString(R.string.error), getString(R.string.image_update_error), false);
+                        }
+                    }
+                });
+                Dialog d = b2.show();
+                d.setCanceledOnTouchOutside(false);
+                TextView messageText = d.findViewById(android.R.id.message);
+                messageText.setGravity(Gravity.CENTER);
+            }
+        );
+        builder.show().setCanceledOnTouchOutside(false);
     }
 
     Set<String> getAddresses() {
