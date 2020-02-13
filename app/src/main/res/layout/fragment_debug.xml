@@ -340,5 +340,28 @@
         app:layout_constraintStart_toStartOf="@+id/vert1"
         app:layout_constraintTop_toTopOf="@+id/horiz4"
         app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/pcbTempTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/adc_value"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintBottom_toTopOf="@+id/pcbTempValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2" />
+
+    <TextView
+        android:id="@+id/pcbTempValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@{@string/temperatureField(debug.pcbTemperature)}"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintEnd_toStartOf="@+id/vert3"
+        app:layout_constraintStart_toStartOf="@+id/vert2"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintVertical_bias="0.6" />
 </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

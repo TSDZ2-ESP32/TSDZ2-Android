@@ -20,7 +20,7 @@ public interface TSDZConst {
     byte MIN_DS18B20_PIN = 3;
     byte MAX_DS18B20_PIN = 31;
 
-    int DEBUG_ADV_SIZE = 12;
+    int DEBUG_ADV_SIZE = 14;
     int STATUS_ADV_SIZE = 17;
 
     int PWM_DUTY_CYCLE_MAX = 254;

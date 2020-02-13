@@ -148,7 +148,7 @@ public class TSDZ_Config {
         } else if ((data[8] & 255) == 1) {
             temperature_control = TempControl.tempADC; // Temperature controlled by Controller sensor
         } else
-            temperature_control = TempControl.none; // No temperature control
+            temperature_control = TempControl.none; // No motorTemperature control
         for (int i=0;i<4;i++)
             ui8_cadence_assist_level[i] = (data[33+i] & 255);
         for (int i=0;i<4;i++)

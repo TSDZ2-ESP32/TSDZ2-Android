@@ -14,7 +14,6 @@ import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.databinding.FragmentDebugBinding;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
-import spider65.ebike.tsdz2_esp32.utils.Utils;
 
 import android.util.Log;
 import android.view.LayoutInflater;

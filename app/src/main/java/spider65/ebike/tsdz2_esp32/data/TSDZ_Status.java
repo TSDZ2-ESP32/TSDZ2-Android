@@ -12,7 +12,7 @@ public class TSDZ_Status {
     public int assistLevel;
     public float speed;
     public int cadence;
-    public float temperature;
+    public float motorTemperature;
     public int pPower;
     public float volts;
     public float amperes;
@@ -78,7 +78,8 @@ public class TSDZ_Status {
         this.assistLevel = (data[1] & 255);
         this.speed = (float)(((data[3] & 255) << 8) + (data[2] & 255)) / 10;
         this.cadence = (data[4] & 255);
-        this.temperature = (float)(((data[6] & 255) << 8) + (data[5] & 255)) / 10;
+        short s = (short) ((data[5] & 0xff) | (data[6] << 8));
+        this.motorTemperature = (float)(s) / 10;
         this.pPower = ((data[8] & 255) << 8) + ((data[7] & 255));
         this.pPower = (this.pPower+5)/10;
         this.volts = (float)(((data[10] & 255) << 8) + (data[9] & 255)) / 1000;

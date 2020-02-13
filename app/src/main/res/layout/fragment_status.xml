@@ -208,7 +208,7 @@
             android:id="@+id/temperatureValueTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{@string/temperatureField(status.temperature)}"
+            android:text="@{@string/temperatureField(status.motorTemperature)}"
             android:textSize="32sp"
             app:layout_constraintBottom_toTopOf="@+id/horiz5"
             app:layout_constraintEnd_toStartOf="@+id/vert1GL"

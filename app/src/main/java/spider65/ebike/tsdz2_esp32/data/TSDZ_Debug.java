@@ -16,7 +16,8 @@ public class TSDZ_Debug {
     public int adcThrottle; // value from ADC Throttle/Temperature
     public int throttle; // Throttled mapped to 0-255
     public float pTorque; // Torque in Nm
-    public float cadencePulseHighPercentage; // temperature mapped to 0-255
+    public float cadencePulseHighPercentage; // motorTemperature mapped to 0-255
+    public float pcbTemperature;
 
     /*
     #pragma pack(1)
@@ -30,6 +31,7 @@ public class TSDZ_Debug {
       volatile uint8_t ui8_foc_angle;
       volatile uint16_t ui16_pedal_torque_x100;
       volatile uint16_t ui16_cadence_sensor_pulse_high_percentage_x10;
+      volatile int16_t i16_pcb_temperaturex10;
     } struct_tsdz_debug;
      */
 
@@ -49,6 +51,8 @@ public class TSDZ_Debug {
         focAngle = (data[7] & 255);
         pTorque = (float)(((data[9] & 255) << 8) + (data[8] & 255)) / 100;
         cadencePulseHighPercentage = (float)(((data[11] & 255) << 8) + (data[10] & 255)) / 10;
+        short s = (short) ((data[12] & 0xff) | (data[13] << 8));
+        this.pcbTemperature = (float)(s) / 10;
         return true;
     }
 }
