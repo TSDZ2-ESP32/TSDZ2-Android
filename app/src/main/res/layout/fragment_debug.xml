@@ -345,7 +345,7 @@
         android:id="@+id/pcbTempTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/adc_value"
+        android:text="@string/controller_temp"
         android:textAppearance="@android:style/TextAppearance.Material.Medium"
         app:layout_constraintTop_toTopOf="@+id/horiz4"
         app:layout_constraintBottom_toTopOf="@+id/pcbTempValueTV"
