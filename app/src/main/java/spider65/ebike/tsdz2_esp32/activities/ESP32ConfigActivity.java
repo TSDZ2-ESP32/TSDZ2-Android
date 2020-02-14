@@ -84,8 +84,9 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
     private void saveCfg() {
         byte[] msg = new byte[] {TSDZConst.CMD_ESP32_CONFIG, TSDZConst.CONFIG_SET,0,0,0};
 
-        String sval = btDelaySpinner.getSelectedItem().toString();
-        msg[2] = (byte)(Integer.valueOf(sval) & 0xff);
+        int idx = btDelaySpinner.getSelectedItemPosition();
+        int[] values = getResources().getIntArray(R.array.delay_values);
+        msg[2] = (byte)(values[idx] & 0xff);
         Integer val;
         if ((val = Utils.checkRange(ds18b20PinET, TSDZConst.MIN_DS18B20_PIN, TSDZConst.MAX_DS18B20_PIN)) == null) {
             showDialog(getString(R.string.ds18b2_pin_nr),
@@ -129,12 +130,11 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
                 if (data[2] != 0) {
                     showDialog(getString(R.string.error), getString(R.string.read_cfg_error), true);
                 } else {
-                    // current BT delay value
-                    String val = String.valueOf(data[3]);
-                    String[] values = getResources().getStringArray(R.array.delay_values);
+                    // current BT delay value is data[3]
+                    int[] values = getResources().getIntArray(R.array.delay_values);
                     int i;
                     for (i = 0; i < values.length; i++) {
-                        if (val.equals(values[i]))
+                        if (data[3] == values[i])
                             break;
                     }
                     if (i < values.length)
