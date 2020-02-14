@@ -195,10 +195,11 @@ public class SystemSetupActivity extends AppCompatActivity {
             return;
         switch (intent.getAction()) {
             case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA));
-                binding.setCfg(cfg);
-                binding.motorTypeSP.setSelection(cfg.ui8_motor_type);
-                binding.lightConfigSP.setSelection(cfg.ui8_lights_configuration);
+                if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
+                    binding.setCfg(cfg);
+                    binding.motorTypeSP.setSelection(cfg.ui8_motor_type);
+                    binding.lightConfigSP.setSelection(cfg.ui8_lights_configuration);
+                }
                 break;
             case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
                 if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))

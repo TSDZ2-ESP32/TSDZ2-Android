@@ -4,413 +4,334 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".fragments.FragmentStatus">
     <data>
-        <variable name="status"     type="spider65.ebike.tsdz2_esp32.data.TSDZ_Status"/>
+        <variable name="status" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Status"/>
     </data>
 
 <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/table"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/linear">
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/vert1GL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.25" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/vert2GL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.75" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/horiz1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/horiz2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.25" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/horiz3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.5" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/horiz4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.75" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/horiz5"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="1" />
-
-        <FrameLayout
-            android:id="@+id/fl11"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/fl12"
-            app:layout_constraintBottom_toTopOf="@+id/horiz2"
-            app:layout_constraintTop_toTopOf="@+id/horiz1">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl12"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/fl11"
-            app:layout_constraintBottom_toTopOf="@+id/horiz2"
-            app:layout_constraintTop_toTopOf="@+id/horiz1">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl21"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/fl22"
-            app:layout_constraintBottom_toTopOf="@+id/horiz3"
-            app:layout_constraintTop_toTopOf="@+id/horiz2">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl22"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintBottom_toTopOf="@+id/horiz3"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/fl21"
-            app:layout_constraintTop_toTopOf="@+id/horiz2">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl31"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/fl22"
-            app:layout_constraintBottom_toTopOf="@+id/horiz4"
-            app:layout_constraintTop_toTopOf="@+id/horiz3">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl32"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintBottom_toTopOf="@+id/horiz4"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/fl21"
-            app:layout_constraintTop_toTopOf="@+id/horiz3">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl41"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/fl22"
-            app:layout_constraintBottom_toTopOf="@+id/horiz5"
-            app:layout_constraintTop_toTopOf="@+id/horiz4">
-        </FrameLayout>
-        <FrameLayout
-            android:id="@+id/fl42"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/border"
-            app:layout_constraintBottom_toTopOf="@+id/horiz5"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/fl21"
-            app:layout_constraintTop_toTopOf="@+id/horiz4">
-        </FrameLayout>
-        <TextView
-            android:id="@+id/speedTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/speed"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintBottom_toTopOf="@+id/speedValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz1" />
-
-        <TextView
-            android:id="@+id/speedValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/speedField(status.speed)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz2"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL"
-            app:layout_constraintTop_toBottomOf="@+id/horiz1"
-            app:layout_constraintVertical_bias="0.6" />
-
-        <TextView
-            android:id="@+id/cadenceTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cadence"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz1"
-            app:layout_constraintBottom_toTopOf="@+id/cadenceValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL" />
-
-        <TextView
-            android:id="@+id/cadenceValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/cadenceField(status.cadence)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz2"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz1"
-            app:layout_constraintVertical_bias="0.6"/>
-
-        <TextView
-            android:id="@+id/temperatureTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/motor_temp"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz4"
-            app:layout_constraintBottom_toTopOf="@+id/temperatureValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL" />
-
-        <TextView
-            android:id="@+id/temperatureValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/temperatureField(status.motorTemperature)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz5"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz4"
-            app:layout_constraintVertical_bias="0.6" />
-
-        <TextView
-            android:id="@+id/pPowerTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/pedal_power"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz2"
-            app:layout_constraintBottom_toTopOf="@+id/pPowerValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL" />
-
-        <TextView
-            android:id="@+id/pPowerValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/powerField(status.pPower)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz3"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz2"
-            app:layout_constraintVertical_bias="0.6"/>
-
-
-        <TextView
-            android:id="@+id/voltageTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/voltage"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz3"
-            app:layout_constraintBottom_toTopOf="@+id/voltageValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL" />
-
-        <TextView
-            android:id="@+id/voltageValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/voltageField(status.volts)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz4"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz3"
-            app:layout_constraintVertical_bias="0.6" />
-
-        <TextView
-            android:id="@+id/currentTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/motor_current"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz3"
-            app:layout_constraintBottom_toTopOf="@+id/currentValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL" />
-
-        <TextView
-            android:id="@+id/currentValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/currentField(status.amperes)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz4"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz3"
-            app:layout_constraintVertical_bias="0.6"/>
-
-        <TextView
-            android:id="@+id/wattHourTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/energy_used"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz4"
-            app:layout_constraintBottom_toTopOf="@+id/wattHourValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL" />
-
-        <TextView
-            android:id="@+id/wattHourValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/whField(status.wattHour)}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz5"
-            app:layout_constraintEnd_toStartOf="@+id/vert2GL"
-            app:layout_constraintStart_toStartOf="@+id/vert2GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz4"
-            app:layout_constraintVertical_bias="0.6" />
-
-        <TextView
-            android:id="@+id/mWattTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/motor_power"
-            android:textAppearance="@android:style/TextAppearance.Material.Medium"
-            app:layout_constraintTop_toTopOf="@+id/horiz2"
-            app:layout_constraintBottom_toTopOf="@+id/mWattValueTV"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL" />
-
-        <TextView
-            android:id="@+id/mWattValueTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{@string/powerField((int)(status.volts*status.amperes))}"
-            android:textSize="32sp"
-            app:layout_constraintBottom_toTopOf="@+id/horiz3"
-            app:layout_constraintEnd_toStartOf="@+id/vert1GL"
-            app:layout_constraintStart_toStartOf="@+id/vert1GL"
-            app:layout_constraintTop_toTopOf="@+id/horiz2"
-            app:layout_constraintVertical_bias="0.6"/>
-
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-    <LinearLayout
-        android:id="@+id/linear"
-        android:layout_width="match_parent"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vert1GL"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/table"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vert2GL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horiz5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="1" />
+
+    <FrameLayout
+        android:id="@+id/fl11"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="@drawable/border"
-        android:orientation="horizontal">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl12"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintTop_toTopOf="@+id/horiz1">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl12"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl11"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintTop_toTopOf="@+id/horiz1">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl21"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl22"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintTop_toTopOf="@+id/horiz2">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl22"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl21"
+        app:layout_constraintTop_toTopOf="@+id/horiz2">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl31"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl22"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintTop_toTopOf="@+id/horiz3">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl32"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl21"
+        app:layout_constraintTop_toTopOf="@+id/horiz3">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl41"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/fl22"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintTop_toTopOf="@+id/horiz4">
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/fl42"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fl21"
+        app:layout_constraintTop_toTopOf="@+id/horiz4">
+    </FrameLayout>
+    <TextView
+        android:id="@+id/speedTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/speed"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintBottom_toTopOf="@+id/speedValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz1" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_weight="1"
-            android:background="@drawable/border">
-            <TextView
-                android:id="@+id/modeLevelTV"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:drawableStart="@mipmap/off_mode_icon"
-                android:text="@string/dash"
-                android:textSize="28sp" />
-        </LinearLayout>
+    <TextView
+        android:id="@+id/speedValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/speedField(status.speed)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL"
+        app:layout_constraintTop_toBottomOf="@+id/horiz1"
+        app:layout_constraintVertical_bias="0.6" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_weight="1"
-            android:background="@drawable/border">
-            <TextView
-                android:id="@+id/statusTV"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="invisible"
-                android:drawableStart="@mipmap/error_icon"
-                android:textSize="28sp"
-                android:gravity="center"
-                android:text="@string/dash" />
-        </LinearLayout>
+    <TextView
+        android:id="@+id/cadenceTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cadence"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz1"
+        app:layout_constraintBottom_toTopOf="@+id/cadenceValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_weight="1"
-            android:background="@drawable/border">
-            <ImageView
-                android:id="@+id/brakeIV"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="invisible"
-                android:src="@mipmap/brake_icon" />
-            <ImageView
-                android:id="@+id/streetModeIV"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@mipmap/street_icon" />
-        </LinearLayout>
+    <TextView
+        android:id="@+id/cadenceValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/cadenceField(status.cadence)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz2"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz1"
+        app:layout_constraintVertical_bias="0.6"/>
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_weight="1">
-            <TextView
-                android:id="@+id/dummy"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="28sp"
-                android:gravity="center"
-                android:text="" />
-        </LinearLayout>
+    <TextView
+        android:id="@+id/temperatureTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/motor_temp"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintBottom_toTopOf="@+id/temperatureValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL" />
 
-    </LinearLayout>
+    <TextView
+        android:id="@+id/temperatureValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/temperatureField(status.motorTemperature)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/pPowerTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pedal_power"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintBottom_toTopOf="@+id/pPowerValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL" />
+
+    <TextView
+        android:id="@+id/pPowerValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/powerField(status.pPower)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintVertical_bias="0.6"/>
+
+
+    <TextView
+        android:id="@+id/voltageTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/voltage"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintBottom_toTopOf="@+id/voltageValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL" />
+
+    <TextView
+        android:id="@+id/voltageValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/voltageField(status.volts)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/currentTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/motor_current"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintBottom_toTopOf="@+id/currentValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL" />
+
+    <TextView
+        android:id="@+id/currentValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/currentField(status.amperes)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz4"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz3"
+        app:layout_constraintVertical_bias="0.6"/>
+
+    <TextView
+        android:id="@+id/wattHourTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/energy_used"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintBottom_toTopOf="@+id/wattHourValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL" />
+
+    <TextView
+        android:id="@+id/wattHourValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/whField(status.wattHour)}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz5"
+        app:layout_constraintEnd_toStartOf="@+id/vert2GL"
+        app:layout_constraintStart_toStartOf="@+id/vert2GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz4"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/mWattTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/motor_power"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintBottom_toTopOf="@+id/mWattValueTV"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL" />
+
+    <TextView
+        android:id="@+id/mWattValueTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="32sp"
+        android:textAppearance="@android:style/TextAppearance.Material.Large"
+        android:text="@{@string/powerField((int)(status.volts*status.amperes))}"
+        app:layout_constraintBottom_toTopOf="@+id/horiz3"
+        app:layout_constraintEnd_toStartOf="@+id/vert1GL"
+        app:layout_constraintStart_toStartOf="@+id/vert1GL"
+        app:layout_constraintTop_toTopOf="@+id/horiz2"
+        app:layout_constraintVertical_bias="0.6"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -238,8 +238,8 @@ public class LevelsSetupActivity extends AppCompatActivity {
             return;
         switch (intent.getAction()) {
             case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA));
-                binding.setCfg(cfg);
+                if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA)))
+                    binding.setCfg(cfg);
                 break;
             case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
                 if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))

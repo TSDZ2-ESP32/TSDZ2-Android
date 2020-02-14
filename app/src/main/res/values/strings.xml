@@ -5,8 +5,8 @@
     <string name="calibration">Cal</string>
 
     <string name="app_name">TSDZ2_ESP32</string>
-    <string name="status">STATUS</string>
-    <string name="debug">DEBUG</string>
+    <string name="status">STATUS DATA</string>
+    <string name="debug">DEBUG DATA</string>
     <string name="btSetup">Setup Bluetooth</string>
     <string name="espOTA">ESP32 FW update</string>
     <string name="bikeOTA">Bike FW update</string>

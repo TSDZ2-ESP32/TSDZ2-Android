@@ -26,14 +26,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
 import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
+import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
+import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.ota.Esp32_Ota;
 import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
 
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -49,6 +56,15 @@ public class MainActivity extends AppCompatActivity {
 
     IntentFilter mIntentFilter = new IntentFilter();
 
+    private ViewPager viewPager;
+    private TSDZ_Status status = new TSDZ_Status();
+    private TSDZ_Debug debug = new TSDZ_Debug();
+
+    private TextView modeLevelTV;
+    private TextView statusTV;
+    private ImageView brakeIV;
+    private ImageView streetModeIV;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,18 +72,16 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
-        ViewPager viewPager = findViewById(R.id.view_pager);
+        sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager(), status, debug);
+        viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
-        /*
+
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
 
             @Override
             public void onPageSelected(int position) {
-                sectionsPagerAdapter.selected(position);
                 switch (position) {
                     case 0:
                         mTitle.setText(R.string.status);
@@ -75,17 +89,12 @@ public class MainActivity extends AppCompatActivity {
                     case 1:
                         mTitle.setText(R.string.debug);
                         break;
-                    case 2:
-                        break;
                 }
             }
 
             @Override
-            public void onPageScrollStateChanged(int state) {
-            }
+            public void onPageScrollStateChanged(int state) {}
         });
-        //sectionsPagerAdapter.selected(viewPager.getCurrentItem());
-        */
 
         TabLayout tabs = findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
@@ -96,6 +105,11 @@ public class MainActivity extends AppCompatActivity {
             actionBar.setDisplayShowTitleEnabled(false);
         mTitle = toolbar.findViewById(R.id.toolbar_title);
         mTitle.setText(R.string.status);
+
+        modeLevelTV = findViewById(R.id.modeLevelTV);
+        statusTV = findViewById(R.id.statusTV);
+        brakeIV = findViewById(R.id.brakeIV);
+        streetModeIV = findViewById(R.id.streetModeIV);
 
         fabButton = findViewById(R.id.fab);
         fabButton.setOnClickListener((View) -> {
@@ -120,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
         mIntentFilter.addAction(TSDZBTService.CONNECTION_FAILURE_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         checkBT();
     }
@@ -232,6 +248,59 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void refreshView() {
+        if (status.brake)
+            brakeIV.setVisibility(View.VISIBLE);
+        else
+            brakeIV.setVisibility(View.INVISIBLE);
+
+        if (status.status != 0) {
+            statusTV.setVisibility(View.VISIBLE);
+            statusTV.setText(String.valueOf(status.status));
+        } else
+            statusTV.setVisibility(View.INVISIBLE);
+
+        if (status.streetMode)
+            streetModeIV.setVisibility(View.VISIBLE);
+        else
+            streetModeIV.setVisibility(View.INVISIBLE);
+
+        switch (status.ridingMode) {
+            case OFF_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
+                modeLevelTV.setText("0");
+                break;
+            case eMTB_ASSIST_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.emtb_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(String.valueOf(status.assistLevel));
+                break;
+            case WALK_ASSIST_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.walk_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(String.valueOf(status.assistLevel));
+                break;
+            case POWER_ASSIST_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.power_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(String.valueOf(status.assistLevel));
+                break;
+            case TORQUE_ASSIST_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.torque_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(String.valueOf(status.assistLevel));
+                break;
+            case CADENCE_ASSIST_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cadence_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(String.valueOf(status.assistLevel));
+                break;
+            case CRUISE_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cruise_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(String.valueOf(status.assistLevel));
+                break;
+            case CADENCE_SENSOR_CALIBRATION_MODE:
+                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
+                modeLevelTV.setText(R.string.calibration);
+                break;
+        }
+    }
+
     private void updateUIStatus() {
         if (TSDZBTService.getBluetoothService() != null) {
             fabButton.setImageResource(android.R.drawable.ic_media_pause);
@@ -269,9 +338,10 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive " + intent.getAction());
+            //Log.d(TAG, "onReceive " + intent.getAction());
             if (intent.getAction() == null)
                 return;
+            byte [] data;
             switch (intent.getAction()) {
                 case TSDZBTService.SERVICE_STARTED_BROADCAST:
                     fabButton.setImageResource(android.R.drawable.ic_media_pause);
@@ -306,11 +376,28 @@ public class MainActivity extends AppCompatActivity {
 					break;
 				case TSDZBTService.TSDZ_COMMAND_BROADCAST:
                     try {
-                        String version = new String(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA), "UTF-8");
+                        String version = new String(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA), StandardCharsets.UTF_8);
                         Toast.makeText(getApplicationContext(), getResources().getString(R.string.show_version) + " : " + version, Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                    break;
+                case TSDZBTService.TSDZ_STATUS_BROADCAST:
+                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                    if (status.data == null || !Arrays.equals(status.data, data))
+                        if (status.setData(data))
+                            // refresh Bottom data, and Status Fragmnt if visibile
+                            refreshView();
+                            if (viewPager.getCurrentItem() == 0)
+                                sectionsPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
+                    break;
+                case TSDZBTService.TSDZ_DEBUG_BROADCAST:
+                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                    if (debug.data == null || !Arrays.equals(debug.data, data))
+                        // refresh Debug Fragment if visibile
+                        if (debug.setData(data))
+                            if (viewPager.getCurrentItem() == 1)
+                                sectionsPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
                     break;
             }
         }

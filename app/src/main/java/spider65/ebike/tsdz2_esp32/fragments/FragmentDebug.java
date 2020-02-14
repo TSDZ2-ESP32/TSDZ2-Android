@@ -1,15 +1,11 @@
 package spider65.ebike.tsdz2_esp32.fragments;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import spider65.ebike.tsdz2_esp32.MyApp;
+
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.databinding.FragmentDebugBinding;
@@ -22,8 +18,6 @@ import android.view.ViewGroup;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 
 /**
  * A simple {@link Fragment} subclass.
@@ -32,13 +26,13 @@ import java.util.Arrays;
  * Use the {@link FragmentDebug#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentDebug extends Fragment {
+public class FragmentDebug extends Fragment implements MyFragmentListener {
 
     private static final String TAG = "FragmentDebug";
 
     private IntentFilter mIntentFilter = new IntentFilter();
 
-    private TSDZ_Debug debugData = new TSDZ_Debug();
+    private TSDZ_Debug debug;
 
     private FragmentDebugBinding binding;
 
@@ -47,12 +41,12 @@ public class FragmentDebug extends Fragment {
      * this fragment using the provided parameters.
      * @return A new instance of fragment FragmentDebug.
      */
-    public static FragmentDebug newInstance() {
-        return new FragmentDebug();
+    public static FragmentDebug newInstance(TSDZ_Debug debug) {
+        return new FragmentDebug(debug);
     }
 
-
-    public FragmentDebug() {
+    private FragmentDebug(TSDZ_Debug debug) {
+        this.debug = debug;
     }
 
     @Override
@@ -70,36 +64,19 @@ public class FragmentDebug extends Fragment {
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(
                 inflater, R.layout.fragment_debug, container, false);
-        binding.setDebug(debugData);
+        binding.setDebug(debug);
         return binding.getRoot();
     }
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume");
         super.onResume();
-        LocalBroadcastManager.getInstance(MyApp.getInstance()).registerReceiver(mMessageReceiver, mIntentFilter);
+        // Data could be changed when fragment was not visible. Refresh the view
+        binding.invalidateAll();
     }
 
     @Override
-    public void onPause() {
-        Log.d(TAG, "onPause");
-        super.onPause();
-        LocalBroadcastManager.getInstance(MyApp.getInstance()).unregisterReceiver(mMessageReceiver);
+    public void refreshView() {
+        binding.invalidateAll();
     }
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //Log.d(TAG, "onReceive " + intent.getAction());
-            if (TSDZBTService.TSDZ_DEBUG_BROADCAST.equals(intent.getAction())) {
-                byte[] debugVal = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                //Log.d(TAG, "value = " + Utils.bytesToHex(debugVal));
-                if (debugData.data == null || !Arrays.equals(debugData.data, debugVal)) {
-                    if (debugData.setData(debugVal))
-                        binding.invalidateAll();
-                }
-            }
-        }
-    };
 }

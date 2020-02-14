@@ -143,10 +143,11 @@ public class TemperatureSetupActivity extends AppCompatActivity {
         Log.d(TAG, "onReceive " + intent.getAction());
         switch (intent.getAction()) {
             case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA));
-                binding.setCfg(cfg);
-                binding.throttleCB.setChecked(cfg.throttleEnabled);
-                binding.controlTypeSP.setSelection(cfg.temperature_control.getValue());
+                if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
+                    binding.setCfg(cfg);
+                    binding.throttleCB.setChecked(cfg.throttleEnabled);
+                    binding.controlTypeSP.setSelection(cfg.temperature_control.getValue());
+                }
                 break;
             case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
                 if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
