@@ -21,6 +21,11 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="save">Save</string>
+    <string name="version_title">FW Versions</string>
+    <string name="esp32_app_version">ESP32 Main App FW version: %s</string>
+    <string name="esp32_ota_versione">ESP32 OTA App FW version: %s</string>
+    <string name="tsdz_version">TSDZ2 FW version: %d</string>
+
 
     <string name="choose">Choose</string>
     <string name="scan">Scan</string>

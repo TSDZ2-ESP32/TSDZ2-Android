@@ -542,7 +542,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                         case CMD_GET_APP_VERSION:
                             String tmp = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
                             String[] out = tmp.split("\\|");
-                            if (out.length != 2) {
+                            if (out.length != 3) {
                                 Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
                                 return;
                             }

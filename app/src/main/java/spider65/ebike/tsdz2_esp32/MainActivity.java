@@ -335,6 +335,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showVersions(byte[] data) {
+        String s = new String(data, StandardCharsets.UTF_8);
+        Log.d(TAG, "Version string is: " + s);
+        String v1 = "-";
+        String v2 = "-";
+        int v3 = -1;
+        int i1 = s.indexOf('|');
+        if (i1 != -1)
+            v1 = s.substring(1, i1);
+        int i2 = s.indexOf('|', i1+1);
+        if (i2 != -1)
+            v2 = s.substring(i1+1, i2);
+        if (data.length > i2+1)
+            v3 = data[i2+1];
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("FW Versions");
+        String message = getString(R.string.esp32_app_version, v1) + "\n" +
+                    getString(R.string.esp32_ota_versione, v2) + "\n" +
+                    getString(R.string.tsdz_version, v3);
+        builder.setMessage(message);
+        builder.setPositiveButton(android.R.string.ok, null);
+        builder.show();
+    }
+
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -375,12 +399,15 @@ public class MainActivity extends AppCompatActivity {
 					invalidateOptionsMenu();
 					break;
 				case TSDZBTService.TSDZ_COMMAND_BROADCAST:
+				    showVersions(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA));
+				    /*
                     try {
                         String version = new String(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA), StandardCharsets.UTF_8);
                         Toast.makeText(getApplicationContext(), getResources().getString(R.string.show_version) + " : " + version, Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+				    */
                     break;
                 case TSDZBTService.TSDZ_STATUS_BROADCAST:
                     data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);

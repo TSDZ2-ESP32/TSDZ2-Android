@@ -492,14 +492,20 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                         // Get Version response
                         case CMD_GET_APP_VERSION:
                             Log.d(TAG, "CMD_GET_APP_VERSION");
-                            String tmp = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
-                            String[] out = tmp.split("\\|");
-                            if (out.length != 2) {
+                            String s = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
+                            String[] out = s.split("\\|");
+                            if (out.length != 3) {
                                 Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
                                 return;
                             }
+                            int j = s.indexOf('|', s.indexOf('|')+1);
+                            int v = -1;
+                            if ((j > 0) && (data.length > (j+2)))
+                                v = data[j+2];
                             if ("ERR".equals(out[1]) || "EMP".equals(out[1]))
                                 showDialog(getString(R.string.error), getString(R.string.partition_not_found), true);
+                            else
+                                showDialog(getString(R.string.version_title), getString(R.string.tsdz_version, v), false);
                             break;
                         case CMD_STM_OTA_STATUS:
                             int phase = ((data[1] & 0x80) == 0) ? 0:1;
