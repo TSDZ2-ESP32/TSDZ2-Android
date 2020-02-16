@@ -77,7 +77,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     private IntentFilter mIntentFilter = new IntentFilter();
 
     private Button selFileButton, startUpdateBT;
-    private TextView fileNameTV,messageTV;
+    private TextView currVerTV, fileNameTV,messageTV;
     private ProgressBar progressBar;
 
     private HotSpotCallback hotSpotCallback = null;
@@ -92,6 +92,8 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         setContentView(R.layout.activity_stm8_ota);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        currVerTV = findViewById(R.id.currVerTV);
 
         selFileButton = findViewById(R.id.selFileButton);
         selFileButton.setOnClickListener((View view) -> performFileSearch());
@@ -505,7 +507,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                             if ("ERR".equals(out[1]) || "EMP".equals(out[1]))
                                 showDialog(getString(R.string.error), getString(R.string.partition_not_found), true);
                             else
-                                showDialog(getString(R.string.version_title), getString(R.string.tsdz_version, v), false);
+                                currVerTV.setText(getString(R.string.current_version, String.valueOf(v)));
                             break;
                         case CMD_STM_OTA_STATUS:
                             int phase = ((data[1] & 0x80) == 0) ? 0:1;
