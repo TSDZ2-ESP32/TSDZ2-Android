@@ -7,8 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -22,7 +20,7 @@ class Esp32AppImageTool {
     ---------------------------
     esp_image_header_t
     esp_image_segment_header_t 1
-    segment data n
+    segment data 1
     .
     .
     .
@@ -88,8 +86,6 @@ class Esp32AppImageTool {
                     crc ^= tmp[j];
                 pos += ESP_IMAGE_SEGMENT_HEADER_SIZE + segSize; // add sizeof(esp_image_segment_header_t) + segSize
             }
-        } catch (IOException e) {
-            throw e;
         } finally {
             try {
                 if (raf != null)

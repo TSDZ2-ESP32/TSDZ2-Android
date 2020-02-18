@@ -65,8 +65,9 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_ESP_OTA_STATUS;
 public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamListener {
 
     private static final String TAG = "Esp32_Ota";
-    private static final String MAIN_APP_NAME = "tsdz2_esp32";
-    private static final String LOADER_APP_NAME = "tsdz2_stm8_ota";
+    
+    private static final String MAIN_APP_NAME = "TSDZ2-ESP32-Main";
+    private static final String LOADER_APP_NAME = "TSDZ2-ESP32-OTA";
 
     private File updateFile = null;
     Esp32AppImageTool.EspImageInfo imageInfo = null;

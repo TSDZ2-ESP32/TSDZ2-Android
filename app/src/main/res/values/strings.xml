@@ -11,7 +11,7 @@
     <string name="espOTA">ESP32 FW update</string>
     <string name="bikeOTA">Bike FW update</string>
     <string name="config">Bike Configuration</string>
-    <string name="show_version">ESP32 version</string>
+    <string name="show_version">Show FW versions</string>
     <string name="esp32_config">ESP32 Configuration</string>
     <string name="title_activity_bluetooth_setup">Bluetooth Setup</string>
     <string name="ok">OK</string>

@@ -6,14 +6,14 @@
 
     <item  android:id="@+id/config"
         android:title="@string/config"/>
-    <item  android:id="@+id/btSetup"
-        android:title="@string/btSetup"/>
+    <item  android:id="@+id/esp32Config"
+        android:title="@string/esp32_config" />
     <item  android:id="@+id/espOTA"
         android:title="@string/espOTA"/>
     <item  android:id="@+id/bikeOTA"
         android:title="@string/bikeOTA"/>
 	<item  android:id="@+id/showVersion"
         android:title="@string/show_version" />
-    <item  android:id="@+id/esp32Config"
-        android:title="@string/esp32_config" />
+    <item  android:id="@+id/btSetup"
+        android:title="@string/btSetup"/>
 </menu>
