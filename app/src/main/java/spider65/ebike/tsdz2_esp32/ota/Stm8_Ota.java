@@ -532,7 +532,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                         final Handler handler = new Handler();
                         handler.postDelayed(() ->
                                 TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_STM_OTA_STATUS})
-                                ,500);
+                                ,3000);
                     }
                     break;
                 case TSDZBTService.CONNECTION_FAILURE_BROADCAST:

@@ -254,12 +254,12 @@ public class TSDZBTService extends Service {
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor,
                                       int status) {
-            Log.d(TAG, "onDescriptorWrite:" + descriptor.getCharacteristic().getUuid().toString() +
-                    " - " + descriptor.getUuid().toString());
+            //Log.d(TAG, "onDescriptorWrite:" + descriptor.getCharacteristic().getUuid().toString() +
+            //        " - " + descriptor.getUuid().toString());
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (descriptor.getUuid().equals(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG))) {
                     boolean enable = (descriptor.getValue()[0] & 0x01) == 1;
-                    Log.d(TAG, "onDescriptorWrite: value = " + descriptor.getValue()[0]);
+                    //Log.d(TAG, "onDescriptorWrite: value = " + descriptor.getValue()[0]);
                     if (descriptor.getCharacteristic().getUuid().equals(UUID_STATUS_CHARACTERISTIC))
                         setCharacteristicNotification(tsdz_debug_char,enable);
                     else if (descriptor.getCharacteristic().getUuid().equals(UUID_DEBUG_CHARACTERISTIC))
@@ -405,6 +405,7 @@ public class TSDZBTService extends Service {
         mBluetoothGatt.writeCharacteristic(tsdz_config_char);
     }
     public void writeCommand(byte[] command) {
+        //Log.d(TAG,"Sending command: " + Utils.bytesToHex(command));
         if (mBluetoothAdapter == null || mBluetoothGatt == null || tsdz_command_char == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;

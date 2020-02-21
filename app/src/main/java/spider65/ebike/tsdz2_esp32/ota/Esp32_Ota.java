@@ -65,7 +65,7 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_ESP_OTA_STATUS;
 public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamListener {
 
     private static final String TAG = "Esp32_Ota";
-    
+
     private static final String MAIN_APP_NAME = "TSDZ2-ESP32-Main";
     private static final String LOADER_APP_NAME = "TSDZ2-ESP32-OTA";
 
@@ -582,10 +582,11 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                     break;
                 case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
                     if (updateInProgress) {
+                        messageTV.setText(getString(R.string.rebootDone));
                         final Handler handler = new Handler();
                         handler.postDelayed(() ->
                                 TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_GET_APP_VERSION})
-                                ,500);
+                                ,3000);
                     }
                     break;
                 case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
