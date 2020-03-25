@@ -6,10 +6,8 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -21,30 +19,25 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 public class LogDataFile {
 
     public class LogStatusEntry {
-        public byte[] status;
+        public byte[] status = new byte[STATUS_ADV_SIZE];
         public long time;
-
-        LogStatusEntry () {
-            status = new byte[STATUS_ADV_SIZE];
-        }
     }
 
     public class LogDebugEntry {
-        public byte[] debug;
+        public byte[] debug = new byte[DEBUG_ADV_SIZE];
         public long time;
-
-        LogDebugEntry () {
-            debug = new byte[DEBUG_ADV_SIZE];
-        }
     }
 
     private class TimeInterval {
-        public long startTime, endTime;
+        long startTime, endTime;
         TimeInterval(long t1, long t2) {
             startTime = t1;
             endTime = t2;
         }
     }
+
+    private final Object statusLock = new Object();
+    private final Object debugLock = new Object();
 
     private static final String TAG = "LogDataFile";
     private static final String STATUS_LOG_FILENAME = "status";
@@ -59,7 +52,7 @@ public class LogDataFile {
     private TimeInterval statusLogInterval, debugLogInterval;
 
 
-    public static LogDataFile getLogDataFile() {
+    public static synchronized LogDataFile getLogDataFile() {
         if (mLogDataFile == null) {
             mLogDataFile = new LogDataFile();
         }
@@ -70,53 +63,62 @@ public class LogDataFile {
         initLogFiles();
     }
 
-    public synchronized void addStatusData(byte[] status) {
+    public void addStatusData(byte[] status) {
         long time = System.currentTimeMillis();
 
-        if (statusLogInterval.startTime == 0)
-            statusLogInterval.startTime = time;
-        else if ((time - statusLogInterval.startTime) > MAX_FILE_HISTORY)
-            swapStatusFile(time);
-        statusLogInterval.endTime = time;
+        synchronized (statusLock) {
+            if (statusLogInterval.startTime == 0)
+                statusLogInterval.startTime = time;
+            else if ((time - statusLogInterval.startTime) > MAX_FILE_HISTORY) {
+                swapStatusFile();
+                statusLogInterval.startTime = time;
+            }
+            statusLogInterval.endTime = time;
 
-        try {
-            rafStatus.writeLong(time);
-            rafStatus.write(status);
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
+            try {
+                rafStatus.writeLong(time);
+                rafStatus.write(status);
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
         }
     }
 
-    public synchronized void addDebugData(byte[] debug) {
+    public void addDebugData(byte[] debug) {
         long time = System.currentTimeMillis();
 
-        if (debugLogInterval.startTime == 0)
-            debugLogInterval.startTime = time;
-        else if ((time - debugLogInterval.startTime) > MAX_FILE_HISTORY)
-            swapDebugFile(time);
-        debugLogInterval.endTime = time;
+        synchronized (debugLock) {
+            if (debugLogInterval.startTime == 0)
+                debugLogInterval.startTime = time;
+            else if ((time - debugLogInterval.startTime) > MAX_FILE_HISTORY) {
+                swapDebugFile();
+                debugLogInterval.startTime = time;
+            }
+            debugLogInterval.endTime = time;
 
-        try {
-            rafDebug.writeLong(time);
-            rafDebug.write(debug);
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
+            try {
+                rafDebug.writeLong(time);
+                rafDebug.write(debug);
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
         }
     }
 
-    private synchronized void swapStatusFile(long time) {
+    private void swapStatusFile() {
         // remove log file with all data older than MAX_LOG_HISTORY
         final File folder = MyApp.getInstance().getFilesDir();
-        final File[] files = folder.listFiles( (dir, name ) ->
+        final File[] files = folder.listFiles( (dir, name) ->
                 name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
         if (files != null) {
             Arrays.sort(files, (object1, object2) ->
                     object1.getName().compareTo(object2.getName()));
-
+            long now = System.currentTimeMillis();
             for (File f:files) {
-                String[] s = f.getName().split(".");
+                String s1 = f.getName();
+                String[] s = s1.split("\\.");
                 long endTime = Long.valueOf(s[3]);
-                if ((time - endTime) > MAX_LOG_HISTORY)
+                if ((now - endTime) > MAX_LOG_HISTORY)
                     if (!f.delete()) {
                         Log.e(TAG, "Can't remove " + f.getAbsolutePath());
                     }
@@ -128,15 +130,15 @@ public class LogDataFile {
                 statusLogInterval.startTime + "." + statusLogInterval.endTime);
         try {
             rafStatus.close();
-            fileStatus.renameTo(f2);
+            if (!fileStatus.renameTo(f2))
+                Log.e(TAG,"Failed to rename file to " + f2.getName() );
             newStatusLogFile();
-            statusLogInterval.startTime = time;
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
     }
 
-    private void swapDebugFile(long time) {
+    private void swapDebugFile() {
         // remove log file with all data older than MAX_LOG_HISTORY
         final File folder = MyApp.getInstance().getFilesDir();
         final File[] files = folder.listFiles( (dir, name ) ->
@@ -146,11 +148,12 @@ public class LogDataFile {
         if (files != null) {
             Arrays.sort(files, (object1, object2) ->
                     object1.getName().compareTo(object2.getName()));
-
+            long now = System.currentTimeMillis();
             for (File f:files) {
-                String[] s = f.getName().split(".");
+                String s1 = f.getName();
+                String[] s = s1.split("\\.");
                 long endTime = Long.valueOf(s[3]);
-                if ((time - endTime) > MAX_LOG_HISTORY)
+                if ((now - endTime) > MAX_LOG_HISTORY)
                     if (!f.delete()) {
                         Log.e(TAG, "Can't remove " + f.getAbsolutePath());
                     }
@@ -162,40 +165,41 @@ public class LogDataFile {
                 debugLogInterval.startTime + "." + debugLogInterval.endTime);
         try {
             rafDebug.close();
-            fileDebug.renameTo(f2);
+            if (!fileDebug.renameTo(f2))
+                Log.e(TAG,"Failed to rename file to " + f2.getName() );
             newDebugLogFile();
-            debugLogInterval.startTime = time;
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
     }
 
+    // Get last used logfiles and initialize statusLogInterval and debugLogInterval according
+    // to file contents
     private void initLogFiles() {
         final File folder = MyApp.getInstance().getFilesDir();
         File[] files = folder.listFiles( (dir, name ) -> name.matches( STATUS_LOG_FILENAME + ".log" ));
         if (files != null && files.length > 0) {
             // file status.log already exist
             fileStatus = files[0];
-            statusLogInterval = checkLogFile(fileStatus,8+STATUS_ADV_SIZE);
             try {
                 rafStatus = new RandomAccessFile(fileStatus, "rw");
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                statusLogInterval = checkLogFile(rafStatus,8+STATUS_ADV_SIZE);
+            } catch (Exception e) {
+               Log.e(TAG,"initLogFiles", e);
             }
         } else {
             // create new status.log file
             newStatusLogFile();
         }
-        files = folder.listFiles( (dir, name ) -> name.matches( DEBUG_LOG_FILENAME + ".log" ));
+        files = folder.listFiles( (dir, name) -> name.matches( DEBUG_LOG_FILENAME + ".log" ));
         if (files != null && files.length > 0) {
             // file debug.log already exist
             fileDebug = files[0];
-            debugLogInterval = checkLogFile(files[0],8+DEBUG_ADV_SIZE);
-            FileOutputStream os = null;
             try {
                 rafDebug = new RandomAccessFile(fileDebug, "rw");
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                debugLogInterval = checkLogFile(rafDebug,8+DEBUG_ADV_SIZE);
+            } catch (Exception e) {
+                Log.e(TAG,"initLogFiles", e);
             }
         } else {
             // create new debug.log file
@@ -204,39 +208,27 @@ public class LogDataFile {
     }
 
     // Verify if the log file is correctly aligned and return the first and last log timestamps
-    private TimeInterval checkLogFile(File f, long logEntrySize) {
+    private TimeInterval checkLogFile(RandomAccessFile f, long logEntrySize) throws IOException {
         TimeInterval ret = new TimeInterval(0,0);
         long l = f.length();
+
         // Check if the Log File is aligned and truncate if not
         if ((l % logEntrySize) > 0) {
             l -= (l % logEntrySize);
-            try (FileChannel outChan = new FileOutputStream(f, true).getChannel()) {
-                outChan.truncate(l);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            f.setLength(l);
         }
 
         if (l == 0)
             return ret;
 
-        RandomAccessFile raf = null;
-        try {
-            raf = new RandomAccessFile(f, "r");
-            ret.startTime = raf.readLong();
-            raf.seek(l - logEntrySize);
-            ret.endTime = raf.readLong();
-        } catch (IOException e) {
-            Log.e(TAG,e.toString());
-        } finally {
-            if (raf != null) {
-                try {
-                    raf.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        // read timestamp of first and last records
+        f.seek(0);
+        ret.startTime = f.readLong();
+        f.seek(l - logEntrySize);
+        ret.endTime = f.readLong();
+        // set file pointer to End of File
+        f.seek(f.length());
+
         return ret;
     }
 
@@ -260,7 +252,7 @@ public class LogDataFile {
         }
     }
 
-    public synchronized ArrayList<LogStatusEntry> getStatusData(long fromTime, long toTime) {
+    public ArrayList<LogStatusEntry> getStatusData(long fromTime, long toTime) {
 
         ArrayList<LogStatusEntry> ret = new ArrayList<>();
 
@@ -268,13 +260,11 @@ public class LogDataFile {
             return ret;
 
         try {
-            FileInputStream fis;
             DataInputStream dis = null;
 
             final File folder = MyApp.getInstance().getFilesDir();
             final File[] files = folder.listFiles( (dir, name ) ->
                     name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
-            boolean stop = false;
             long t,startTime,endTime;
             if (files != null) {
                 Arrays.sort(files, (object1, object2) ->
@@ -286,20 +276,20 @@ public class LogDataFile {
                     endTime   = Long.valueOf(s[3]);
                     if (fromTime <= endTime && toTime >= startTime) {
                         try {
-                            fis = new FileInputStream(file);
-                            dis = new DataInputStream(fis);
+                            dis = new DataInputStream(new FileInputStream(file));
                             while (dis.available() > 0) {
                                 t = dis.readLong();
                                 if (t >= toTime) {
-                                    dis.close();
-                                    stop = true;
-                                    break;
+                                    return ret;
                                 } else if (t >= fromTime) {
                                     LogStatusEntry entry = new LogStatusEntry();
                                     entry.time = t;
-                                    dis.read(entry.status);
-                                    ret.add(entry);
-                                }
+                                    if (dis.read(entry.status) == STATUS_ADV_SIZE)
+                                        ret.add(entry);
+                                    else
+                                        Log.e(TAG, "getStatusData read error");
+                                } else
+                                    dis.skipBytes(STATUS_ADV_SIZE);
                             }
                         } finally {
                             if (dis != null) {
@@ -308,32 +298,40 @@ public class LogDataFile {
                             }
                         }
                     }
-                    if (stop)
-                        break;
                 }
             }
-
-            if (stop || statusLogInterval.startTime > toTime)
-                return ret;
-
-            long pos = rafStatus.getFilePointer();
-            rafStatus.seek(0);
-            while (rafStatus.getFilePointer() < rafStatus.length()) {
-                t = rafStatus.readLong();
-                if (t >= toTime) {
-                    break;
-                } else if (t >= fromTime) {
-                    LogStatusEntry entry = new LogStatusEntry();
-                    entry.time = t;
-                    rafStatus.read(entry.status);
-                    ret.add(entry);
-                } else
-                    rafStatus.skipBytes(STATUS_ADV_SIZE);
-            }
-            rafStatus.seek(pos);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
+
+        synchronized (statusLock) {
+            try {
+                long t;
+                if (statusLogInterval.startTime > toTime)
+                    return ret;
+
+                long pos = rafStatus.getFilePointer();
+                rafStatus.seek(0);
+                while (rafStatus.getFilePointer() < rafStatus.length()) {
+                    t = rafStatus.readLong();
+                    if (t >= toTime) {
+                        break;
+                    } else if (t >= fromTime) {
+                        LogStatusEntry entry = new LogStatusEntry();
+                        entry.time = t;
+                        if (rafStatus.read(entry.status) == STATUS_ADV_SIZE)
+                            ret.add(entry);
+                        else
+                            Log.e(TAG, "getStatusData read error");
+                    } else
+                        rafStatus.skipBytes(STATUS_ADV_SIZE);
+                }
+                rafStatus.seek(pos);
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
         return ret;
     }
 
@@ -351,7 +349,6 @@ public class LogDataFile {
             final File folder = MyApp.getInstance().getFilesDir();
             final File[] files = folder.listFiles((dir, name) ->
                     name.matches(DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
-            boolean stop = false;
             long t, startTime, endTime;
             if (files != null) {
                 Arrays.sort(files, (object1, object2) ->
@@ -368,15 +365,16 @@ public class LogDataFile {
                             while (dis.available() > 0) {
                                 t = dis.readLong();
                                 if (t >= toTime) {
-                                    dis.close();
-                                    stop = true;
-                                    break;
+                                    return ret;
                                 } else if (t >= fromTime) {
                                     LogDebugEntry entry = new LogDebugEntry();
                                     entry.time = t;
-                                    dis.read(entry.debug);
-                                    ret.add(entry);
-                                }
+                                    if (dis.read(entry.debug) == DEBUG_ADV_SIZE)
+                                        ret.add(entry);
+                                    else
+                                        Log.e(TAG, "getDebugData read error");
+                                } else
+                                    dis.skipBytes(DEBUG_ADV_SIZE);
                             }
                         } finally {
                             if (dis != null) {
@@ -385,31 +383,35 @@ public class LogDataFile {
                             }
                         }
                     }
-                    if (stop)
-                        break;
                 }
             }
-
-            if (stop || debugLogInterval.startTime > toTime)
-                return ret;
-
-            long pos = rafDebug.getFilePointer();
-            rafDebug.seek(0);
-            while (rafDebug.getFilePointer() < rafDebug.length()) {
-                t = rafDebug.readLong();
-                if (t >= toTime) {
-                    break;
-                } else if (t >= fromTime) {
-                    LogDebugEntry entry = new LogDebugEntry();
-                    entry.time = t;
-                    rafDebug.read(entry.debug);
-                    ret.add(entry);
-                } else
-                    rafDebug.skipBytes(DEBUG_ADV_SIZE);
-            }
-            rafDebug.seek(pos);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+        }
+
+        synchronized (statusLock) {
+            try {
+                long t;
+                long pos = rafDebug.getFilePointer();
+                rafDebug.seek(0);
+                while (rafDebug.getFilePointer() < rafDebug.length()) {
+                    t = rafDebug.readLong();
+                    if (t >= toTime) {
+                        break;
+                    } else if (t >= fromTime) {
+                        LogDebugEntry entry = new LogDebugEntry();
+                        entry.time = t;
+                        if (rafDebug.read(entry.debug) == DEBUG_ADV_SIZE)
+                            ret.add(entry);
+                        else
+                            Log.e(TAG, "getDebugData read error");
+                    } else
+                        rafDebug.skipBytes(DEBUG_ADV_SIZE);
+                }
+                rafDebug.seek(pos);
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
         }
         return ret;
     }

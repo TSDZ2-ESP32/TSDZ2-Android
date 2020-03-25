@@ -17,7 +17,10 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 
 import java.util.List;
@@ -26,13 +29,21 @@ import java.util.UUID;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import spider65.ebike.tsdz2_esp32.data.DebugBuffer;
 import spider65.ebike.tsdz2_esp32.data.LogDataFile;
+import spider65.ebike.tsdz2_esp32.data.StatusBuffer;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
+
+import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 
 
 public class TSDZBTService extends Service {
 
     private static final String TAG = "TSDZBTService";
+
+    public static final int MSG_STATUS_LOG = 1;
+    public static final int MSG_DEBUG_LOG = 2;
 
     public static String TSDZ_SERVICE = "000000ff-0000-1000-8000-00805f9b34fb";
     public static String TSDZ_CHARACTERISTICS_STATUS = "0000ff01-0000-1000-8000-00805f9b34fb";
@@ -46,9 +57,9 @@ public class TSDZBTService extends Service {
     public final static UUID UUID_CONFIG_CHARACTERISTIC = UUID.fromString(TSDZ_CHARACTERISTICS_CONFIG);
     public final static UUID UUID_COMMAND_CHARACTERISTIC = UUID.fromString(TSDZ_CHARACTERISTICS_COMMAND);
 
-
     public static final String ADDRESS_EXTRA = "ADDRESS";
     public static final String VALUE_EXTRA = "VALUE";
+
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
 
@@ -63,7 +74,7 @@ public class TSDZBTService extends Service {
     public static final String TSDZ_CFG_READ_BROADCAST = "TSDZ_CFG_READ";
     public static final String TSDZ_CFG_WRITE_BROADCAST = "TSDZ_CFG_WRITE";
 
-    private static final int MAX_CONNCTION_RETRY = 10;
+    private static final int MAX_CONNECTION_RETRY = 10;
     private static TSDZBTService mService = null;
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -80,8 +91,8 @@ public class TSDZBTService extends Service {
     private BluetoothGattCharacteristic tsdz_config_char = null;
     private BluetoothGattCharacteristic tsdz_command_char = null;
 
-    private LogDataFile logDataFile;
-
+    private final Handler mHandler;
+    private final LogDataFile mLogDataFile;
 
     public static TSDZBTService getBluetoothService() {
         return mService;
@@ -93,6 +104,38 @@ public class TSDZBTService extends Service {
         CONNECTED
     }
 
+    public TSDZBTService() {
+        Log.d(TAG, "TSDZBTService()");
+        mLogDataFile = LogDataFile.getLogDataFile();
+        // to avoid performance issues (e.g. log file switch can take some time), data logging
+        // is asyncronous and handled by a dedicated thread
+        final HandlerThread mHandlerThread = new HandlerThread("LogDataThread");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg){
+                switch (msg.what) {
+                    case MSG_STATUS_LOG:
+                        StatusBuffer sb = (StatusBuffer)msg.obj;
+                        mLogDataFile.addStatusData(sb.data);
+                        StatusBuffer.recycle(sb);
+                        break;
+                    case MSG_DEBUG_LOG:
+                        DebugBuffer db = (DebugBuffer)msg.obj;
+                        mLogDataFile.addDebugData(db.data);
+                        DebugBuffer.recycle(db);
+                        break;
+                }
+            }
+        };
+    }
+
+
+    @Override
+    public void onCreate() {
+        Log.d(TAG, "onCreate");
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
@@ -101,6 +144,7 @@ public class TSDZBTService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand");
         if(intent != null)
         {
             String action = intent.getAction();
@@ -132,7 +176,7 @@ public class TSDZBTService extends Service {
     /* Used to build and start foreground service. */
     private void startForegroundService()
     {
-        Log.d(TAG, "Start TSDZ BT Service.");
+        Log.d(TAG, "startForegroundService");
 
         // Create notification default intent.
         Intent intent = new Intent();
@@ -172,12 +216,11 @@ public class TSDZBTService extends Service {
         Intent bi = new Intent(SERVICE_STARTED_BROADCAST);
         LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
         mService = this;
-        logDataFile = LogDataFile.getLogDataFile();
     }
 
     private void stopForegroundService()
     {
-        Log.d(TAG, "Stop TSDZ BT Service.");
+        Log.d(TAG, "stopForegroundService");
 
         // Stop foreground service and remove the notification.
         stopForeground(true);
@@ -205,7 +248,7 @@ public class TSDZBTService extends Service {
                 mConnectionState = ConnectionState.DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 if (!stopped)
-                    if (connectionRetry++ > MAX_CONNCTION_RETRY) {
+                    if (connectionRetry++ > MAX_CONNECTION_RETRY) {
                         disconnect();
                         stopForegroundService();
                     } else {
@@ -228,21 +271,29 @@ public class TSDZBTService extends Service {
                             if (c.getUuid().equals(UUID_STATUS_CHARACTERISTIC)) {
                                 tsdz_status_char = c;
                                 Log.d(TAG, "UUID_STATUS_CHARACTERISTIC enable notifications");
-                                //setCharacteristicNotification(c,true);
                             } else if(c.getUuid().equals(UUID_DEBUG_CHARACTERISTIC)) {
                                 tsdz_debug_char = c;
                                 Log.d(TAG, "UUID_DEBUG_CHARACTERISTIC enable notifications");
-                                //setCharacteristicNotification(c,true);
                             } else if(c.getUuid().equals(UUID_CONFIG_CHARACTERISTIC)) {
                                 tsdz_config_char = c;
                             } else if(c.getUuid().equals(UUID_COMMAND_CHARACTERISTIC)) {
                                 tsdz_command_char = c;
                                 Log.d(TAG, "UUID_COMMAND_CHARACTERISTIC enable notifications");
-                                //setCharacteristicNotification(c,true);
                             }
                         }
                     }
                 }
+                if (tsdz_status_char == null || tsdz_debug_char == null || tsdz_config_char == null
+                        || tsdz_command_char == null) {
+                    Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
+                    // TODO bi.putExtra("MESSAGE", "Error Detail");
+                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                    Log.e(TAG, "onServicesDiscovered Characteristic not found!");
+                    disconnect();
+                    return;
+                }
+                // setCharacteristicNotification is asynchronous. Before to make a new call we
+                // must wait the end of the previous in the callback onDescriptorWrite
                 setCharacteristicNotification(tsdz_status_char,true);
                 Intent bi = new Intent(CONNECTION_SUCCESS_BROADCAST);
                 LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
@@ -269,7 +320,8 @@ public class TSDZBTService extends Service {
         }
 
         @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic,
                                          int status) {
             //Log.d(TAG, "onCharacteristicRead:" + characteristic.getUuid().toString());
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -284,18 +336,28 @@ public class TSDZBTService extends Service {
         }
 
         @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic) {
             //Log.d(TAG, "onCharacteristicChanged:" + characteristic.getUuid().toString());
+            byte [] data = characteristic.getValue();
             if (UUID_STATUS_CHARACTERISTIC.equals(characteristic.getUuid())) {
-                Intent bi = new Intent(TSDZ_STATUS_BROADCAST);
-                bi.putExtra(VALUE_EXTRA, characteristic.getValue());
-                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
-                logDataFile.addStatusData(characteristic.getValue());
+                if (data.length == STATUS_ADV_SIZE) {
+                    Intent bi = new Intent(TSDZ_STATUS_BROADCAST);
+                    bi.putExtra(VALUE_EXTRA, data);
+                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                    sendStatusLog(data);
+                } else {
+                    Log.e(TAG, "Wrong Status Advertising Size: " + data.length);
+                }
             } else if (UUID_DEBUG_CHARACTERISTIC.equals(characteristic.getUuid())) {
-                Intent bi = new Intent(TSDZ_DEBUG_BROADCAST);
-                bi.putExtra(VALUE_EXTRA, characteristic.getValue());
-                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
-                logDataFile.addDebugData(characteristic.getValue());
+                if (data.length == DEBUG_ADV_SIZE) {
+                    Intent bi = new Intent(TSDZ_DEBUG_BROADCAST);
+                    bi.putExtra(VALUE_EXTRA, characteristic.getValue());
+                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                    sendDebugLog(data);
+                } else {
+                    Log.e(TAG, "Wrong Debug Advertising Size: " + data.length);
+                }
             } else if (UUID_COMMAND_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_COMMAND_BROADCAST);
                 bi.putExtra(VALUE_EXTRA, characteristic.getValue());
@@ -304,7 +366,8 @@ public class TSDZBTService extends Service {
         }
 
         @Override
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
+        public void onCharacteristicWrite(BluetoothGatt gatt,
+                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
             //Log.d(TAG, "onCharacteristicWrite:" + characteristic.getUuid().toString());
             if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
@@ -317,6 +380,21 @@ public class TSDZBTService extends Service {
             }
         }
     };
+
+    private void sendStatusLog(byte[] data) {
+        // data parameter could be overwritten if a new notification arrives before the previous
+        // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
+        StatusBuffer sb = StatusBuffer.obtain();
+        System.arraycopy(data, 0, sb.data, 0, data.length);
+        Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, sb);
+        mHandler.sendMessage(msg);
+    }
+    private void sendDebugLog(byte[] data) {
+        DebugBuffer db = DebugBuffer.obtain();
+        System.arraycopy(data,0,db.data,0,data.length);
+        Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, db);
+        mHandler.sendMessage(msg);
+    }
 
     private boolean connect(String address) {
         Log.d(TAG, "connect");
@@ -369,25 +447,7 @@ public class TSDZBTService extends Service {
      * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
      * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
      * callback.
-     *
-     * @param characteristic The characteristic to read from.
      */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.readCharacteristic(characteristic);
-    }
-
-    public void writeCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.writeCharacteristic(characteristic) ;
-    }
-
     public void readCfg() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null || tsdz_command_char == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -404,6 +464,7 @@ public class TSDZBTService extends Service {
         tsdz_config_char.setValue(cfg.toByteArray());
         mBluetoothGatt.writeCharacteristic(tsdz_config_char);
     }
+
     public void writeCommand(byte[] command) {
         //Log.d(TAG,"Sending command: " + Utils.bytesToHex(command));
         if (mBluetoothAdapter == null || mBluetoothGatt == null || tsdz_command_char == null) {
