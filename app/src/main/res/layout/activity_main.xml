@@ -38,11 +38,7 @@
                     android:text="@string/status"/>
             </androidx.appcompat.widget.Toolbar>
 
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabs"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:background="?attr/colorPrimary" />
+
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.viewpager.widget.ViewPager
@@ -51,12 +47,20 @@
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@+id/main_toolbar"
         app:layout_constraintBottom_toTopOf="@+id/linear"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="?attr/colorPrimary" />
+        </androidx.viewpager.widget.ViewPager>
+
 
         <LinearLayout
             android:id="@+id/linear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:baselineAligned="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/view_pager"
             android:background="@drawable/border"

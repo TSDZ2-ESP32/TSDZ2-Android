@@ -1,9 +1,18 @@
 <resources>
+    <integer-array name="delay_values">
+        <item>20</item>
+        <item>25</item>
+        <item>33</item>
+        <item>40</item>
+        <item>50</item>
+        <item>66</item>
+        <item>100</item>
+    </integer-array>
     <string name="dash">-</string>
     <string name="brake_letter">B</string>
     <string name="off">Off</string>
-    <string name="calibration">Cal</string>
 
+    <string name="calibration">Cal</string>
     <string name="app_name">TSDZ2_ESP32</string>
     <string name="status">STATUS DATA</string>
     <string name="debug">DEBUG DATA</string>
@@ -24,15 +33,15 @@
     <string name="version_title">FW Versions</string>
     <string name="esp32_app_version">ESP32 Main App FW version: %s</string>
     <string name="esp32_ota_versione">ESP32 OTA App FW version: %s</string>
+
+
     <string name="tsdz_version">TSDZ2 FW version: %d</string>
-
-
     <string name="choose">Choose</string>
     <string name="scan">Scan</string>
     <string name="noDeviceSelected">No device selected</string>
     <string name="notification_title">Bike Connection</string>
-    <string name="bike_connected">Bike connected</string>
 
+    <string name="bike_connected">Bike connected</string>
     <string name="speed">Speed</string>
     <string name="cadence">Cadence</string>
     <string name="motor_temp">Motor Temperature</string>
@@ -48,8 +57,8 @@
     <string name="powerField">%1$d W</string>
     <string name="voltageField">%.1f V</string>
     <string name="currentField">%.1f A</string>
-    <string name="whField">%1$d Wh</string>
 
+    <string name="whField">%1$d Wh</string>
     <string name="tsdz_cfg">Bike Configuration</string>
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
     <string name="title_activity_stm8_ota">Bike Firmware Update</string>
@@ -164,8 +173,8 @@
     <string name="throttle_enabled">Throttle Enabled</string>
     <string name="title_activity_street_mode_setup">Street mode Setup</string>
     <string name="title_activity_cadence_sensor_calibration">Cadence sensor calibration</string>
-    <string name="title_activity_esp32_config">ESP32 Configuration</string>
 
+    <string name="title_activity_esp32_config">ESP32 Configuration</string>
     <string name="duty_cycle">Duty Cycle</string>
     <string name="motor_erps">Motor ERPS</string>
     <string name="foc_angle">FOC Angle</string>
@@ -173,28 +182,31 @@
     <string name="pedal_torque">Pedal Torque</string>
     <string name="cad_pulse">Cadence High %</string>
     <string name="adc_value">ADC value</string>
+
     <string name="controller_temp">Controller Temp.</string>
-
     <string name="success">Success!</string>
-    <string name="update_completed">Firmware update completed.</string>
 
+    <string name="update_completed">Firmware update completed.</string>
     <string name="cadenceStartError">Cannot start cadence calibration</string>
     <string name="cadenceStopError">Cannot stop cadence calibration</string>
     <string name="cadenceSaveError">Cannot save cadence value</string>
-    <string name="commandError">Command not recognized</string>
 
+    <string name="commandError">Command not recognized</string>
     <string name="btUpdateSpeed">BT update speed</string>
     <string name="ds18b2_pin_nr">DS18B20 GPIO Pin</string>
     <string name="lcd_uart_alt_pins">LCD UART alt. pins (32,33)</string>
-    <string name="enable_wifi">Wifi is disabled\nEnable Wifi and try again</string>
 
+    <string name="enable_wifi">Wifi is disabled\nEnable Wifi and try again</string>
     <string name="cannot_change_pin">Image is signed\n cannot change BT PIN %1$d</string>
     <string name="wrong_app_name">Bin image App Name is wrong</string>
     <string name="pin_change">Image BT Pin is %1$d\ndo you want to change it? </string>
     <string name="bt_pin_input">Insert the new BT Pin (6 digits) </string>
     <string name="image_update_error">Error updating bin image</string>
+
+
     <string name="pin_input_error">PIN is empty</string>
 
+    <string name="title_activity_chart">Charts</string>
 
     <string-array name="ota_types">
         <item> Select the App to update </item>
@@ -209,6 +221,7 @@
         <item> 48V (exp.)</item>
     </string-array>
 
+
     <string-array name="ligths_cfg">
         <item> Solid - Off</item>
         <item> Flashing - Off</item>
@@ -220,14 +233,11 @@
         <item> Flashing - On</item>
         <item> Flashing - Flashing</item>
     </string-array>
-
     <string-array name="temperature_types">
         <item> None </item>
         <item> Controller ADC </item>
         <item> ESP32 </item>
     </string-array>
-
-
     <string-array name="delay_labels">
         <item> 5 msg/sec </item>
         <item> 4 msg/sec </item>
@@ -237,13 +247,4 @@
         <item> 1.5 msg/sec</item>
         <item> 1 msg/sec </item>
     </string-array>
-    <integer-array name="delay_values">
-        <item> 20 </item>
-        <item> 25 </item>
-        <item> 33 </item>
-        <item> 40 </item>
-        <item> 50 </item>
-        <item> 66 </item>
-        <item> 100 </item>
-    </integer-array>
 </resources>

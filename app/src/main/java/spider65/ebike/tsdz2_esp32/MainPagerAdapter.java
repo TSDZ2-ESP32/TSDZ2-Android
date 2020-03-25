@@ -18,11 +18,11 @@ import spider65.ebike.tsdz2_esp32.fragments.MyFragmentListener;
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
  * one of the sections/tabs/pages.
  */
-public class SectionsPagerAdapter extends FragmentPagerAdapter {
+public class MainPagerAdapter extends FragmentPagerAdapter {
     private static final Fragment[] TAB_FRAGMENTS = new Fragment[2];
     private final Context mContext;
 
-    SectionsPagerAdapter(Context context, FragmentManager fm, TSDZ_Status status, TSDZ_Debug debug) {
+    MainPagerAdapter(Context context, FragmentManager fm, TSDZ_Status status, TSDZ_Debug debug) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         TAB_FRAGMENTS[0] = FragmentStatus.newInstance(status);
         TAB_FRAGMENTS[1] = FragmentDebug.newInstance(debug);

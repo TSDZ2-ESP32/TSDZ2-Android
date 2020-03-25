@@ -24,16 +24,20 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
+import spider65.ebike.tsdz2_esp32.activities.ChartActivity;
 import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.ota.Esp32_Ota;
 import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
+import spider65.ebike.tsdz2_esp32.utils.OnSwipeListener;
 
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -43,13 +47,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
     private static final String TAG = "MainActivity";
     private TextView mTitle;
     private boolean serviceRunning;
     private  FloatingActionButton fabButton;
-    private SectionsPagerAdapter sectionsPagerAdapter;
+    private MainPagerAdapter mainPagerAdapter;
 
     private static final int REQUEST_ENABLE_BLUETOOTH = 0;
     private static final int APP_PERMISSION_REQUEST = 1;
@@ -65,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageView brakeIV;
     private ImageView streetModeIV;
 
+    private GestureDetector gestureDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,9 +78,10 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager(), status, debug);
+        mainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager(), status, debug);
         viewPager = findViewById(R.id.view_pager);
-        viewPager.setAdapter(sectionsPagerAdapter);
+        viewPager.setAdapter(mainPagerAdapter);
+        viewPager.setOnTouchListener(this);
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -94,6 +101,26 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageScrollStateChanged(int state) {}
+        });
+
+        gestureDetector = new GestureDetector(this,new OnSwipeListener(){
+            @Override
+            public boolean onSwipe(Direction direction) {
+                if (direction==Direction.up){
+                    //do your stuff
+                    Log.d(TAG, "onSwipe: up");
+                    Intent myIntent = new Intent(MainActivity.this, ChartActivity.class);
+                    MainActivity.this.startActivity(myIntent);
+                    return false;
+                }
+
+                if (direction==Direction.down){
+                    //do your stuff
+                    Log.d(TAG, "onSwipe: down");
+                    return false;
+                }
+                return false;
+            }
         });
 
         TabLayout tabs = findViewById(R.id.tabs);
@@ -416,7 +443,7 @@ public class MainActivity extends AppCompatActivity {
                             // refresh Bottom data, and Status Fragmnt if visibile
                             refreshView();
                             if (viewPager.getCurrentItem() == 0)
-                                sectionsPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
+                                mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
                     break;
                 case TSDZBTService.TSDZ_DEBUG_BROADCAST:
                     data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
@@ -424,9 +451,15 @@ public class MainActivity extends AppCompatActivity {
                         // refresh Debug Fragment if visibile
                         if (debug.setData(data))
                             if (viewPager.getCurrentItem() == 1)
-                                sectionsPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
+                                mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
                     break;
             }
         }
     };
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        gestureDetector.onTouchEvent(event);
+        return false;
+    }
 }
