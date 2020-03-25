@@ -259,52 +259,52 @@ public class LogDataFile {
         if ((fromTime < 0) || (toTime <= fromTime))
             return ret;
 
-        try {
-            DataInputStream dis = null;
+        synchronized (statusLock) {
+            try {
+                DataInputStream dis = null;
 
-            final File folder = MyApp.getInstance().getFilesDir();
-            final File[] files = folder.listFiles( (dir, name ) ->
-                    name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
-            long t,startTime,endTime;
-            if (files != null) {
-                Arrays.sort(files, (object1, object2) ->
-                        object1.getName().compareTo(object2.getName()));
+                final File folder = MyApp.getInstance().getFilesDir();
+                final File[] files = folder.listFiles( (dir, name ) ->
+                        name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
+                long t,startTime,endTime;
+                if (files != null) {
+                    Arrays.sort(files, (object1, object2) ->
+                            object1.getName().compareTo(object2.getName()));
 
-                for (File file : files) {
-                    String[] s = file.getName().split(".");
-                    startTime = Long.valueOf(s[2]);
-                    endTime   = Long.valueOf(s[3]);
-                    if (fromTime <= endTime && toTime >= startTime) {
-                        try {
-                            dis = new DataInputStream(new FileInputStream(file));
-                            while (dis.available() > 0) {
-                                t = dis.readLong();
-                                if (t >= toTime) {
-                                    return ret;
-                                } else if (t >= fromTime) {
-                                    LogStatusEntry entry = new LogStatusEntry();
-                                    entry.time = t;
-                                    if (dis.read(entry.status) == STATUS_ADV_SIZE)
-                                        ret.add(entry);
-                                    else
-                                        Log.e(TAG, "getStatusData read error");
-                                } else
-                                    dis.skipBytes(STATUS_ADV_SIZE);
-                            }
-                        } finally {
-                            if (dis != null) {
-                                dis.close();
-                                dis = null;
+                    for (File file : files) {
+                        String[] s = file.getName().split(".");
+                        startTime = Long.valueOf(s[2]);
+                        endTime   = Long.valueOf(s[3]);
+                        if (fromTime <= endTime && toTime >= startTime) {
+                            try {
+                                dis = new DataInputStream(new FileInputStream(file));
+                                while (dis.available() > 0) {
+                                    t = dis.readLong();
+                                    if (t >= toTime) {
+                                        return ret;
+                                    } else if (t >= fromTime) {
+                                        LogStatusEntry entry = new LogStatusEntry();
+                                        entry.time = t;
+                                        if (dis.read(entry.status) == STATUS_ADV_SIZE)
+                                            ret.add(entry);
+                                        else
+                                            Log.e(TAG, "getStatusData read error");
+                                    } else
+                                        dis.skipBytes(STATUS_ADV_SIZE);
+                                }
+                            } finally {
+                                if (dis != null) {
+                                    dis.close();
+                                    dis = null;
+                                }
                             }
                         }
                     }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
             }
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-        }
 
-        synchronized (statusLock) {
             try {
                 long t;
                 if (statusLogInterval.startTime > toTime)
@@ -335,61 +335,61 @@ public class LogDataFile {
         return ret;
     }
 
-    public synchronized ArrayList<LogDebugEntry> getDebugData(long fromTime, long toTime) {
+    public ArrayList<LogDebugEntry> getDebugData(long fromTime, long toTime) {
 
         ArrayList<LogDebugEntry> ret = new ArrayList<>();
 
         if ((fromTime < 0) || (toTime <= fromTime))
             return ret;
 
-        try {
-            FileInputStream fis;
-            DataInputStream dis = null;
+        synchronized (debugLock) {
+            try {
+                FileInputStream fis;
+                DataInputStream dis = null;
 
-            final File folder = MyApp.getInstance().getFilesDir();
-            final File[] files = folder.listFiles((dir, name) ->
-                    name.matches(DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
-            long t, startTime, endTime;
-            if (files != null) {
-                Arrays.sort(files, (object1, object2) ->
-                        object1.getName().compareTo(object2.getName()));
+                final File folder = MyApp.getInstance().getFilesDir();
+                final File[] files = folder.listFiles((dir, name) ->
+                        name.matches(DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+                long t, startTime, endTime;
+                if (files != null) {
+                    Arrays.sort(files, (object1, object2) ->
+                            object1.getName().compareTo(object2.getName()));
 
-                for (File file : files) {
-                    String[] s = file.getName().split(".");
-                    startTime = Long.valueOf(s[2]);
-                    endTime = Long.valueOf(s[3]);
-                    if (fromTime <= endTime && toTime >= startTime) {
-                        try {
-                            fis = new FileInputStream(file);
-                            dis = new DataInputStream(fis);
-                            while (dis.available() > 0) {
-                                t = dis.readLong();
-                                if (t >= toTime) {
-                                    return ret;
-                                } else if (t >= fromTime) {
-                                    LogDebugEntry entry = new LogDebugEntry();
-                                    entry.time = t;
-                                    if (dis.read(entry.debug) == DEBUG_ADV_SIZE)
-                                        ret.add(entry);
-                                    else
-                                        Log.e(TAG, "getDebugData read error");
-                                } else
-                                    dis.skipBytes(DEBUG_ADV_SIZE);
-                            }
-                        } finally {
-                            if (dis != null) {
-                                dis.close();
-                                dis = null;
+                    for (File file : files) {
+                        String[] s = file.getName().split(".");
+                        startTime = Long.valueOf(s[2]);
+                        endTime = Long.valueOf(s[3]);
+                        if (fromTime <= endTime && toTime >= startTime) {
+                            try {
+                                fis = new FileInputStream(file);
+                                dis = new DataInputStream(fis);
+                                while (dis.available() > 0) {
+                                    t = dis.readLong();
+                                    if (t >= toTime) {
+                                        return ret;
+                                    } else if (t >= fromTime) {
+                                        LogDebugEntry entry = new LogDebugEntry();
+                                        entry.time = t;
+                                        if (dis.read(entry.debug) == DEBUG_ADV_SIZE)
+                                            ret.add(entry);
+                                        else
+                                            Log.e(TAG, "getDebugData read error");
+                                    } else
+                                        dis.skipBytes(DEBUG_ADV_SIZE);
+                                }
+                            } finally {
+                                if (dis != null) {
+                                    dis.close();
+                                    dis = null;
+                                }
                             }
                         }
                     }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
             }
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-        }
 
-        synchronized (statusLock) {
             try {
                 long t;
                 long pos = rafDebug.getFilePointer();
