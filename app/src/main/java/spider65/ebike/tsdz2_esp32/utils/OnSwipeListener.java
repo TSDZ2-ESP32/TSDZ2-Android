@@ -8,7 +8,7 @@ public class OnSwipeListener extends GestureDetector.SimpleOnGestureListener {
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        Log.d("OnSwipeListener", "onFling");
+        //Log.d("OnSwipeListener", "onFling");
 
         // Grab two events located on the plane at e1=(x1, y1) and e2=(x2, y2)
         // Let e1 be the initial event

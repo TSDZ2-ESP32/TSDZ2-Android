@@ -2,6 +2,7 @@ package spider65.ebike.tsdz2_esp32.data;
 
 import android.util.Log;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -63,49 +64,42 @@ public class LogDataFile {
         initLogFiles();
     }
 
-    public void addStatusData(byte[] status) {
-        long time = System.currentTimeMillis();
-
+    public void addStatusData(long startTime, long endTime, byte[] data, int length) {
+        Log.d(TAG, "addStatusData");
         synchronized (statusLock) {
             if (statusLogInterval.startTime == 0)
-                statusLogInterval.startTime = time;
-            else if ((time - statusLogInterval.startTime) > MAX_FILE_HISTORY) {
-                swapStatusFile();
-                statusLogInterval.startTime = time;
-            }
-            statusLogInterval.endTime = time;
-
+                statusLogInterval.startTime = startTime;
+            statusLogInterval.endTime = endTime;
             try {
-                rafStatus.writeLong(time);
-                rafStatus.write(status);
+                rafStatus.write(data, 0, length);
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
+            }
+            if ((endTime - statusLogInterval.startTime) > MAX_FILE_HISTORY) {
+                swapStatusFile();
             }
         }
     }
 
-    public void addDebugData(byte[] debug) {
-        long time = System.currentTimeMillis();
-
+    public void addDebugData(long startTime, long endTime, byte[] data, int length) {
+        Log.d(TAG, "addDebugData");
         synchronized (debugLock) {
             if (debugLogInterval.startTime == 0)
-                debugLogInterval.startTime = time;
-            else if ((time - debugLogInterval.startTime) > MAX_FILE_HISTORY) {
-                swapDebugFile();
-                debugLogInterval.startTime = time;
-            }
-            debugLogInterval.endTime = time;
-
+                debugLogInterval.startTime = startTime;
+            debugLogInterval.endTime = endTime;
             try {
-                rafDebug.writeLong(time);
-                rafDebug.write(debug);
+                rafDebug.write(data, 0, length);
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
+            }
+            if ((endTime - debugLogInterval.startTime) > MAX_FILE_HISTORY) {
+                swapDebugFile();
             }
         }
     }
 
     private void swapStatusFile() {
+        Log.d(TAG, "swapStatusFile");
         // remove log file with all data older than MAX_LOG_HISTORY
         final File folder = MyApp.getInstance().getFilesDir();
         final File[] files = folder.listFiles( (dir, name) ->
@@ -139,6 +133,7 @@ public class LogDataFile {
     }
 
     private void swapDebugFile() {
+        Log.d(TAG, "swapDebugFile");
         // remove log file with all data older than MAX_LOG_HISTORY
         final File folder = MyApp.getInstance().getFilesDir();
         final File[] files = folder.listFiles( (dir, name ) ->
@@ -182,7 +177,7 @@ public class LogDataFile {
             // file status.log already exist
             fileStatus = files[0];
             try {
-                rafStatus = new RandomAccessFile(fileStatus, "rw");
+                rafStatus = new RandomAccessFile(fileStatus, "rwd");
                 statusLogInterval = checkLogFile(rafStatus,8+STATUS_ADV_SIZE);
             } catch (Exception e) {
                Log.e(TAG,"initLogFiles", e);
@@ -196,7 +191,7 @@ public class LogDataFile {
             // file debug.log already exist
             fileDebug = files[0];
             try {
-                rafDebug = new RandomAccessFile(fileDebug, "rw");
+                rafDebug = new RandomAccessFile(fileDebug, "rwd");
                 debugLogInterval = checkLogFile(rafDebug,8+DEBUG_ADV_SIZE);
             } catch (Exception e) {
                 Log.e(TAG,"initLogFiles", e);
@@ -236,9 +231,9 @@ public class LogDataFile {
         statusLogInterval = new TimeInterval(0,0);
         fileStatus = new File(MyApp.getInstance().getFilesDir(), STATUS_LOG_FILENAME+".log");
         try {
-            rafStatus = new RandomAccessFile(fileStatus, "rw");
+            rafStatus = new RandomAccessFile(fileStatus, "rwd");
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+           Log.e(TAG, "newStatusLogFile", e);
         }
     }
 
@@ -246,14 +241,13 @@ public class LogDataFile {
         debugLogInterval = new TimeInterval(0,0);
         fileDebug = new File(MyApp.getInstance().getFilesDir(), DEBUG_LOG_FILENAME+".log");
         try {
-            rafDebug = new RandomAccessFile(fileDebug, "rw");
+            rafDebug = new RandomAccessFile(fileDebug, "rwd");
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "newStatusLogFile", e);
         }
     }
 
     public ArrayList<LogStatusEntry> getStatusData(long fromTime, long toTime) {
-
         ArrayList<LogStatusEntry> ret = new ArrayList<>();
 
         if ((fromTime < 0) || (toTime <= fromTime))
@@ -267,17 +261,17 @@ public class LogDataFile {
                 final File[] files = folder.listFiles( (dir, name ) ->
                         name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
                 long t,startTime,endTime;
-                if (files != null) {
+                if (files != null && files.length > 0) {
                     Arrays.sort(files, (object1, object2) ->
                             object1.getName().compareTo(object2.getName()));
 
                     for (File file : files) {
-                        String[] s = file.getName().split(".");
+                        String[] s = file.getName().split("\\.");
                         startTime = Long.valueOf(s[2]);
                         endTime   = Long.valueOf(s[3]);
                         if (fromTime <= endTime && toTime >= startTime) {
                             try {
-                                dis = new DataInputStream(new FileInputStream(file));
+                                dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
                                 while (dis.available() > 0) {
                                     t = dis.readLong();
                                     if (t >= toTime) {
@@ -307,26 +301,31 @@ public class LogDataFile {
 
             try {
                 long t;
-                if (statusLogInterval.startTime > toTime)
+                if (statusLogInterval.startTime>toTime || statusLogInterval.endTime<fromTime)
                     return ret;
 
-                long pos = rafStatus.getFilePointer();
-                rafStatus.seek(0);
-                while (rafStatus.getFilePointer() < rafStatus.length()) {
-                    t = rafStatus.readLong();
-                    if (t >= toTime) {
-                        break;
-                    } else if (t >= fromTime) {
-                        LogStatusEntry entry = new LogStatusEntry();
-                        entry.time = t;
-                        if (rafStatus.read(entry.status) == STATUS_ADV_SIZE)
-                            ret.add(entry);
-                        else
-                            Log.e(TAG, "getStatusData read error");
-                    } else
-                        rafStatus.skipBytes(STATUS_ADV_SIZE);
+                DataInputStream dis = null;
+                try {
+                    dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileStatus)));
+                    while (dis.available() > 0) {
+                        t = dis.readLong();
+                        if (t >= toTime) {
+                            return ret;
+                        } else if (t >= fromTime) {
+                            LogStatusEntry entry = new LogStatusEntry();
+                            entry.time = t;
+                            if (dis.read(entry.status) == STATUS_ADV_SIZE)
+                                ret.add(entry);
+                            else
+                                Log.e(TAG, "getStatusData read error");
+                        } else
+                            dis.skipBytes(STATUS_ADV_SIZE);
+                    }
+                } finally {
+                    if (dis != null) {
+                        dis.close();
+                    }
                 }
-                rafStatus.seek(pos);
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
             }
@@ -336,7 +335,6 @@ public class LogDataFile {
     }
 
     public ArrayList<LogDebugEntry> getDebugData(long fromTime, long toTime) {
-
         ArrayList<LogDebugEntry> ret = new ArrayList<>();
 
         if ((fromTime < 0) || (toTime <= fromTime))
@@ -356,7 +354,7 @@ public class LogDataFile {
                             object1.getName().compareTo(object2.getName()));
 
                     for (File file : files) {
-                        String[] s = file.getName().split(".");
+                        String[] s = file.getName().split("\\.");
                         startTime = Long.valueOf(s[2]);
                         endTime = Long.valueOf(s[3]);
                         if (fromTime <= endTime && toTime >= startTime) {
@@ -392,23 +390,31 @@ public class LogDataFile {
 
             try {
                 long t;
-                long pos = rafDebug.getFilePointer();
-                rafDebug.seek(0);
-                while (rafDebug.getFilePointer() < rafDebug.length()) {
-                    t = rafDebug.readLong();
-                    if (t >= toTime) {
-                        break;
-                    } else if (t >= fromTime) {
-                        LogDebugEntry entry = new LogDebugEntry();
-                        entry.time = t;
-                        if (rafDebug.read(entry.debug) == DEBUG_ADV_SIZE)
-                            ret.add(entry);
-                        else
-                            Log.e(TAG, "getDebugData read error");
-                    } else
-                        rafDebug.skipBytes(DEBUG_ADV_SIZE);
+                if (debugLogInterval.startTime>toTime || debugLogInterval.endTime<fromTime)
+                    return ret;
+
+                DataInputStream dis = null;
+                try {
+                    dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileDebug)));
+                    while (dis.available() > 0) {
+                        t = dis.readLong();
+                        if (t >= toTime) {
+                            return ret;
+                        } else if (t >= fromTime) {
+                            LogDebugEntry entry = new LogDebugEntry();
+                            entry.time = t;
+                            if (dis.read(entry.debug) == DEBUG_ADV_SIZE)
+                                ret.add(entry);
+                            else
+                                Log.e(TAG, "getDebugData read error");
+                        } else
+                            dis.skipBytes(DEBUG_ADV_SIZE);
+                    }
+                } finally {
+                    if (dis != null) {
+                        dis.close();
+                    }
                 }
-                rafDebug.seek(pos);
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
             }

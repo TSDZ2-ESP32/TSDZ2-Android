@@ -91,7 +91,7 @@ public class TSDZBTService extends Service {
     private BluetoothGattCharacteristic tsdz_config_char = null;
     private BluetoothGattCharacteristic tsdz_command_char = null;
 
-    private final Handler mHandler;
+    private Handler mHandler = null;
     private final LogDataFile mLogDataFile;
 
     public static TSDZBTService getBluetoothService() {
@@ -107,6 +107,12 @@ public class TSDZBTService extends Service {
     public TSDZBTService() {
         Log.d(TAG, "TSDZBTService()");
         mLogDataFile = LogDataFile.getLogDataFile();
+    }
+
+
+    @Override
+    public void onCreate() {
+        Log.d(TAG, "onCreate");
         // to avoid performance issues (e.g. log file switch can take some time), data logging
         // is asyncronous and handled by a dedicated thread
         final HandlerThread mHandlerThread = new HandlerThread("LogDataThread");
@@ -117,12 +123,12 @@ public class TSDZBTService extends Service {
                 switch (msg.what) {
                     case MSG_STATUS_LOG:
                         StatusBuffer sb = (StatusBuffer)msg.obj;
-                        mLogDataFile.addStatusData(sb.data);
+                        mLogDataFile.addStatusData(sb.startTime, sb.endTime, sb.data, sb.position);
                         StatusBuffer.recycle(sb);
                         break;
                     case MSG_DEBUG_LOG:
                         DebugBuffer db = (DebugBuffer)msg.obj;
-                        mLogDataFile.addDebugData(db.data);
+                        mLogDataFile.addDebugData(db.startTime, db.endTime, db.data, db.position);
                         DebugBuffer.recycle(db);
                         break;
                 }
@@ -130,10 +136,12 @@ public class TSDZBTService extends Service {
         };
     }
 
-
     @Override
-    public void onCreate() {
-        Log.d(TAG, "onCreate");
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        if (mHandler != null) {
+            mHandler.getLooper().quitSafely();
+        }
     }
 
     @Override
@@ -164,6 +172,7 @@ public class TSDZBTService extends Service {
                         break;
                     case ACTION_STOP_FOREGROUND_SERVICE:
                         stopped = true;
+                        flushLogs();
                         disconnect();
                         stopForegroundService();
                         break;
@@ -241,12 +250,12 @@ public class TSDZBTService extends Service {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 mConnectionState = ConnectionState.CONNECTED;
                 connectionRetry = 0;
-                Log.i(TAG, "Connected to GATT server.");
+                Log.i(TAG, "onConnectionStateChange: Connected");
                 // Discover services after successful connection.
                 mBluetoothGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 mConnectionState = ConnectionState.DISCONNECTED;
-                Log.i(TAG, "Disconnected from GATT server.");
+                Log.i(TAG, "onConnectionStateChange: Disconnected");
                 if (!stopped)
                     if (connectionRetry++ > MAX_CONNECTION_RETRY) {
                         disconnect();
@@ -256,6 +265,10 @@ public class TSDZBTService extends Service {
                         Intent bi = new Intent(CONNECTION_LOST_BROADCAST);
                         LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
                     }
+                else {
+                    mBluetoothGatt.close();
+                    mBluetoothGatt = null;
+                }
             }
         }
 
@@ -381,19 +394,46 @@ public class TSDZBTService extends Service {
         }
     };
 
+    private StatusBuffer statusBuffer = null;
+    private DebugBuffer debugBuffer = null;
     private void sendStatusLog(byte[] data) {
-        // data parameter could be overwritten if a new notification arrives before the previous
+        if (stopped)
+            return;
+        // statusBuffer could be overwritten if a new notification arrives before statusBuffer
         // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
-        StatusBuffer sb = StatusBuffer.obtain();
-        System.arraycopy(data, 0, sb.data, 0, data.length);
-        Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, sb);
-        mHandler.sendMessage(msg);
+        if (statusBuffer == null)
+            statusBuffer = StatusBuffer.obtain();
+        if (statusBuffer.addRecord(data)) {
+            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
+            mHandler.sendMessage(msg);
+            statusBuffer = StatusBuffer.obtain();
+        }
     }
     private void sendDebugLog(byte[] data) {
-        DebugBuffer db = DebugBuffer.obtain();
-        System.arraycopy(data,0,db.data,0,data.length);
-        Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, db);
-        mHandler.sendMessage(msg);
+        if (stopped)
+            return;
+        // debugBuffer could be overwritten if a new notification arrives before debugBuffer
+        // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
+        if (debugBuffer == null)
+            debugBuffer = DebugBuffer.obtain();
+        if (debugBuffer.addRecord(data)) {
+            Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
+            mHandler.sendMessage(msg);
+            debugBuffer = DebugBuffer.obtain();
+        }
+    }
+    private void flushLogs() {
+        Log.d(TAG, "flushLogs");
+        if (statusBuffer != null) {
+            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
+            mHandler.sendMessage(msg);
+            statusBuffer = StatusBuffer.obtain();
+        }
+        if (debugBuffer != null) {
+            Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
+            mHandler.sendMessage(msg);
+            debugBuffer = DebugBuffer.obtain();
+        }
     }
 
     private boolean connect(String address) {
@@ -435,8 +475,6 @@ public class TSDZBTService extends Service {
         }
         if (mConnectionState != ConnectionState.DISCONNECTED)
             mBluetoothGatt.disconnect();
-        mBluetoothGatt.close();
-        mBluetoothGatt = null;
     }
 
     public ConnectionState getConnectionStatus() {

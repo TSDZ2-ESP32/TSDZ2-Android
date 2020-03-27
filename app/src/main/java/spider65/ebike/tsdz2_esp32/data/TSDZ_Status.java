@@ -76,7 +76,7 @@ public class TSDZ_Status {
         this.data = data;
         this.ridingMode = RidingMode.valueOf(data[0] & 255);
         this.assistLevel = (data[1] & 255);
-        this.speed = (float)(((data[3] & 255) << 8) + (data[2] & 255)) / 10;
+        this.speed = getSpeed(data); //(float)(((data[3] & 255) << 8) + (data[2] & 255)) / 10;
         this.cadence = (data[4] & 255);
         short s = (short) ((data[5] & 0xff) | (data[6] << 8));
         this.motorTemperature = (float)(s) / 10;
@@ -89,5 +89,9 @@ public class TSDZ_Status {
         this.wattHour = ((data[15] & 255) << 8) + ((data[14] & 255));
         this.streetMode = (data[16] & 255) != 0;
         return true;
+    }
+
+    public static float getSpeed(byte[] data) {
+        return (float)(((data[3] & 255) << 8) + (data[2] & 255)) / 10;
     }
 }

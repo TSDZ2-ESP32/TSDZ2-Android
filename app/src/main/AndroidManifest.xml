@@ -54,9 +54,11 @@
         <activity
             android:name=".activities.BluetoothSetupActivity"
             android:label="@string/title_activity_bluetooth_setup"
-            android:theme="@style/AppTheme.NoActionBar" />        <activity
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -107,15 +107,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public boolean onSwipe(Direction direction) {
                 if (direction==Direction.up){
-                    //do your stuff
-                    Log.d(TAG, "onSwipe: up");
+                    // Log.d(TAG, "onSwipe: up");
                     Intent myIntent = new Intent(MainActivity.this, ChartActivity.class);
                     MainActivity.this.startActivity(myIntent);
                     return false;
                 }
-
                 if (direction==Direction.down){
-                    //do your stuff
                     Log.d(TAG, "onSwipe: down");
                     return false;
                 }
@@ -187,7 +184,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.d(TAG, "onCreateOptionsMenu");
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
@@ -362,6 +358,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    // Version packet format is "%s|%s|%d".
+    // First string is the ESP32 Main FW version, second is ESP32 OTA FW version and last integer
+    // is the Bike Controller FW version.
+    // The two strings are up to 8 char and the last integer is between 0 and 127.
     private void showVersions(byte[] data) {
         String s = new String(data, StandardCharsets.UTF_8);
         Log.d(TAG, "Version string is: " + s);
