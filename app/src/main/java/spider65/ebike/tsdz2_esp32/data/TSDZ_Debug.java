@@ -7,7 +7,6 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 public class TSDZ_Debug {
 
     private static final String TAG = "TSDZ_Debug";
-    public byte[] data;
 
     public int dutyCycle; // D
     public int motorERPS; // D
@@ -40,9 +39,6 @@ public class TSDZ_Debug {
             Log.e(TAG, "Wrong Debug BT message size!");
             return false;
         }
-
-        this.data = data;
-
         adcThrottle = (data[0] & 255);
         throttle = (data[1] & 255);
         torqueSensorValue = ((data[3] & 255) << 8) + ((data[2] & 255));

@@ -46,6 +46,9 @@ import android.widget.Toast;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
@@ -61,6 +64,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     IntentFilter mIntentFilter = new IntentFilter();
 
     private ViewPager viewPager;
+    private byte[] lastStatusData = new byte[STATUS_ADV_SIZE];
+    private byte[] lastDebugData = new byte[DEBUG_ADV_SIZE];
+
     private TSDZ_Status status = new TSDZ_Status();
     private TSDZ_Debug debug = new TSDZ_Debug();
 
@@ -438,20 +444,26 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     break;
                 case TSDZBTService.TSDZ_STATUS_BROADCAST:
                     data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (status.data == null || !Arrays.equals(status.data, data))
-                        if (status.setData(data))
+                    if (!Arrays.equals(lastStatusData, data)) {
+                        if (status.setData(data)) {
+                            System.arraycopy(data, 0, lastStatusData, 0, STATUS_ADV_SIZE);
                             // refresh Bottom data, and Status Fragmnt if visibile
                             refreshView();
                             if (viewPager.getCurrentItem() == 0)
                                 mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
+                        }
+                    }
                     break;
                 case TSDZBTService.TSDZ_DEBUG_BROADCAST:
                     data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (debug.data == null || !Arrays.equals(debug.data, data))
+                    if (!Arrays.equals(lastDebugData, data)) {
                         // refresh Debug Fragment if visibile
-                        if (debug.setData(data))
+                        if (debug.setData(data)) {
+                            System.arraycopy(data, 0, lastDebugData, 0, DEBUG_ADV_SIZE);
                             if (viewPager.getCurrentItem() == 1)
                                 mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
+                        }
+                    }
                     break;
             }
         }

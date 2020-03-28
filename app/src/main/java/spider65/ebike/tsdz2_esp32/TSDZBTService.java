@@ -17,10 +17,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 
 import java.util.List;
@@ -29,11 +26,7 @@ import java.util.UUID;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import spider65.ebike.tsdz2_esp32.data.DebugBuffer;
-import spider65.ebike.tsdz2_esp32.data.LogDataFile;
-import spider65.ebike.tsdz2_esp32.data.StatusBuffer;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
-
 import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 
@@ -41,9 +34,6 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 public class TSDZBTService extends Service {
 
     private static final String TAG = "TSDZBTService";
-
-    public static final int MSG_STATUS_LOG = 1;
-    public static final int MSG_DEBUG_LOG = 2;
 
     public static String TSDZ_SERVICE = "000000ff-0000-1000-8000-00805f9b34fb";
     public static String TSDZ_CHARACTERISTICS_STATUS = "0000ff01-0000-1000-8000-00805f9b34fb";
@@ -91,9 +81,6 @@ public class TSDZBTService extends Service {
     private BluetoothGattCharacteristic tsdz_config_char = null;
     private BluetoothGattCharacteristic tsdz_command_char = null;
 
-    private Handler mHandler = null;
-    private final LogDataFile mLogDataFile;
-
     public static TSDZBTService getBluetoothService() {
         return mService;
     }
@@ -106,42 +93,17 @@ public class TSDZBTService extends Service {
 
     public TSDZBTService() {
         Log.d(TAG, "TSDZBTService()");
-        mLogDataFile = LogDataFile.getLogDataFile();
     }
 
 
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate");
-        // to avoid performance issues (e.g. log file switch can take some time), data logging
-        // is asyncronous and handled by a dedicated thread
-        final HandlerThread mHandlerThread = new HandlerThread("LogDataThread");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper()) {
-            @Override
-            public void handleMessage(Message msg){
-                switch (msg.what) {
-                    case MSG_STATUS_LOG:
-                        StatusBuffer sb = (StatusBuffer)msg.obj;
-                        mLogDataFile.addStatusData(sb.startTime, sb.endTime, sb.data, sb.position);
-                        StatusBuffer.recycle(sb);
-                        break;
-                    case MSG_DEBUG_LOG:
-                        DebugBuffer db = (DebugBuffer)msg.obj;
-                        mLogDataFile.addDebugData(db.startTime, db.endTime, db.data, db.position);
-                        DebugBuffer.recycle(db);
-                        break;
-                }
-            }
-        };
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
-        if (mHandler != null) {
-            mHandler.getLooper().quitSafely();
-        }
     }
 
     @Override
@@ -172,7 +134,6 @@ public class TSDZBTService extends Service {
                         break;
                     case ACTION_STOP_FOREGROUND_SERVICE:
                         stopped = true;
-                        flushLogs();
                         disconnect();
                         stopForegroundService();
                         break;
@@ -234,12 +195,12 @@ public class TSDZBTService extends Service {
         // Stop foreground service and remove the notification.
         stopForeground(true);
 
-        // Stop the foreground service.
-        stopSelf();
-
         Intent bi = new Intent(SERVICE_STOPPED_BROADCAST);
         LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
         mService = null;
+
+        // Stop the foreground service.
+        stopSelf();
     }
 
     // Implements callback methods for GATT events that the app cares about.  For example,
@@ -358,7 +319,6 @@ public class TSDZBTService extends Service {
                     Intent bi = new Intent(TSDZ_STATUS_BROADCAST);
                     bi.putExtra(VALUE_EXTRA, data);
                     LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
-                    sendStatusLog(data);
                 } else {
                     Log.e(TAG, "Wrong Status Advertising Size: " + data.length);
                 }
@@ -367,7 +327,6 @@ public class TSDZBTService extends Service {
                     Intent bi = new Intent(TSDZ_DEBUG_BROADCAST);
                     bi.putExtra(VALUE_EXTRA, characteristic.getValue());
                     LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
-                    sendDebugLog(data);
                 } else {
                     Log.e(TAG, "Wrong Debug Advertising Size: " + data.length);
                 }
@@ -393,48 +352,6 @@ public class TSDZBTService extends Service {
             }
         }
     };
-
-    private StatusBuffer statusBuffer = null;
-    private DebugBuffer debugBuffer = null;
-    private void sendStatusLog(byte[] data) {
-        if (stopped)
-            return;
-        // statusBuffer could be overwritten if a new notification arrives before statusBuffer
-        // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
-        if (statusBuffer == null)
-            statusBuffer = StatusBuffer.obtain();
-        if (statusBuffer.addRecord(data)) {
-            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
-            mHandler.sendMessage(msg);
-            statusBuffer = StatusBuffer.obtain();
-        }
-    }
-    private void sendDebugLog(byte[] data) {
-        if (stopped)
-            return;
-        // debugBuffer could be overwritten if a new notification arrives before debugBuffer
-        // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
-        if (debugBuffer == null)
-            debugBuffer = DebugBuffer.obtain();
-        if (debugBuffer.addRecord(data)) {
-            Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
-            mHandler.sendMessage(msg);
-            debugBuffer = DebugBuffer.obtain();
-        }
-    }
-    private void flushLogs() {
-        Log.d(TAG, "flushLogs");
-        if (statusBuffer != null) {
-            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
-            mHandler.sendMessage(msg);
-            statusBuffer = StatusBuffer.obtain();
-        }
-        if (debugBuffer != null) {
-            Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
-            mHandler.sendMessage(msg);
-            debugBuffer = DebugBuffer.obtain();
-        }
-    }
 
     private boolean connect(String address) {
         Log.d(TAG, "connect");

@@ -20,11 +20,9 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
-import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -32,12 +30,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import spider65.ebike.tsdz2_esp32.MyApp;
 import spider65.ebike.tsdz2_esp32.R;
-import spider65.ebike.tsdz2_esp32.data.LogDataFile;
-import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
+import spider65.ebike.tsdz2_esp32.data.LogManager;
 
 
-public class ChartActivity extends AppCompatActivity {
+public class ChartActivity extends AppCompatActivity implements LogManager.LogResultListener {
 
     private static final String TAG = "ChartActivity";
 
@@ -46,7 +44,8 @@ public class ChartActivity extends AppCompatActivity {
     protected Typeface tfRegular;
     protected Typeface tfLight;
 
-    private long timeOffset; // Timezone offset in seconds to GMT
+    private long tzOffset; // Timezone offset in seconds to GMT
+    private LogManager logManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,14 +58,16 @@ public class ChartActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
             actionBar.setDisplayShowTitleEnabled(false);
+        chart = findViewById(R.id.chart1);
 
         tfRegular = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
 
         TimeZone tz = Calendar.getInstance().getTimeZone();
-        timeOffset = tz.getOffset(System.currentTimeMillis())/1000;
+        tzOffset = tz.getOffset(System.currentTimeMillis())/1000;
 
-        chart = findViewById(R.id.chart1);
+        logManager = MyApp.getLogManager();
+        logManager.setListener(this);
 
         chart.getDescription().setEnabled(false);
         chart.setTouchEnabled(true);
@@ -117,13 +118,12 @@ public class ChartActivity extends AppCompatActivity {
             }
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
-                return String.valueOf(value);
-                /*
-                long l = (long)value+start+timeOffset;
+                //return String.valueOf(value);
+
+                long l = (long)(value*60)+statusStartTime+tzOffset;
                 int minutes = (int) ((l / (60L)) % 60L);
                 int hours   = (int) ((l / (60L*60L)) % 24L);
                 return String.format(Locale.ITALY,"%02d:%02d",hours,minutes);
-                */
             }
         });
 
@@ -152,6 +152,11 @@ public class ChartActivity extends AppCompatActivity {
         rightAxis.setDrawZeroLine(false);
         rightAxis.setGranularityEnabled(false);
         */
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MyApp.getLogManager().setListener(null);
     }
 
     @Override
@@ -297,13 +302,15 @@ public class ChartActivity extends AppCompatActivity {
         return true;
     }
 
-    private long start;
-    void setData() {
-        long end;
 
+    void setData() {
+        long start,end;
+        ArrayList<Entry> values = new ArrayList<>();
+
+        /*
         end = System.currentTimeMillis();
-        end = end/1000;
-        start = end - (60 * 15); // 30 min
+        end = end/1000/60*60;
+        start = end - (60 * 30); // 30 min
 
         ArrayList<Entry> values = new ArrayList<>();
         float val, min = 1000000000, max = 0;
@@ -318,31 +325,18 @@ public class ChartActivity extends AppCompatActivity {
         min = -16f;
 
         chart.getXAxis().setAxisMinimum(0f);
-        chart.getXAxis().setAxisMaximum(15f);
+        chart.getXAxis().setAxisMaximum(30f);
         chart.getXAxis().setGranularity(1f);
-
-
-
-
-        /*
-        LogDataFile logData = LogDataFile.getLogDataFile();
-        ArrayList<LogDataFile.LogStatusEntry> logStatusEntries = logData.getStatusData(start,end);
-
-        LogDataFile.LogStatusEntry log;
-        for (int i=0; i<logStatusEntries.size(); i++) {
-            log = logStatusEntries.get(i);
-            val = TSDZ_Status.getSpeed(log.status);
-            if (val > max) max = val;
-            if (val < min) min = val;
-            values.add(new Entry(logStatusEntries.get(i).time, val));
-        }
         */
+
+        end = System.currentTimeMillis()/1000L/60L;
+        start = end - 30;
         LineDataSet set = new LineDataSet(values, "Speed");
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
         set.setCircleColor(Color.WHITE);
         set.setLineWidth(2f);
-        set.setCircleRadius(4f);
+        set.setCircleRadius(3f);
         set.setFillAlpha(65);
         set.setFillColor(ColorTemplate.getHoloBlue());
         set.setHighLightColor(Color.rgb(244, 117, 117));
@@ -351,10 +345,56 @@ public class ChartActivity extends AppCompatActivity {
         set.setDrawCircles(false);
         set.setDrawFilled(false);
         LineData data = new LineData(set);
-        chart.getAxisLeft().setAxisMinimum(min > 0? min/1.1f : min*1.1f);
-        if (max==0)
-            max=10;
-        chart.getAxisLeft().setAxisMaximum(max > 0? max*1.1f : max/1.1f);
+        chart.getAxisLeft().setAxisMinimum(0);
+        chart.getAxisLeft().setAxisMaximum(100);
+        chart.getXAxis().setGranularity(1f);
         chart.setData(data);
+        logManager.queryStatusData((int)start, (int)end);
+        //logManager.queryDebugData((int)start, (int)end);
+    }
+
+    private List<LogManager.LogStatusEntry> statusData = null;
+    private List<LogManager.LogDebugEntry>  debugData  = null;
+    private long statusStartTime = 0;
+    private long debugStartTime = 0;
+
+    @Override
+    public void logStatusResult(List<LogManager.LogStatusEntry> result) {
+        statusData = result;
+        statusStartTime = statusData.get(0).time/1000;
+
+        LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
+
+        ArrayList<Entry> values = new ArrayList<>();
+        for (int i=0; i<statusData.size(); i++) {
+            float y = statusData.get(i).status.speed;
+            float x = (float)((statusData.get(i).time - statusStartTime) / 1000) / 60f;
+            values.add(new Entry(x, y));
+        }
+        set.setValues(values);
+        runOnUiThread( () -> {
+                chart.getData().notifyDataChanged();
+                chart.notifyDataSetChanged();
+            });
+    }
+
+    @Override
+    public void logDebugResult(List<LogManager.LogDebugEntry>  result) {
+        debugData = result;
+        debugStartTime = debugData.get(0).time;
+
+        LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
+
+        ArrayList<Entry> values = new ArrayList<>();
+        for (int i=0; i<debugData.size(); i++) {
+            float y = debugData.get(i).debug.dutyCycle;
+            float x = (float)((debugData.get(i).time - debugStartTime) / 1000) / 60f;
+            values.add(new Entry(x, y));
+        }
+        set.setValues(values);
+        runOnUiThread( () -> {
+            chart.getData().notifyDataChanged();
+            chart.notifyDataSetChanged();
+        });
     }
 }

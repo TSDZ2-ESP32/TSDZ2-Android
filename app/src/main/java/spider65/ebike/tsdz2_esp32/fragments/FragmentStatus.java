@@ -23,7 +23,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
 
     private static final String TAG = "FragmentStatus";
 
-    private IntentFilter mIntentFilter = new IntentFilter();
+    //private IntentFilter mIntentFilter = new IntentFilter();
 
     private TSDZ_Status status;
 
@@ -48,7 +48,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
+        //mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
     }
 
     @Override

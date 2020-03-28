@@ -10,7 +10,7 @@ public class DebugBuffer {
     private final static Object mLock = new Object();
     private static DebugBuffer mPool;
 
-    public static DebugBuffer obtain() {
+    static DebugBuffer obtain() {
         synchronized (mLock) {
             if (mPool != null) {
                 DebugBuffer res = mPool;
@@ -21,7 +21,7 @@ public class DebugBuffer {
         }
     }
 
-    public static void recycle(@NonNull DebugBuffer buffer) {
+    static void recycle(@NonNull DebugBuffer buffer) {
         synchronized (mLock) {
             buffer.position = 0;
             buffer.startTime = 0;
@@ -32,14 +32,13 @@ public class DebugBuffer {
     }
 
     private DebugBuffer next;
-    public long startTime,endTime;
+    long startTime,endTime;
     public int position = 0;
     public byte[] data = new byte[(8+DEBUG_ADV_SIZE)*NUM_RECORDS];
 
-    public boolean addRecord(byte[] rec) {
+    boolean addRecord(byte[] rec, long time) {
         if (position >= data.length)
             return true;
-        long time = System.currentTimeMillis();
         data[position++] = (byte)((time >>> 56) & 0xFF);
         data[position++] = (byte)((time >>> 48) & 0xFF);
         data[position++] = (byte)((time >>> 40) & 0xFF);

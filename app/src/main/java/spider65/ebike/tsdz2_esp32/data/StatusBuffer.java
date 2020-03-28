@@ -11,7 +11,7 @@ public class StatusBuffer {
     private final static Object mLock = new Object();
     private static StatusBuffer mPool;
 
-    public static StatusBuffer obtain() {
+    static StatusBuffer obtain() {
         synchronized (mLock) {
             if (mPool != null) {
                 StatusBuffer res = mPool;
@@ -22,7 +22,7 @@ public class StatusBuffer {
         }
     }
 
-    public static void recycle(@NonNull StatusBuffer buffer) {
+    static void recycle(@NonNull StatusBuffer buffer) {
         synchronized (mLock) {
             buffer.position = 0;
             buffer.startTime = 0;
@@ -33,14 +33,13 @@ public class StatusBuffer {
     }
 
     private StatusBuffer next;
-    public long startTime,endTime;
+    long startTime,endTime;
     public int position = 0;
     public byte[] data = new byte[(8+STATUS_ADV_SIZE)*NUM_RECORDS];
 
-    public boolean addRecord(byte[] rec) {
+    boolean addRecord(byte[] rec, long time) {
         if (position >= data.length)
             return true;
-        long time = System.currentTimeMillis();
         data[position++] = (byte)((time >>> 56) & 0xFF);
         data[position++] = (byte)((time >>> 48) & 0xFF);
         data[position++] = (byte)((time >>> 40) & 0xFF);

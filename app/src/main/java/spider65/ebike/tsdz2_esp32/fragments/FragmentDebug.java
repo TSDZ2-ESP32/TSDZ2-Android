@@ -30,7 +30,7 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
 
     private static final String TAG = "FragmentDebug";
 
-    private IntentFilter mIntentFilter = new IntentFilter();
+    //private IntentFilter mIntentFilter = new IntentFilter();
 
     private TSDZ_Debug debug;
 
@@ -54,7 +54,7 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
+        //mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
     }
 
     @Override
