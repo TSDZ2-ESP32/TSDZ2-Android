@@ -9,6 +9,8 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -16,9 +18,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import spider65.ebike.tsdz2_esp32.MyApp;
@@ -30,8 +35,7 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 public class LogManager {
 
     public interface LogResultListener {
-        void logStatusResult(List<LogStatusEntry> result);
-        void logDebugResult (List<LogDebugEntry>  result);
+        void logQueryResult(List<LogStatusEntry> statusList, List<LogDebugEntry>  debugList);
     }
 
     public class LogStatusEntry {
@@ -54,14 +58,13 @@ public class LogManager {
 
     private static final int MSG_STATUS_LOG = 1;
     private static final int MSG_DEBUG_LOG = 2;
-    private static final int MSG_STATUS_QUERY = 3;
-    private static final int MSG_DEBUG_QUERY = 4;
+    private static final int MSG_QUERY = 3;
 
     private static final String TAG = "LogManager";
     private static final String STATUS_LOG_FILENAME = "status";
     private static final String DEBUG_LOG_FILENAME = "debug";
-    private static final long MAX_LOG_HISTORY = 1000 * 60 * 60 * 24 * 2; // log file retention is 2 days (in msec)
-    private static final long MAX_FILE_HISTORY = 1000 * 60 * 60 * 2; // max single log file time is 2 hours (in msec)
+    private static final long MAX_LOG_HISTORY = 1000 * 60 * 60 * 24 * 5; // log file retention is 2 days (in msec)
+    private static final long MAX_FILE_HISTORY = 1000 * 60 * 60 * 1; // max single log file time is 1 hour (in msec)
 
     private static LogManager mLogManager = null;
 
@@ -112,11 +115,13 @@ public class LogManager {
                         saveDebugLog(db.startTime, db.endTime, db.data, db.position);
                         DebugBuffer.recycle(db);
                         break;
-                    case MSG_STATUS_QUERY:
-                        getStatusData(msg.arg1,msg.arg2);
-                        break;
-                    case MSG_DEBUG_QUERY:
-                        getDebugData(msg.arg1,msg.arg2);
+                    case MSG_QUERY:
+                        List<LogStatusEntry> statusList = getStatusData(msg.arg1,msg.arg2);
+                        List<LogDebugEntry>  debugList  = getDebugData (msg.arg1,msg.arg2);
+                        synchronized (this) {
+                            if (mListener != null)
+                                mListener.logQueryResult(statusList, debugList);
+                        }
                         break;
                 }
             }
@@ -126,7 +131,7 @@ public class LogManager {
 
         final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
+            public void onReceive(Context context, @NotNull Intent intent) {
                 if (intent.getAction() == null)
                     return;
                 byte[] data;
@@ -147,11 +152,11 @@ public class LogManager {
                         break;
                     case TSDZBTService.TSDZ_STATUS_BROADCAST:
                         now = System.currentTimeMillis();
-                        data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                         // log 1 msg/sec
                         if ((now - lastStatusTimestamp) <= 900)
                             return;
                         lastStatusTimestamp = now;
+                        data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                         // statusBuffer could be overwritten if a new notification arrives before statusBuffer
                         // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
                         if (statusBuffer == null)
@@ -164,11 +169,11 @@ public class LogManager {
                         break;
                     case TSDZBTService.TSDZ_DEBUG_BROADCAST:
                         now = System.currentTimeMillis();
-                        data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                         // log 1 msg/sec
                         if ((now - lastDebugTimestamp) <= 900)
                             return;
                         lastDebugTimestamp = now;
+                        data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                         // debugBuffer could be overwritten if a new notification arrives before debugBuffer
                         // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
                         if (debugBuffer == null)
@@ -191,17 +196,20 @@ public class LogManager {
         }
     }
 
-    public void queryStatusData(int minuteFrom, int minuteTo) {
+    public void queryLogData(int minuteFrom, int minuteTo) {
         if (mListener == null)
             return;
-        Message msg = mHandler.obtainMessage(MSG_STATUS_QUERY, minuteFrom, minuteTo);
-        mHandler.sendMessage(msg);
-    }
-
-    public void queryDebugData(int minuteFrom, int minuteTo) {
-        if (mListener == null)
-            return;
-        Message msg = mHandler.obtainMessage(MSG_DEBUG_QUERY, minuteFrom, minuteTo);
+        if (statusBuffer != null) {
+            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
+            mHandler.sendMessage(msg);
+            statusBuffer = StatusBuffer.obtain();
+        }
+        if (debugBuffer != null) {
+            Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
+            mHandler.sendMessage(msg);
+            debugBuffer = DebugBuffer.obtain();
+        }
+        Message msg = mHandler.obtainMessage(MSG_QUERY, minuteFrom, minuteTo);
         mHandler.sendMessage(msg);
     }
 
@@ -340,7 +348,7 @@ public class LogManager {
     }
 
     // Verify if the log file is correctly aligned and return the first and last log timestamps
-    private TimeInterval checkLogFile(RandomAccessFile f, long logEntrySize) throws IOException {
+    private TimeInterval checkLogFile(@NotNull RandomAccessFile f, long logEntrySize) throws IOException {
         TimeInterval ret = new TimeInterval(0,0);
         long l = f.length();
 
@@ -384,11 +392,14 @@ public class LogManager {
         }
     }
 
-    private void getStatusData (int fromMinute, int toMinute) {
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.ITALY);
+
+    private ArrayList<LogStatusEntry> getStatusData (int fromMinute, int toMinute) {
         ArrayList<LogStatusEntry> ret = new ArrayList<>();
         byte[] data = new byte[STATUS_ADV_SIZE];
         long fromTime = (long)fromMinute * 60L * 1000L;
         long toTime = (long)toMinute * 60L * 1000L;
+        Log.d(TAG, "getStatusData - fromTime=" + sdf.format(new Date(fromTime)) + " toTime=" + sdf.format(new Date(toTime)));
 
         try {
             FileInputStream fis;
@@ -413,18 +424,15 @@ public class LogManager {
                             while (dis.available() > 0) {
                                 t = dis.readLong();
                                 if (t >= toTime) {
-                                    synchronized (this) {
-                                        if (mListener != null)
-                                            mListener.logStatusResult(ret);
-                                    }
-                                    return;
+                                    return ret;
                                 } else if (t >= fromTime) {
-                                    if (dis.read(data) == STATUS_ADV_SIZE) {
+                                    int n = dis.read(data);
+                                    if (n == STATUS_ADV_SIZE) {
                                         LogStatusEntry entry = new LogStatusEntry();
                                         entry.time = t;
                                         entry.status.setData(data);
                                         ret.add(entry);
-                                    } else
+                                    } else if (n > 0)
                                         Log.e(TAG, "getStatusData read error");
                                 } else
                                     dis.skipBytes(STATUS_ADV_SIZE);
@@ -445,29 +453,22 @@ public class LogManager {
         try {
             long t;
             if (statusLogInterval.startTime>toTime || statusLogInterval.endTime<fromTime) {
-                synchronized (this) {
-                    if (mListener != null)
-                        mListener.logStatusResult(ret);
-                }
-                return;
+                return ret;
             }
 
             try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileStatus)))){
                 while (dis.available() > 0) {
                     t = dis.readLong();
                     if (t >= toTime) {
-                        synchronized (this) {
-                            if (mListener != null)
-                                mListener.logStatusResult(ret);
-                        }
-                        return;
+                        return ret;
                     } else if (t >= fromTime) {
-                        if (dis.read(data) == STATUS_ADV_SIZE) {
+                        int n = dis.read(data);
+                        if (n == STATUS_ADV_SIZE) {
                             LogStatusEntry entry = new LogStatusEntry();
                             entry.time = t;
                             entry.status.setData(data);
                             ret.add(entry);
-                        } else
+                        } else if (n > 0)
                             Log.e(TAG, "getStatusData read error");
                     } else
                         dis.skipBytes(STATUS_ADV_SIZE);
@@ -476,17 +477,15 @@ public class LogManager {
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
-        synchronized (this) {
-            if (mListener != null)
-                mListener.logStatusResult(ret);
-        }
+        return ret;
     }
 
-    private void getDebugData (int fromMinute, int toMinute) {
+    private ArrayList<LogDebugEntry> getDebugData (int fromMinute, int toMinute) {
         ArrayList<LogDebugEntry> ret = new ArrayList<>();
         byte[] data = new byte[DEBUG_ADV_SIZE];
-        long fromTime = fromMinute * 60 * 1000;
-        long toTime = toMinute * 60 * 1000;
+        long fromTime = (long)fromMinute * 60L * 1000L;
+        long toTime = (long)toMinute * 60L * 1000L;
+        Log.d(TAG, "getDebugData - fromTime=" + sdf.format(new Date(fromTime)) + " toTime=" + sdf.format(new Date(toTime)));
 
         try {
             FileInputStream fis;
@@ -511,18 +510,15 @@ public class LogManager {
                             while (dis.available() > 0) {
                                 t = dis.readLong();
                                 if (t >= toTime) {
-                                    synchronized (this) {
-                                        if (mListener != null)
-                                            mListener.logDebugResult(ret);
-                                    }
-                                    return;
+                                    return ret;
                                 } else if (t >= fromTime) {
-                                    LogDebugEntry entry = new LogDebugEntry();
-                                    entry.time = t;
-                                    if (dis.read(data) == DEBUG_ADV_SIZE) {
+                                    int n = dis.read(data);
+                                    if (n == DEBUG_ADV_SIZE) {
+                                        LogDebugEntry entry = new LogDebugEntry();
+                                        entry.time = t;
                                         entry.debug.setData(data);
                                         ret.add(entry);
-                                    } else
+                                    } else if (n > 0)
                                         Log.e(TAG, "getDebugData read error");
                                 } else
                                     dis.skipBytes(DEBUG_ADV_SIZE);
@@ -543,29 +539,22 @@ public class LogManager {
         try {
             long t;
             if (debugLogInterval.startTime>toTime || debugLogInterval.endTime<fromTime) {
-                synchronized (this) {
-                    if (mListener != null)
-                        mListener.logDebugResult(ret);
-                }
-                return;
+                return ret;
             }
 
-            try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileDebug)))) {
+            try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileDebug)))){
                 while (dis.available() > 0) {
                     t = dis.readLong();
                     if (t >= toTime) {
-                        synchronized (this) {
-                            if (mListener != null)
-                                mListener.logDebugResult(ret);
-                        }
-                        return;
+                        return ret;
                     } else if (t >= fromTime) {
-                        LogDebugEntry entry = new LogDebugEntry();
-                        entry.time = t;
-                        if (dis.read(data) == DEBUG_ADV_SIZE) {
+                        int n = dis.read(data);
+                        if (n == DEBUG_ADV_SIZE) {
+                            LogDebugEntry entry = new LogDebugEntry();
+                            entry.time = t;
                             entry.debug.setData(data);
                             ret.add(entry);
-                        } else
+                        } else if (n > 0)
                             Log.e(TAG, "getDebugData read error");
                     } else
                         dis.skipBytes(DEBUG_ADV_SIZE);
@@ -574,9 +563,6 @@ public class LogManager {
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
-        synchronized (this) {
-            if (mListener != null)
-                mListener.logDebugResult(ret);
-        }
+        return ret;
     }
 }

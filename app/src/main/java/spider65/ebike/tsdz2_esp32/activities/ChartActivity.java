@@ -1,14 +1,18 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
 
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -24,8 +28,10 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -64,7 +70,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
 
         TimeZone tz = Calendar.getInstance().getTimeZone();
-        tzOffset = tz.getOffset(System.currentTimeMillis())/1000;
+        tzOffset = tz.getOffset(System.currentTimeMillis())/1000/60;
 
         logManager = MyApp.getLogManager();
         logManager.setListener(this);
@@ -89,7 +95,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         // modify the legend ...
         l.setForm(Legend.LegendForm.LINE);
         l.setTypeface(tfLight);
-        l.setTextSize(12f);
+        l.setTextSize(14f);
         l.setTextColor(Color.WHITE);
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
@@ -99,30 +105,28 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setTypeface(tfLight);
-        xAxis.setTextSize(12f);
+        xAxis.setTextSize(14f);
         xAxis.setTextColor(Color.WHITE);
         xAxis.setDrawGridLines(true);
         xAxis.setDrawAxisLine(true);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawLabels(true);
-
+        xAxis.setAxisMinimum(0f);
+        xAxis.setAxisMaximum(30f);
+        xAxis.setGranularity(1f);
 
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                /*
-                ViewPortHandler viewPortHandler = myChart.getViewPortHandler();
-                float scaleX = viewPortHandler.getScaleX();
-                */
                 return String.valueOf(value);
             }
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
-                //return String.valueOf(value);
+                //return String.format(Locale.ITALY,"%.1f",value);
 
-                long l = (long)(value*60)+statusStartTime+tzOffset;
-                int minutes = (int) ((l / (60L)) % 60L);
-                int hours   = (int) ((l / (60L*60L)) % 24L);
+                long l = (long)(value)+(startTime/1000L/60L)+tzOffset;
+                int minutes = (int) (l % 60L);
+                int hours   = (int) ((l / 60L) % 24L);
                 return String.format(Locale.ITALY,"%02d:%02d",hours,minutes);
             }
         });
@@ -130,8 +134,9 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setTypeface(tfLight);
         leftAxis.setTextColor(ColorTemplate.getHoloBlue());
-        //leftAxis.setAxisMaximum(200f);
-        //leftAxis.setAxisMinimum(0f);
+        leftAxis.setTextSize(14f);
+        leftAxis.setAxisMaximum(100f);
+        leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(true);
         leftAxis.setGranularityEnabled(true);
 
@@ -177,21 +182,10 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch (item.getItemId()) {
-            case R.id.actionToggleValues: {
-                List<ILineDataSet> sets = chart.getData()
-                        .getDataSets();
-
-                for (ILineDataSet iSet : sets) {
-
-                    LineDataSet set = (LineDataSet) iSet;
-                    set.setDrawValues(!set.isDrawValuesEnabled());
-                }
-
-                chart.invalidate();
+            case R.id.menu_edit:
+                showDataSelectionDialog();
                 break;
-            }
             case R.id.actionToggleHighlight: {
                 if (chart.getData() != null) {
                     chart.getData().setHighlightEnabled(!chart.getData().isHighlightEnabled());
@@ -200,84 +194,16 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 break;
             }
             case R.id.actionToggleFilled: {
-
-                List<ILineDataSet> sets = chart.getData()
-                        .getDataSets();
-
+                List<ILineDataSet> sets = chart.getData().getDataSets();
                 for (ILineDataSet iSet : sets) {
-
                     LineDataSet set = (LineDataSet) iSet;
-                    if (set.isDrawFilledEnabled())
-                        set.setDrawFilled(false);
-                    else
-                        set.setDrawFilled(true);
-                }
-                chart.invalidate();
-                break;
-            }
-            case R.id.actionToggleCircles: {
-                List<ILineDataSet> sets = chart.getData()
-                        .getDataSets();
-
-                for (ILineDataSet iSet : sets) {
-
-                    LineDataSet set = (LineDataSet) iSet;
-                    if (set.isDrawCirclesEnabled())
-                        set.setDrawCircles(false);
-                    else
-                        set.setDrawCircles(true);
-                }
-                chart.invalidate();
-                break;
-            }
-            case R.id.actionToggleCubic: {
-                List<ILineDataSet> sets = chart.getData()
-                        .getDataSets();
-
-                for (ILineDataSet iSet : sets) {
-
-                    LineDataSet set = (LineDataSet) iSet;
-                    set.setMode(set.getMode() == LineDataSet.Mode.CUBIC_BEZIER
-                            ? LineDataSet.Mode.LINEAR
-                            : LineDataSet.Mode.CUBIC_BEZIER);
-                }
-                chart.invalidate();
-                break;
-            }
-            case R.id.actionToggleStepped: {
-                List<ILineDataSet> sets = chart.getData()
-                        .getDataSets();
-
-                for (ILineDataSet iSet : sets) {
-
-                    LineDataSet set = (LineDataSet) iSet;
-                    set.setMode(set.getMode() == LineDataSet.Mode.STEPPED
-                            ? LineDataSet.Mode.LINEAR
-                            : LineDataSet.Mode.STEPPED);
-                }
-                chart.invalidate();
-                break;
-            }
-            case R.id.actionToggleHorizontalCubic: {
-                List<ILineDataSet> sets = chart.getData()
-                        .getDataSets();
-
-                for (ILineDataSet iSet : sets) {
-
-                    LineDataSet set = (LineDataSet) iSet;
-                    set.setMode(set.getMode() == LineDataSet.Mode.HORIZONTAL_BEZIER
-                            ? LineDataSet.Mode.LINEAR
-                            : LineDataSet.Mode.HORIZONTAL_BEZIER);
+                    set.setDrawFilled(!set.isDrawFilledEnabled());
                 }
                 chart.invalidate();
                 break;
             }
             case R.id.actionTogglePinch: {
-                if (chart.isPinchZoomEnabled())
-                    chart.setPinchZoom(false);
-                else
-                    chart.setPinchZoom(true);
-
+                chart.setPinchZoom(!chart.isPinchZoomEnabled());
                 chart.invalidate();
                 break;
             }
@@ -286,51 +212,51 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 chart.notifyDataSetChanged();
                 break;
             }
-            case R.id.animateX: {
-                chart.animateX(2000);
-                break;
-            }
-            case R.id.animateY: {
-                chart.animateY(2000);
-                break;
-            }
-            case R.id.animateXY: {
-                chart.animateXY(2000, 2000);
-                break;
-            }
         }
         return true;
+    }
+
+    private void showDataSelectionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.data_select));
+
+        String[] animals = {"speed", "cadence", "Voltage", "Amperes", "Motor Power", "Human Power", "torque", "level", "Motor Temp.", "PCB Temp."};
+        boolean[] checkedItems = {true, false, false, false, false, false, false, false, false, false};
+        builder.setMultiChoiceItems(animals, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                Log.d(TAG, "OnMultiChoiceClickListener: which="+which+" isChecked="+isChecked);
+                checkedItems[which] = isChecked;
+                if (((AlertDialog)dialog).getListView().getCheckedItemCount() > 2) {
+                    ((AlertDialog)dialog).getListView().setItemChecked(which, false);
+                    checkedItems[which]=false;
+                    Toast.makeText(getApplicationContext(),"You can select max 2 values",Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // add OK and Cancel buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.d(TAG, "PositiveButton onClick: which="+which);
+                SparseBooleanArray sba = ((AlertDialog)dialog).getListView().getCheckedItemPositions();
+                for (int i=0;i<checkedItems.length;i++) {
+                    Log.d(TAG,animals[i]+"="+sba.get(i));
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+
+        // create and show the alert dialog
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
 
     void setData() {
         long start,end;
         ArrayList<Entry> values = new ArrayList<>();
-
-        /*
-        end = System.currentTimeMillis();
-        end = end/1000/60*60;
-        start = end - (60 * 30); // 30 min
-
-        ArrayList<Entry> values = new ArrayList<>();
-        float val, min = 1000000000, max = 0;
-
-        // impostare l'asse x in modo che l'unità sia 1 minuto e garanularity = 1
-        // con secondi e granularity = 60 non funziona.
-        for (long i=start; i<end; i++) {
-            val = (float)(16 * Math.sin((double)i/57));
-            values.add(new Entry((float)(i-start)/60, val));
-        }
-        max = 16f;
-        min = -16f;
-
-        chart.getXAxis().setAxisMinimum(0f);
-        chart.getXAxis().setAxisMaximum(30f);
-        chart.getXAxis().setGranularity(1f);
-        */
-
-        end = System.currentTimeMillis()/1000L/60L;
-        start = end - 30;
         LineDataSet set = new LineDataSet(values, "Speed");
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
@@ -345,56 +271,54 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         set.setDrawCircles(false);
         set.setDrawFilled(false);
         LineData data = new LineData(set);
-        chart.getAxisLeft().setAxisMinimum(0);
-        chart.getAxisLeft().setAxisMaximum(100);
-        chart.getXAxis().setGranularity(1f);
+        data.setHighlightEnabled(false);
         chart.setData(data);
-        logManager.queryStatusData((int)start, (int)end);
-        //logManager.queryDebugData((int)start, (int)end);
+
+        end = System.currentTimeMillis()/1000L/60L;
+        start = end - 30;
+        startTime = start*60*1000;
+        logManager.queryLogData((int)start, (int)end);
     }
+
+    private void drawData() {
+        ArrayList<Entry> values = new ArrayList<>();
+        for (int i=0; i<statusData.size(); i++) {
+            float x = (float)((statusData.get(i).time - startTime) / 1000) / 60f;
+            float y = (float)(50 + 10*Math.sin(x));
+            //float y = statusData.get(i).status.speed;
+            values.add(new Entry(x, y));
+        }
+        synchronized (this) {
+            LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
+            set.setValues(values);
+            chart.getData().notifyDataChanged();
+            chart.notifyDataSetChanged();
+            chart.postInvalidate();
+        }
+    }
+
 
     private List<LogManager.LogStatusEntry> statusData = null;
     private List<LogManager.LogDebugEntry>  debugData  = null;
-    private long statusStartTime = 0;
-    private long debugStartTime = 0;
+    private long startTime = 0;
+
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.ITALY);
 
     @Override
-    public void logStatusResult(List<LogManager.LogStatusEntry> result) {
-        statusData = result;
-        statusStartTime = statusData.get(0).time/1000;
-
-        LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
-
-        ArrayList<Entry> values = new ArrayList<>();
-        for (int i=0; i<statusData.size(); i++) {
-            float y = statusData.get(i).status.speed;
-            float x = (float)((statusData.get(i).time - statusStartTime) / 1000) / 60f;
-            values.add(new Entry(x, y));
+    public void logQueryResult(List<LogManager.LogStatusEntry> statusList, List<LogManager.LogDebugEntry>  debugList) {
+        if (statusList.size() == 0 || debugList.size() == 0) {
+            Log.d(TAG, "logQueryResult - no data found. Num status records=" + statusList.size()
+                    + " Num debug records=" + debugList.size());
+            return;
         }
-        set.setValues(values);
-        runOnUiThread( () -> {
-                chart.getData().notifyDataChanged();
-                chart.notifyDataSetChanged();
-            });
+        statusData = statusList;
+        debugData = debugList;
+
+        Log.d(TAG, "logQueryResult Status: startTTime=" + sdf.format(new Date(statusData.get(0).time)) +
+                " endTime=" + sdf.format(new Date(statusData.get(statusData.size()-1).time)));
+        Log.d(TAG, "logQueryResult Debug: - startTTime=" + sdf.format(new Date(debugData.get(0).time)) +
+                " endTime=" + sdf.format(new Date(debugData.get(debugData.size()-1).time)));
+        drawData();
     }
 
-    @Override
-    public void logDebugResult(List<LogManager.LogDebugEntry>  result) {
-        debugData = result;
-        debugStartTime = debugData.get(0).time;
-
-        LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
-
-        ArrayList<Entry> values = new ArrayList<>();
-        for (int i=0; i<debugData.size(); i++) {
-            float y = debugData.get(i).debug.dutyCycle;
-            float x = (float)((debugData.get(i).time - debugStartTime) / 1000) / 60f;
-            values.add(new Entry(x, y));
-        }
-        set.setValues(values);
-        runOnUiThread( () -> {
-            chart.getData().notifyDataChanged();
-            chart.notifyDataSetChanged();
-        });
-    }
 }

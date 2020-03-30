@@ -74,11 +74,11 @@
     <string name="address_not_contiguous">non-contiguous addresses</string>
     <string name="wrong_start_address">wrong firmware addresses</string>
     <string name="update_error">Update error!\nphase:%1$d code:%2$d</string>
-    <string name="updateStarted">Waiting upload ...</string>
-    <string name="waiting_sync">Waiting Sync ...</string>
+    <string name="updateStarted">Waiting upload …</string>
+    <string name="waiting_sync">Waiting Sync …</string>
     <string name="sync_done">Bootloader sync done</string>
     <string name="bootloader_version">Bootloader version: %1$x</string>
-    <string name="waiting_connection">Waiting Connection ...</string>
+    <string name="waiting_connection">Waiting Connection …</string>
     <string name="update_start_procedure">Update start procedure</string>
     <string name="update_start_description">1) Switch off the bike display\n2) Wait some seconds\n3) Switch on the display\n4) Press OK when done</string>
     <string name="uploading">Uploading: %1$d%%</string>
@@ -86,7 +86,7 @@
     <string name="upgrade_ok">Firmware upgraded</string>
     <string name="stm8_upgrade_message">Bike firmware successfully updated!</string>
     <string name="uploaded_bytes">Uploaded %1$d bytes</string>
-    <string name="waitingReboot">ESP32 restarting ...</string>
+    <string name="waitingReboot">ESP32 restarting …</string>
     <string name="rebootDone">ESP32 started!</string>
     <string name="updateError">Update cannot start</string>
     <string name="upload_error">Update error: %1$d</string>
@@ -250,6 +250,8 @@
 
 
     <!--  Chart Example Values -->
+
+    <string name="data_select">Select data</string>
 
     <string name="actionSave">Save to Gallery</string>
 
