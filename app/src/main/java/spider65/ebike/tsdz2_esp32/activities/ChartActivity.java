@@ -274,10 +274,8 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         data.setHighlightEnabled(false);
         chart.setData(data);
 
-        end = System.currentTimeMillis()/1000L/60L;
-        start = end - 30;
-        startTime = start*60*1000;
-        logManager.queryLogData((int)start, (int)end);
+
+        logManager.queryLogIntervals();
     }
 
     private void drawData() {
@@ -305,7 +303,27 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.ITALY);
 
     @Override
-    public void logQueryResult(List<LogManager.LogStatusEntry> statusList, List<LogManager.LogDebugEntry>  debugList) {
+    public void logIntervalsResult(List<LogManager.TimeInterval> intervals) {
+        if (intervals.size() == 0) {
+            Log.d(TAG, "logIntervalsResult - no intervals found.");
+            return;
+        }
+        for (int i=0; i < intervals.size(); i++) {
+            String s = String.format(Locale.ITALY,"Interval %d: from %s - to %s",
+                    i,
+                    sdf.format(new Date(intervals.get(i).startTime)),
+                    sdf.format(new Date(intervals.get(i).endTime)));
+            Log.d(TAG, s);
+        }
+        long end,start;
+        end = intervals.get(intervals.size()-1).endTime/1000L/60L;
+        start = end - 30;
+        startTime = start*60*1000;
+        logManager.queryLogData((int)start, (int)end);
+    }
+
+    @Override
+    public void logDataResult(List<LogManager.LogStatusEntry> statusList, List<LogManager.LogDebugEntry>  debugList) {
         if (statusList.size() == 0 || debugList.size() == 0) {
             Log.d(TAG, "logQueryResult - no data found. Num status records=" + statusList.size()
                     + " Num debug records=" + debugList.size());

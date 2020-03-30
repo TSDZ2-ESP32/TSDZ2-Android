@@ -35,21 +35,22 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 public class LogManager {
 
     public interface LogResultListener {
-        void logQueryResult(List<LogStatusEntry> statusList, List<LogDebugEntry>  debugList);
+        void logIntervalsResult(List<TimeInterval> intervals);
+        void logDataResult(List<LogStatusEntry> statusList, List<LogDebugEntry>  debugList);
     }
 
-    public class LogStatusEntry {
+    public static class LogStatusEntry {
         public TSDZ_Status status = new TSDZ_Status();
         public long time;
     }
 
-    public class LogDebugEntry {
+    public static class LogDebugEntry {
         public TSDZ_Debug debug = new TSDZ_Debug();
         public long time;
     }
 
-    private class TimeInterval {
-        long startTime, endTime;
+    public class TimeInterval {
+        public long startTime, endTime;
         TimeInterval(long t1, long t2) {
             startTime = t1;
             endTime = t2;
@@ -58,13 +59,19 @@ public class LogManager {
 
     private static final int MSG_STATUS_LOG = 1;
     private static final int MSG_DEBUG_LOG = 2;
-    private static final int MSG_QUERY = 3;
+    private static final int MSG_QUERY_DATA = 3;
+    private static final int MSG_QUERY_INTERVALS = 4;
 
     private static final String TAG = "LogManager";
     private static final String STATUS_LOG_FILENAME = "status";
     private static final String DEBUG_LOG_FILENAME = "debug";
-    private static final long MAX_LOG_HISTORY = 1000 * 60 * 60 * 24 * 5; // log file retention is 2 days (in msec)
-    private static final long MAX_FILE_HISTORY = 1000 * 60 * 60 * 1; // max single log file time is 1 hour (in msec)
+
+    // max time interval between two log entries in a single log file. If more, a new log file is started.
+    private static final long MAX_LOG_PAUSE = 1000 * 60 * 20;
+    // log file retention is 7 days (in msec)
+    private static final long MAX_LOG_HISTORY = 1000 * 60 * 60 * 24 * 7;
+    // max single log file time is 6 hours (in msec)
+    private static final long MAX_FILE_HISTORY = 1000 * 60 * 60 * 6;
 
     private static LogManager mLogManager = null;
 
@@ -115,12 +122,19 @@ public class LogManager {
                         saveDebugLog(db.startTime, db.endTime, db.data, db.position);
                         DebugBuffer.recycle(db);
                         break;
-                    case MSG_QUERY:
+                    case MSG_QUERY_DATA:
                         List<LogStatusEntry> statusList = getStatusData(msg.arg1,msg.arg2);
                         List<LogDebugEntry>  debugList  = getDebugData (msg.arg1,msg.arg2);
                         synchronized (this) {
                             if (mListener != null)
-                                mListener.logQueryResult(statusList, debugList);
+                                mListener.logDataResult(statusList, debugList);
+                        }
+                        break;
+                    case MSG_QUERY_INTERVALS:
+                        List<TimeInterval> result = getLogIntervals();
+                        synchronized (this) {
+                            if (mListener != null)
+                                mListener.logIntervalsResult(result);
                         }
                         break;
                 }
@@ -196,6 +210,11 @@ public class LogManager {
         }
     }
 
+    public void queryLogIntervals() {
+        Message msg = mHandler.obtainMessage(MSG_QUERY_INTERVALS);
+        mHandler.sendMessage(msg);
+    }
+
     public void queryLogData(int minuteFrom, int minuteTo) {
         if (mListener == null)
             return;
@@ -209,12 +228,21 @@ public class LogManager {
             mHandler.sendMessage(msg);
             debugBuffer = DebugBuffer.obtain();
         }
-        Message msg = mHandler.obtainMessage(MSG_QUERY, minuteFrom, minuteTo);
+        Message msg = mHandler.obtainMessage(MSG_QUERY_DATA, minuteFrom, minuteTo);
         mHandler.sendMessage(msg);
     }
 
     private void saveStatusLog(long startTime, long endTime, byte[] data, int length) {
         Log.d(TAG, "saveStatusLog");
+
+        // check if log was paused for more than MAX_LOG_PAUSE
+        // or the file log interval is more than MAX_FILE_HISTORY
+        // if yes, start a new log file
+        if ((statusLogInterval.endTime != 0) &&
+                ((startTime - statusLogInterval.endTime) > MAX_LOG_PAUSE) ||
+                 (startTime - statusLogInterval.startTime) > MAX_FILE_HISTORY)
+            swapStatusFile();
+
         if (statusLogInterval.startTime == 0)
             statusLogInterval.startTime = startTime;
         statusLogInterval.endTime = endTime;
@@ -230,6 +258,15 @@ public class LogManager {
 
     private void saveDebugLog(long startTime, long endTime, byte[] data, int length) {
         Log.d(TAG, "saveDebugLog");
+
+        // check if log was paused for more than MAX_LOG_PAUSE
+        // or the file log interval is more than MAX_FILE_HISTORY
+        // if yes, start a new log file
+        if ((debugLogInterval.endTime != 0) &&
+                ((startTime - debugLogInterval.endTime) > MAX_LOG_PAUSE) ||
+                (startTime - debugLogInterval.startTime) > MAX_FILE_HISTORY)
+            swapDebugFile();
+
         if (debugLogInterval.startTime == 0)
             debugLogInterval.startTime = startTime;
         debugLogInterval.endTime = endTime;
@@ -256,11 +293,13 @@ public class LogManager {
             for (File f:files) {
                 String s1 = f.getName();
                 String[] s = s1.split("\\.");
-                long endTime = Long.valueOf(s[3]);
-                if ((now - endTime) > MAX_LOG_HISTORY)
+                long endTime = Long.parseLong(s[3]);
+                if ((now - endTime) > MAX_LOG_HISTORY) {
+                    Log.d(TAG,"Removing file: "+f.getName()+" File end Time:"+endTime+" now="+now);
                     if (!f.delete()) {
                         Log.e(TAG, "Can't remove " + f.getAbsolutePath());
                     }
+                }
             }
         }
         // rename current log file to status.log.startTime.endTime and
@@ -269,6 +308,7 @@ public class LogManager {
                 statusLogInterval.startTime + "." + statusLogInterval.endTime);
         try {
             rafStatus.close();
+            Log.d(TAG,"Renaming file: "+fileStatus.getName()+" to:"+f2.getName());
             if (!fileStatus.renameTo(f2))
                 Log.e(TAG,"Failed to rename file to " + f2.getName() );
             newStatusLogFile();
@@ -293,10 +333,12 @@ public class LogManager {
                 String s1 = f.getName();
                 String[] s = s1.split("\\.");
                 long endTime = Long.valueOf(s[3]);
-                if ((now - endTime) > MAX_LOG_HISTORY)
+                if ((now - endTime) > MAX_LOG_HISTORY) {
+                    Log.d(TAG,"Removing file: "+f.getName()+" File end Time:"+endTime+" now="+now);
                     if (!f.delete()) {
                         Log.e(TAG, "Can't remove " + f.getAbsolutePath());
                     }
+                }
             }
         }
         // rename current log file to debug.log.startTime.endTime and
@@ -305,6 +347,7 @@ public class LogManager {
                 debugLogInterval.startTime + "." + debugLogInterval.endTime);
         try {
             rafDebug.close();
+            Log.d(TAG,"Renaming file: "+fileDebug.getName()+" to:"+f2.getName());
             if (!fileDebug.renameTo(f2))
                 Log.e(TAG,"Failed to rename file to " + f2.getName() );
             newDebugLogFile();
@@ -394,6 +437,64 @@ public class LogManager {
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.ITALY);
 
+    private ArrayList<TimeInterval> getLogIntervals () {
+        ArrayList<TimeInterval> ret = new ArrayList<>();
+        TimeInterval ti = null;
+        try {
+            FileInputStream fis;
+            DataInputStream dis = null;
+
+            final File folder = MyApp.getInstance().getFilesDir();
+            final File[] files = folder.listFiles((dir, name) ->
+                    name.matches(STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+            long startTime, endTime;
+            if (files != null) {
+                Arrays.sort(files, (object1, object2) ->
+                        object1.getName().compareTo(object2.getName()));
+                for (File file : files) {
+                    String[] s = file.getName().split("\\.");
+                    startTime = Long.parseLong(s[2]);
+                    endTime = Long.parseLong(s[3]);
+                    Log.d(TAG, "File: " + file.getName() + " from:" + startTime + " to:" + endTime);
+
+                    if (ti != null) {
+                        if ((startTime - ti.endTime) < MAX_LOG_PAUSE) {
+                            ti.endTime = endTime;
+                        } else {
+                            Log.d(TAG, "New Interval. from:" + ti.startTime + " to:" + ti.endTime);
+                            ret.add(ti);
+                            ti = null;
+                        }
+                    }
+                    if (ti == null)
+                        ti = new TimeInterval(startTime, endTime);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+
+        if (statusLogInterval.startTime != 0) {
+            if (ti != null) {
+                if ((statusLogInterval.startTime - ti.endTime) < MAX_LOG_PAUSE) {
+                    ti.endTime = statusLogInterval.endTime;
+                } else {
+                    Log.d(TAG, "New Interval. from:" + ti.startTime + " to:" + ti.endTime);
+                    ret.add(ti);
+                    ti = new TimeInterval(statusLogInterval.startTime, statusLogInterval.endTime);
+                }
+            } else {
+                ti = new TimeInterval(statusLogInterval.startTime, statusLogInterval.endTime);
+            }
+        }
+        if (ti != null) {
+            Log.d(TAG, "New Interval. from:" + ti.startTime + " to:" + ti.endTime);
+            ret.add(ti);
+        }
+
+        return ret;
+    }
+
     private ArrayList<LogStatusEntry> getStatusData (int fromMinute, int toMinute) {
         ArrayList<LogStatusEntry> ret = new ArrayList<>();
         byte[] data = new byte[STATUS_ADV_SIZE];
@@ -415,8 +516,8 @@ public class LogManager {
 
                 for (File file : files) {
                     String[] s = file.getName().split("\\.");
-                    startTime = Long.valueOf(s[2]);
-                    endTime = Long.valueOf(s[3]);
+                    startTime = Long.parseLong(s[2]);
+                    endTime   = Long.parseLong(s[3]);
                     if (fromTime <= endTime && toTime >= startTime) {
                         try {
                             fis = new FileInputStream(file);
@@ -501,8 +602,8 @@ public class LogManager {
 
                 for (File file : files) {
                     String[] s = file.getName().split("\\.");
-                    startTime = Long.valueOf(s[2]);
-                    endTime = Long.valueOf(s[3]);
+                    startTime = Long.parseLong(s[2]);
+                    endTime   = Long.parseLong(s[3]);
                     if (fromTime <= endTime && toTime >= startTime) {
                         try {
                             fis = new FileInputStream(file);
