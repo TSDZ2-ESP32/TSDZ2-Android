@@ -40,16 +40,17 @@ public class StatusBuffer {
     boolean addRecord(byte[] rec, long time) {
         if (position >= data.length)
             return true;
-        data[position++] = (byte)((time >>> 56) & 0xFF);
-        data[position++] = (byte)((time >>> 48) & 0xFF);
-        data[position++] = (byte)((time >>> 40) & 0xFF);
-        data[position++] = (byte)((time >>> 32) & 0xFF);
-        data[position++] = (byte)((time >>> 24) & 0xFF);
-        data[position++] = (byte)((time >>> 16) & 0xFF);
-        data[position++] = (byte)((time >>> 8) & 0xFF);
-        data[position++] = (byte)(time & 0xFF);
-        System.arraycopy(rec,0, data, position, STATUS_ADV_SIZE);
-        position+=STATUS_ADV_SIZE;
+
+        data[position++] = (byte) ((time >>> 56) & 0xFF);
+        data[position++] = (byte) ((time >>> 48) & 0xFF);
+        data[position++] = (byte) ((time >>> 40) & 0xFF);
+        data[position++] = (byte) ((time >>> 32) & 0xFF);
+        data[position++] = (byte) ((time >>> 24) & 0xFF);
+        data[position++] = (byte) ((time >>> 16) & 0xFF);
+        data[position++] = (byte) ((time >>> 8) & 0xFF);
+        data[position++] = (byte) (time & 0xFF);
+        System.arraycopy(rec, 0, data, position, STATUS_ADV_SIZE);
+        position += STATUS_ADV_SIZE;
         if (startTime == 0)
             startTime = time;
         endTime = time;

@@ -37,6 +37,8 @@
 
     <string name="tsdz_version">TSDZ2 FW version: %d</string>
     <string name="choose">Choose</string>
+    <string name="selectedDevice">Selected Device</string>
+    <string name="discoveredDevices">Discovered Devices</string>
     <string name="scan">Scan</string>
     <string name="noDeviceSelected">No device selected</string>
     <string name="notification_title">Bike Connection</string>
@@ -250,6 +252,7 @@
 
 
     <!--  Chart Example Values -->
+    <string name="bike_sessions">Bike sessions</string>
 
     <string name="data_select">Select data</string>
 

@@ -2,6 +2,7 @@ package spider65.ebike.tsdz2_esp32.activities;
 
 
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -9,6 +10,11 @@ import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -46,12 +52,15 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private static final String TAG = "ChartActivity";
 
     private LineChart chart;
+    private Spinner spinner;
 
     protected Typeface tfRegular;
     protected Typeface tfLight;
 
     private long tzOffset; // Timezone offset in seconds to GMT
     private LogManager logManager;
+
+    private List<LogManager.TimeInterval> intervals = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +74,26 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         if (actionBar != null)
             actionBar.setDisplayShowTitleEnabled(false);
         chart = findViewById(R.id.chart1);
+        spinner = findViewById(R.id.spinner);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                if (intervals == null)
+                    return;
+                Log.d(TAG,"onItemSelected: position=" + position);
+                long end,start;
+                end = intervals.get(position).endTime;
+                start = end - (1000L * 60L * 30L);
+                if (start < intervals.get(position).startTime)
+                    start = intervals.get(position).startTime;
+                startTime = start;
+
+                logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
+            }
+
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                return;
+            }
+        });
 
         tfRegular = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
@@ -274,11 +303,11 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         data.setHighlightEnabled(false);
         chart.setData(data);
 
-
         logManager.queryLogIntervals();
     }
 
     private void drawData() {
+
         ArrayList<Entry> values = new ArrayList<>();
         for (int i=0; i<statusData.size(); i++) {
             float x = (float)((statusData.get(i).time - startTime) / 1000) / 60f;
@@ -286,6 +315,14 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             //float y = statusData.get(i).status.speed;
             values.add(new Entry(x, y));
         }
+
+        float max = (float)((statusData.get(statusData.size()-1).time - startTime) / 1000) / 60f;
+        if (max < 2)
+            max = 2f;
+        chart.getXAxis().setAxisMaximum(max);
+        chart.getViewPortHandler().setMaximumScaleY(1f);
+        chart.getViewPortHandler().setMaximumScaleX(max/2f);
+
         synchronized (this) {
             LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
             set.setValues(values);
@@ -300,26 +337,43 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private List<LogManager.LogDebugEntry>  debugData  = null;
     private long startTime = 0;
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.ITALY);
-
     @Override
     public void logIntervalsResult(List<LogManager.TimeInterval> intervals) {
         if (intervals.size() == 0) {
             Log.d(TAG, "logIntervalsResult - no intervals found.");
             return;
         }
-        for (int i=0; i < intervals.size(); i++) {
-            String s = String.format(Locale.ITALY,"Interval %d: from %s - to %s",
-                    i,
-                    sdf.format(new Date(intervals.get(i).startTime)),
-                    sdf.format(new Date(intervals.get(i).endTime)));
+        this.intervals = intervals;
+
+        SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
+        List<String> spinnerArray =  new ArrayList<>();
+        for (int i = 0; i < intervals.size(); i++) {
+            String s = String.format(Locale.ITALY,"%s -- %s",
+                    sdf2.format(new Date(intervals.get(i).startTime)),
+                    sdf2.format(new Date(intervals.get(i).endTime)));
+            spinnerArray.add(s);
             Log.d(TAG, s);
         }
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, spinnerArray);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinner.setAdapter(adapter);
+                spinner.setSelection(0);
+            }
+        });
+
         long end,start;
-        end = intervals.get(intervals.size()-1).endTime/1000L/60L;
-        start = end - 30;
-        startTime = start*60*1000;
-        logManager.queryLogData((int)start, (int)end);
+        end = intervals.get(0).endTime;
+        start = end - (1000L * 60L * 30L);
+        if (start < intervals.get(0).startTime)
+            start = intervals.get(0).startTime;
+        startTime = start;
+
+        logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
     }
 
     @Override
@@ -332,11 +386,11 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         statusData = statusList;
         debugData = debugList;
 
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
         Log.d(TAG, "logQueryResult Status: startTTime=" + sdf.format(new Date(statusData.get(0).time)) +
                 " endTime=" + sdf.format(new Date(statusData.get(statusData.size()-1).time)));
         Log.d(TAG, "logQueryResult Debug: - startTTime=" + sdf.format(new Date(debugData.get(0).time)) +
                 " endTime=" + sdf.format(new Date(debugData.get(debugData.size()-1).time)));
         drawData();
     }
-
 }

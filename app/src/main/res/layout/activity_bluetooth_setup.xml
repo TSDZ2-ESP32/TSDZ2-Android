@@ -42,18 +42,37 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/textView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="@string/selectedDevice"
+                android:textSize="20sp"/>
+
+            <TextView
                 android:id="@+id/deviceTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginRight="10dp"
+                android:layout_margin="10dp"
                 android:background="@drawable/border"
                 android:padding="5dp"
                 android:text="@string/noDeviceSelected"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
+
+            <View
+                android:id="@+id/divider4"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/discoveredDevices"
+                android:textSize="20sp" />
 
             <ListView
                 android:id="@+id/devicesListView"
@@ -79,7 +98,7 @@
             <View
                 android:id="@+id/divider"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
+                android:layout_height="2dp"
                 android:background="?android:attr/listDivider" />
 
             <LinearLayout

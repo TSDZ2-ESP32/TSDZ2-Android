@@ -49,7 +49,7 @@ public class LogManager {
         public long time;
     }
 
-    public class TimeInterval {
+    public static class TimeInterval {
         public long startTime, endTime;
         TimeInterval(long t1, long t2) {
             startTime = t1;
@@ -100,6 +100,7 @@ public class LogManager {
 
     private LogManager() {
         final IntentFilter mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
@@ -151,17 +152,19 @@ public class LogManager {
                 byte[] data;
                 long now;
                 switch (intent.getAction()) {
+                    case TSDZBTService.CONNECTION_LOST_BROADCAST:
+                        Log.d(TAG, "CONNECTION_LOST_BROADCAST - flush Logs");
                     case TSDZBTService.SERVICE_STOPPED_BROADCAST:
                         Log.d(TAG, "SERVICE_STOPPED_BROADCAST - flush Logs");
                         if (statusBuffer != null) {
                             Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
                             mHandler.sendMessage(msg);
-                            statusBuffer = StatusBuffer.obtain();
+                            statusBuffer = null;
                         }
                         if (debugBuffer != null) {
                             Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
                             mHandler.sendMessage(msg);
-                            debugBuffer = DebugBuffer.obtain();
+                            debugBuffer = null;
                         }
                         break;
                     case TSDZBTService.TSDZ_STATUS_BROADCAST:
@@ -171,6 +174,10 @@ public class LogManager {
                             return;
                         lastStatusTimestamp = now;
                         data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                        if (data.length != STATUS_ADV_SIZE) {
+                            Log.w(TAG, "TSDZ_STATUS_BROADCAST: Wrong data size!");
+                            return;
+                        }
                         // statusBuffer could be overwritten if a new notification arrives before statusBuffer
                         // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
                         if (statusBuffer == null)
@@ -178,7 +185,7 @@ public class LogManager {
                         if (statusBuffer.addRecord(data, now)) {
                             Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
                             mHandler.sendMessage(msg);
-                            statusBuffer = StatusBuffer.obtain();
+                            statusBuffer = null;
                         }
                         break;
                     case TSDZBTService.TSDZ_DEBUG_BROADCAST:
@@ -188,6 +195,10 @@ public class LogManager {
                             return;
                         lastDebugTimestamp = now;
                         data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                        if (data.length != DEBUG_ADV_SIZE) {
+                            Log.w(TAG, "TSDZ_STATUS_BROADCAST: Wrong data size!");
+                            return;
+                        }
                         // debugBuffer could be overwritten if a new notification arrives before debugBuffer
                         // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
                         if (debugBuffer == null)
@@ -195,7 +206,7 @@ public class LogManager {
                         if (debugBuffer.addRecord(data, now)) {
                             Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
                             mHandler.sendMessage(msg);
-                            debugBuffer = DebugBuffer.obtain();
+                            debugBuffer = null;
                         }
                         break;
                 }
@@ -211,22 +222,30 @@ public class LogManager {
     }
 
     public void queryLogIntervals() {
+        if (statusBuffer != null) {
+            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
+            mHandler.sendMessage(msg);
+            statusBuffer = null;
+        }
+        if (debugBuffer != null) {
+            Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
+            mHandler.sendMessage(msg);
+            debugBuffer = null;
+        }
         Message msg = mHandler.obtainMessage(MSG_QUERY_INTERVALS);
         mHandler.sendMessage(msg);
     }
 
     public void queryLogData(int minuteFrom, int minuteTo) {
-        if (mListener == null)
-            return;
         if (statusBuffer != null) {
             Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
             mHandler.sendMessage(msg);
-            statusBuffer = StatusBuffer.obtain();
+            statusBuffer = null;
         }
         if (debugBuffer != null) {
             Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
             mHandler.sendMessage(msg);
-            debugBuffer = DebugBuffer.obtain();
+            debugBuffer = null;
         }
         Message msg = mHandler.obtainMessage(MSG_QUERY_DATA, minuteFrom, minuteTo);
         mHandler.sendMessage(msg);
@@ -235,12 +254,15 @@ public class LogManager {
     private void saveStatusLog(long startTime, long endTime, byte[] data, int length) {
         Log.d(TAG, "saveStatusLog");
 
+        if (startTime == 0 || endTime == 0 || length == 0)
+            return;
+
         // check if log was paused for more than MAX_LOG_PAUSE
         // or the file log interval is more than MAX_FILE_HISTORY
         // if yes, start a new log file
         if ((statusLogInterval.endTime != 0) &&
-                ((startTime - statusLogInterval.endTime) > MAX_LOG_PAUSE) ||
-                 (startTime - statusLogInterval.startTime) > MAX_FILE_HISTORY)
+                (((startTime - statusLogInterval.endTime)   > MAX_LOG_PAUSE) ||
+                 ((startTime - statusLogInterval.startTime) > MAX_FILE_HISTORY)))
             swapStatusFile();
 
         if (statusLogInterval.startTime == 0)
@@ -258,6 +280,9 @@ public class LogManager {
 
     private void saveDebugLog(long startTime, long endTime, byte[] data, int length) {
         Log.d(TAG, "saveDebugLog");
+
+        if (startTime == 0 || endTime == 0 || length == 0)
+            return;
 
         // check if log was paused for more than MAX_LOG_PAUSE
         // or the file log interval is more than MAX_FILE_HISTORY
@@ -332,7 +357,7 @@ public class LogManager {
             for (File f:files) {
                 String s1 = f.getName();
                 String[] s = s1.split("\\.");
-                long endTime = Long.valueOf(s[3]);
+                long endTime = Long.parseLong(s[3]);
                 if ((now - endTime) > MAX_LOG_HISTORY) {
                     Log.d(TAG,"Removing file: "+f.getName()+" File end Time:"+endTime+" now="+now);
                     if (!f.delete()) {
@@ -367,6 +392,9 @@ public class LogManager {
             try {
                 rafStatus = new RandomAccessFile(fileStatus, "rwd");
                 statusLogInterval = checkLogFile(rafStatus,8+STATUS_ADV_SIZE);
+                Log.d(TAG,"initLogFiles: status.log found. startTime=" +
+                        sdf.format(new Date(statusLogInterval.startTime)) + " endTime=" +
+                        sdf.format(new Date(statusLogInterval.endTime)));
             } catch (Exception e) {
                Log.e(TAG,"initLogFiles", e);
             }
@@ -381,6 +409,9 @@ public class LogManager {
             try {
                 rafDebug = new RandomAccessFile(fileDebug, "rwd");
                 debugLogInterval = checkLogFile(rafDebug,8+DEBUG_ADV_SIZE);
+                Log.d(TAG,"initLogFiles: debug.log found. startTime=" +
+                        sdf.format(new Date(debugLogInterval.startTime)) + " endTime=" +
+                        sdf.format(new Date(debugLogInterval.endTime)));
             } catch (Exception e) {
                 Log.e(TAG,"initLogFiles", e);
             }
@@ -397,6 +428,7 @@ public class LogManager {
 
         // Check if the Log File is aligned and truncate if not
         if ((l % logEntrySize) > 0) {
+            Log.w(TAG,"checkLogFile: file size wrong!");
             l -= (l % logEntrySize);
             f.setLength(l);
         }
@@ -439,11 +471,8 @@ public class LogManager {
 
     private ArrayList<TimeInterval> getLogIntervals () {
         ArrayList<TimeInterval> ret = new ArrayList<>();
-        TimeInterval ti = null;
+        TimeInterval ti;
         try {
-            FileInputStream fis;
-            DataInputStream dis = null;
-
             final File folder = MyApp.getInstance().getFilesDir();
             final File[] files = folder.listFiles((dir, name) ->
                     name.matches(STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
@@ -455,19 +484,10 @@ public class LogManager {
                     String[] s = file.getName().split("\\.");
                     startTime = Long.parseLong(s[2]);
                     endTime = Long.parseLong(s[3]);
-                    Log.d(TAG, "File: " + file.getName() + " from:" + startTime + " to:" + endTime);
-
-                    if (ti != null) {
-                        if ((startTime - ti.endTime) < MAX_LOG_PAUSE) {
-                            ti.endTime = endTime;
-                        } else {
-                            Log.d(TAG, "New Interval. from:" + ti.startTime + " to:" + ti.endTime);
-                            ret.add(ti);
-                            ti = null;
-                        }
-                    }
-                    if (ti == null)
-                        ti = new TimeInterval(startTime, endTime);
+                    //Log.d(TAG, "File: " + file.getName() + " from:" + startTime + " to:" + endTime);
+                    ti = new TimeInterval(startTime, endTime);
+                    //Log.d(TAG, "getLogIntervals: New Interval from " + ti.startTime + " to " + ti.endTime);
+                    ret.add(0,ti);
                 }
             }
         } catch (Exception e) {
@@ -475,23 +495,10 @@ public class LogManager {
         }
 
         if (statusLogInterval.startTime != 0) {
-            if (ti != null) {
-                if ((statusLogInterval.startTime - ti.endTime) < MAX_LOG_PAUSE) {
-                    ti.endTime = statusLogInterval.endTime;
-                } else {
-                    Log.d(TAG, "New Interval. from:" + ti.startTime + " to:" + ti.endTime);
-                    ret.add(ti);
-                    ti = new TimeInterval(statusLogInterval.startTime, statusLogInterval.endTime);
-                }
-            } else {
-                ti = new TimeInterval(statusLogInterval.startTime, statusLogInterval.endTime);
-            }
+            ti = new TimeInterval(statusLogInterval.startTime, statusLogInterval.endTime);
+            //Log.d(TAG, "getLogIntervals: New Interval from " + ti.startTime + " to " + ti.endTime);
+            ret.add(0,ti);
         }
-        if (ti != null) {
-            Log.d(TAG, "New Interval. from:" + ti.startTime + " to:" + ti.endTime);
-            ret.add(ti);
-        }
-
         return ret;
     }
 
@@ -502,29 +509,52 @@ public class LogManager {
         long toTime = (long)toMinute * 60L * 1000L;
         Log.d(TAG, "getStatusData - fromTime=" + sdf.format(new Date(fromTime)) + " toTime=" + sdf.format(new Date(toTime)));
 
-        try {
-            FileInputStream fis;
-            DataInputStream dis = null;
-
-            final File folder = MyApp.getInstance().getFilesDir();
-            final File[] files = folder.listFiles((dir, name) ->
-                    name.matches(STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
-            long t, startTime, endTime;
-            if (files != null) {
-                Arrays.sort(files, (object1, object2) ->
-                        object1.getName().compareTo(object2.getName()));
-
-                for (File file : files) {
-                    String[] s = file.getName().split("\\.");
-                    startTime = Long.parseLong(s[2]);
-                    endTime   = Long.parseLong(s[3]);
-                    if (fromTime <= endTime && toTime >= startTime) {
-                        try {
-                            fis = new FileInputStream(file);
-                            dis = new DataInputStream(fis);
+        long t;
+        // check if requested interval is in current log file
+        if ((statusLogInterval.startTime != 0) &&
+                (fromTime <= statusLogInterval.endTime && 
+                        toTime >= statusLogInterval.startTime)) {
+            try {
+                try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileStatus)))){
+                    while (dis.available() > 0) {
+                        t = dis.readLong();
+                        if (t > toTime) {
+                            return ret;
+                        } else if (t >= fromTime) {
+                            int n = dis.read(data);
+                            if (n == STATUS_ADV_SIZE) {
+                                LogStatusEntry entry = new LogStatusEntry();
+                                entry.time = t;
+                                entry.status.setData(data);
+                                ret.add(entry);
+                            } else if (n > 0)
+                                Log.e(TAG, "getStatusData read error");
+                        } else
+                            dis.skipBytes(STATUS_ADV_SIZE);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+            return ret;
+        }
+        
+        final File folder = MyApp.getInstance().getFilesDir();
+        final File[] files = folder.listFiles((dir, name) ->
+                name.matches(STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+        long startTime, endTime;
+        if (files != null) {
+            Arrays.sort(files, (object1, object2) -> object1.getName().compareTo(object2.getName()));
+            for (File file : files) {
+                String[] s = file.getName().split("\\.");
+                startTime = Long.parseLong(s[2]);
+                endTime   = Long.parseLong(s[3]);
+                if (fromTime <= endTime && toTime >= startTime) {
+                    try {
+                        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
                             while (dis.available() > 0) {
                                 t = dis.readLong();
-                                if (t >= toTime) {
+                                if (t > toTime) {
                                     return ret;
                                 } else if (t >= fromTime) {
                                     int n = dis.read(data);
@@ -538,45 +568,13 @@ public class LogManager {
                                 } else
                                     dis.skipBytes(STATUS_ADV_SIZE);
                             }
-                        } finally {
-                            if (dis != null) {
-                                dis.close();
-                                dis = null;
-                            }
                         }
+                    } catch (Exception e) {
+                        Log.e(TAG, e.toString());
                     }
+                    return ret;
                 }
             }
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-        }
-
-        try {
-            long t;
-            if (statusLogInterval.startTime>toTime || statusLogInterval.endTime<fromTime) {
-                return ret;
-            }
-
-            try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileStatus)))){
-                while (dis.available() > 0) {
-                    t = dis.readLong();
-                    if (t >= toTime) {
-                        return ret;
-                    } else if (t >= fromTime) {
-                        int n = dis.read(data);
-                        if (n == STATUS_ADV_SIZE) {
-                            LogStatusEntry entry = new LogStatusEntry();
-                            entry.time = t;
-                            entry.status.setData(data);
-                            ret.add(entry);
-                        } else if (n > 0)
-                            Log.e(TAG, "getStatusData read error");
-                    } else
-                        dis.skipBytes(STATUS_ADV_SIZE);
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
         }
         return ret;
     }
@@ -588,29 +586,52 @@ public class LogManager {
         long toTime = (long)toMinute * 60L * 1000L;
         Log.d(TAG, "getDebugData - fromTime=" + sdf.format(new Date(fromTime)) + " toTime=" + sdf.format(new Date(toTime)));
 
-        try {
-            FileInputStream fis;
-            DataInputStream dis = null;
+        long t;
+        // check if requested interval is in current log file
+        if ((debugLogInterval.startTime != 0) &&
+                (fromTime <= debugLogInterval.endTime &&
+                        toTime >= debugLogInterval.startTime)) {
+            try {
+                try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileDebug)))){
+                    while (dis.available() > 0) {
+                        t = dis.readLong();
+                        if (t > toTime) {
+                            return ret;
+                        } else if (t >= fromTime) {
+                            int n = dis.read(data);
+                            if (n == DEBUG_ADV_SIZE) {
+                                LogDebugEntry entry = new LogDebugEntry();
+                                entry.time = t;
+                                entry.debug.setData(data);
+                                ret.add(entry);
+                            } else if (n > 0)
+                                Log.e(TAG, "getDebugData read error");
+                        } else
+                            dis.skipBytes(DEBUG_ADV_SIZE);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+            return ret;
+        }
 
-            final File folder = MyApp.getInstance().getFilesDir();
-            final File[] files = folder.listFiles((dir, name) ->
-                    name.matches(DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
-            long t, startTime, endTime;
-            if (files != null) {
-                Arrays.sort(files, (object1, object2) ->
-                        object1.getName().compareTo(object2.getName()));
-
-                for (File file : files) {
-                    String[] s = file.getName().split("\\.");
-                    startTime = Long.parseLong(s[2]);
-                    endTime   = Long.parseLong(s[3]);
-                    if (fromTime <= endTime && toTime >= startTime) {
-                        try {
-                            fis = new FileInputStream(file);
-                            dis = new DataInputStream(fis);
+        final File folder = MyApp.getInstance().getFilesDir();
+        final File[] files = folder.listFiles((dir, name) ->
+                name.matches(DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+        long startTime, endTime;
+        if (files != null) {
+            Arrays.sort(files, (object1, object2) -> object1.getName().compareTo(object2.getName()));
+            for (File file : files) {
+                String[] s = file.getName().split("\\.");
+                startTime = Long.parseLong(s[2]);
+                endTime   = Long.parseLong(s[3]);
+                if (fromTime <= endTime && toTime >= startTime) {
+                    try {
+                        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
                             while (dis.available() > 0) {
                                 t = dis.readLong();
-                                if (t >= toTime) {
+                                if (t > toTime) {
                                     return ret;
                                 } else if (t >= fromTime) {
                                     int n = dis.read(data);
@@ -624,45 +645,13 @@ public class LogManager {
                                 } else
                                     dis.skipBytes(DEBUG_ADV_SIZE);
                             }
-                        } finally {
-                            if (dis != null) {
-                                dis.close();
-                                dis = null;
-                            }
                         }
+                    } catch (Exception e) {
+                        Log.e(TAG, e.toString());
                     }
+                    return ret;
                 }
             }
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-        }
-
-        try {
-            long t;
-            if (debugLogInterval.startTime>toTime || debugLogInterval.endTime<fromTime) {
-                return ret;
-            }
-
-            try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fileDebug)))){
-                while (dis.available() > 0) {
-                    t = dis.readLong();
-                    if (t >= toTime) {
-                        return ret;
-                    } else if (t >= fromTime) {
-                        int n = dis.read(data);
-                        if (n == DEBUG_ADV_SIZE) {
-                            LogDebugEntry entry = new LogDebugEntry();
-                            entry.time = t;
-                            entry.debug.setData(data);
-                            ret.add(entry);
-                        } else if (n > 0)
-                            Log.e(TAG, "getDebugData read error");
-                    } else
-                        dis.skipBytes(DEBUG_ADV_SIZE);
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
         }
         return ret;
     }
