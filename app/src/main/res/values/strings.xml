@@ -8,10 +8,8 @@
         <item>66</item>
         <item>100</item>
     </integer-array>
-    <string name="dash">-</string>
-    <string name="brake_letter">B</string>
-    <string name="off">Off</string>
 
+    <string name="dash">-</string>
     <string name="calibration">Cal</string>
     <string name="app_name">TSDZ2_ESP32</string>
     <string name="status">STATUS DATA</string>
@@ -30,7 +28,6 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="save">Save</string>
-    <string name="version_title">FW Versions</string>
     <string name="esp32_app_version">ESP32 Main App FW version: %s</string>
     <string name="esp32_ota_versione">ESP32 OTA App FW version: %s</string>
 
@@ -43,7 +40,6 @@
     <string name="noDeviceSelected">No device selected</string>
     <string name="notification_title">Bike Connection</string>
 
-    <string name="bike_connected">Bike connected</string>
     <string name="speed">Speed</string>
     <string name="cadence">Cadence</string>
     <string name="motor_temp">Motor Temperature</string>
@@ -54,7 +50,6 @@
     <string name="energy_used">Energy Used</string>
     <string name="speedField">%.1f Km/h</string>
     <string name="cadenceField">%1$d rmp</string>
-    <string name="torqueField">%.1f N/m</string>
     <string name="temperatureField">%.1f °C</string>
     <string name="powerField">%1$d W</string>
     <string name="voltageField">%.1f V</string>
@@ -77,24 +72,18 @@
     <string name="wrong_start_address">wrong firmware addresses</string>
     <string name="update_error">Update error!\nphase:%1$d code:%2$d</string>
     <string name="updateStarted">Waiting upload …</string>
-    <string name="waiting_sync">Waiting Sync …</string>
-    <string name="sync_done">Bootloader sync done</string>
-    <string name="bootloader_version">Bootloader version: %1$x</string>
-    <string name="waiting_connection">Waiting Connection …</string>
     <string name="update_start_procedure">Update start procedure</string>
     <string name="update_start_description">1) Switch off the bike display\n2) Wait some seconds\n3) Switch on the display\n4) Press OK when done</string>
     <string name="uploading">Uploading: %1$d%%</string>
     <string name="upload_completed">Upload completed</string>
     <string name="upgrade_ok">Firmware upgraded</string>
     <string name="stm8_upgrade_message">Bike firmware successfully updated!</string>
-    <string name="uploaded_bytes">Uploaded %1$d bytes</string>
     <string name="waitingReboot">ESP32 restarting …</string>
     <string name="rebootDone">ESP32 started!</string>
     <string name="updateError">Update cannot start</string>
     <string name="upload_error">Update error: %1$d</string>
     <string name="warning">Warning</string>
     <string name="exit_warning">OTA in progress!\nConfirm exit?</string>
-    <string name="exit_warning2">Upload in progress!\nConfirm exit?</string>
     <string name="select_file">Select File</string>
     <string name="system">System</string>
     <string name="battery">Battery</string>
@@ -105,9 +94,6 @@
     <string name="motor">Motor</string>
     <string name="motor_type">Motor Type</string>
     <string name="acceleration">Acceleration</string>
-    <string name="temperature">Temperature\nsensor</string>
-    <string name="min">Min:</string>
-    <string name="max">Max:</string>
     <string name="max_current">Max current (A)</string>
     <string name="max_power">Max Power (W)</string>
     <string name="sensors">Sensors</string>
@@ -122,11 +108,8 @@
     <string name="street_mode">Street Mode</string>
     <string name="cruise_mode_enabled">Cruise mode enabled</string>
     <string name="street_mode_throttle">Throttle enabled</string>
-    <string name="max_speed">Max speed (Km/h)</string>
     <string name="wheel_perimeter">Wheel perim. (mm)</string>
-    <string name="wheel_divisor">OEM wheel div.</string>
     <string name="range_error">Value must be between %1$d and %2$d</string>
-    <string name="min_max_error">Min should be less than Max</string>
     <string name="write_cfg_error">Configuration cannot be updated</string>
     <string name="read_cfg_error">Configuration cannot be readed</string>
     <string name="connection_error">Bike is not connected</string>
@@ -173,7 +156,6 @@
     <string name="stop_temp">Shutoff Temperature</string>
     <string name="throttle_control">Throttle Control</string>
     <string name="throttle_enabled">Throttle Enabled</string>
-    <string name="title_activity_street_mode_setup">Street mode Setup</string>
     <string name="title_activity_cadence_sensor_calibration">Cadence sensor calibration</string>
 
     <string name="title_activity_esp32_config">ESP32 Configuration</string>
@@ -186,9 +168,8 @@
     <string name="adc_value">ADC value</string>
 
     <string name="controller_temp">Controller Temp.</string>
-    <string name="success">Success!</string>
 
-    <string name="update_completed">Firmware update completed.</string>
+
     <string name="cadenceStartError">Cannot start cadence calibration</string>
     <string name="cadenceStopError">Cannot stop cadence calibration</string>
     <string name="cadenceSaveError">Cannot save cadence value</string>
@@ -256,50 +237,10 @@
 
     <string name="data_select">Select data</string>
 
-    <string name="actionSave">Save to Gallery</string>
-
-    <string name="animateX">Animate X</string>
-    <string name="animateY">Animate Y</string>
-    <string name="animateXY">Animate XY</string>
-
-    <string name="actionToggleValues">Toggle Values</string>
-    <string name="actionToggleYValues">Toggle Y-Values</string>
-    <string name="actionToggleXValues">Toggle X-Values</string>
-
-    <string name="actionToggleIcons">Toggle Icons</string>
     <string name="actionToggleHighlight">Toggle Highlight</string>
     <string name="actionTogglePinch">Toggle PinchZoom</string>
     <string name="actionToggleAutoScale">Toggle Auto Scale</string>
 
-    <string name="actionToggleLineValues">Toggle Line Values</string>
-    <string name="actionToggleBarValues">Toggle Bar Values</string>
-    <string name="actionToggleBarBorders">Toggle Bar Borders</string>
     <string name="actionToggleFilled">Toggle Filled</string>
-    <string name="actionToggleCircles">Toggle Circles</string>
-    <string name="actionToggleCandleShadow">Toggle Shadow Color</string>
-
-    <string name="actionToggleCubic">Toggle Cubic</string>
-    <string name="actionToggleStepped">Toggle Stepped</string>
-    <string name="actionToggleHorizontalCubic">Toggle Horizontal Cubic</string>
-
-    <string name="actionAddEntry">Add Entry</string>
-    <string name="actionFeedMultiple">Add Multiple</string>
-    <string name="actionRemoveEntry">Remove Entry</string>
-    <string name="actionAddDataSet">Add Data Set</string>
-    <string name="actionRemoveDataSet">Remove Data Set</string>
-    <string name="actionClearChart">Clear chart</string>
-
-    <string name="actionTogglePercent">Toggle Percent</string>
-    <string name="actionToggleMinAngles">Toggle Minimum Angles</string>
-    <string name="actionToggleHole">Toggle Hole</string>
-    <string name="actionToggleCurvedSlices">Toggle Curved Slices</string>
-    <string name="actionDrawCenterText">Draw Center Text</string>
-    <string name="actionToggleHighlightCircle">Toggle Highlight Circle</string>
-    <string name="actionToggleRotation">Toggle Rotation</string>
-    <string name="actionToggleSpin">Spin Animation</string>
-
-    <string name="scrollViewStart">START OF SCROLLVIEW</string>
-    <string name="scrollViewEnd">END OF SCROLLVIEW</string>
-
 
 </resources>

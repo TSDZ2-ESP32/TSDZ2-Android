@@ -16,20 +16,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/vert1GL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.2" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/vert2GL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.6" />
-
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/main_toolbar"
             android:layout_width="match_parent"
@@ -56,46 +42,68 @@
             </androidx.appcompat.widget.Toolbar>
         </com.google.android.material.appbar.AppBarLayout>
 
-        <TextView
-            android:id="@+id/sessionsTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:text="@string/bike_sessions"
-            app:layout_constraintBottom_toBottomOf="@id/spinner"
-            app:layout_constraintEnd_toStartOf="@id/spinner"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/spinner" />
-
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_margin="10dp"
-            app:layout_constraintStart_toEndOf="@id/sessionsTV"
-            app:layout_constraintEnd_toEndOf="parent"
-
-            app:layout_constraintTop_toBottomOf="@+id/main_toolbar"/>
-
-
-        <SeekBar
-            android:id="@+id/seekBar"
-            style="@style/Widget.AppCompat.SeekBar.Discrete"
+        <LinearLayout
+            android:id="@+id/linear1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:max="1"
-            android:progress="0"
-            app:layout_constraintTop_toBottomOf="@+id/spinner" />
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/main_toolbar">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#a0a0a0">
+
+                <TextView
+                    android:id="@+id/sessionsTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="5dp"
+                    android:gravity="center"
+                    android:text="@string/bike_sessions" />
+
+                <Spinner
+                    android:id="@+id/spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
+                    android:layout_weight="10"
+                    android:gravity="fill_horizontal|center_vertical"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/fromToTV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="" />
+
+            <SeekBar
+                android:id="@+id/seekBar"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:max="10"
+                android:progress="0" />
+
+        </LinearLayout>
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart1"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/linear1"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/seekBar">
+            android:layout_height="0dp"
+            tools:layout_editor_absoluteY="138dp">
 
         </com.github.mikephil.charting.charts.LineChart>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

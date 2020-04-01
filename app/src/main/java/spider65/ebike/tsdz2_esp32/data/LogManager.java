@@ -196,7 +196,7 @@ public class LogManager {
                         lastDebugTimestamp = now;
                         data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                         if (data.length != DEBUG_ADV_SIZE) {
-                            Log.w(TAG, "TSDZ_STATUS_BROADCAST: Wrong data size!");
+                            Log.w(TAG, "TSDZ_DEBUG_BROADCAST: Wrong data size!");
                             return;
                         }
                         // debugBuffer could be overwritten if a new notification arrives before debugBuffer
@@ -288,8 +288,8 @@ public class LogManager {
         // or the file log interval is more than MAX_FILE_HISTORY
         // if yes, start a new log file
         if ((debugLogInterval.endTime != 0) &&
-                ((startTime - debugLogInterval.endTime) > MAX_LOG_PAUSE) ||
-                (startTime - debugLogInterval.startTime) > MAX_FILE_HISTORY)
+                (((startTime - debugLogInterval.endTime) > MAX_LOG_PAUSE) ||
+                 ((startTime - debugLogInterval.startTime) > MAX_FILE_HISTORY)))
             swapDebugFile();
 
         if (debugLogInterval.startTime == 0)

@@ -2,7 +2,6 @@ package spider65.ebike.tsdz2_esp32.activities;
 
 
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -13,8 +12,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -51,16 +51,25 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
     private static final String TAG = "ChartActivity";
 
+    // x axis shift step in minutes
+    private static final long TIME_STEP=15;
+    // x axis graph width in minutes
+    private static final long TIME_WINDOW=45;
+
     private LineChart chart;
     private Spinner spinner;
+    private SeekBar seekbar;
+    private TextView fromToTV;
 
     protected Typeface tfRegular;
     protected Typeface tfLight;
 
     private long tzOffset; // Timezone offset in seconds to GMT
     private LogManager logManager;
+    private boolean queryRunning = false;
 
     private List<LogManager.TimeInterval> intervals = null;
+    private int currentInterval;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,25 +84,91 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             actionBar.setDisplayShowTitleEnabled(false);
         chart = findViewById(R.id.chart1);
         spinner = findViewById(R.id.spinner);
+        seekbar = findViewById(R.id.seekBar);
+        fromToTV = findViewById(R.id.fromToTV);
+
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
                 if (intervals == null)
                     return;
                 Log.d(TAG,"onItemSelected: position=" + position);
+                currentInterval = position;
                 long end,start;
-                end = intervals.get(position).endTime;
-                start = end - (1000L * 60L * 30L);
+                end = intervals.get(currentInterval).endTime;
+                start = end - (1000L * 60L * TIME_WINDOW);
                 if (start < intervals.get(position).startTime)
                     start = intervals.get(position).startTime;
                 startTime = start;
 
+                long length = intervals.get(position).endTime - intervals.get(position).startTime;
+                length = length / 1000 / 60;
+                if (length <= TIME_WINDOW)
+                    seekbar.setEnabled(false);
+                else {
+                    length -= TIME_WINDOW;
+                    seekbar.setEnabled(true);
+                    seekbar.setMax((int)((length/TIME_STEP)+(length%TIME_STEP>0?1:0)));
+                    seekbar.setProgress(0);
+                }
+
                 logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
+                queryRunning = true;
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
-                return;
             }
         });
+
+        seekbar.setProgress(0);
+        seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+           @Override
+           public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+               long end,start;
+               end = intervals.get(currentInterval).endTime/1000L/60L - (progress * TIME_STEP) + tzOffset;
+               if (progress == seekBar.getMax())
+                   start = intervals.get(currentInterval).startTime/1000L/60L + tzOffset;
+               else
+                   start = end - TIME_WINDOW;
+
+               int minutesStart = (int) (start % 60L);
+               int hoursStart   = (int) ((start / 60L) % 24L);
+               int minutesEnd = (int) (end % 60L);
+               int hoursEnd   = (int) ((end / 60L) % 24L);
+               fromToTV.setText(String.format(Locale.ITALY,"%02d:%02d  --  %02d:%02d",
+                       hoursStart, minutesStart, hoursEnd, minutesEnd));
+           }
+
+           @Override
+           public void onStartTrackingTouch(SeekBar seekBar) {
+           }
+
+           @Override
+           public void onStopTrackingTouch(SeekBar seekBar) {
+               Log.d(TAG,"onStopTrackingTouch");
+               if (!queryRunning) {
+                   SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+                   long progress = seekBar.getProgress();
+
+                   Log.d(TAG,"New offset="+progress*TIME_STEP+" minutes");
+                   Log.d(TAG,"Current startTime="+sdf.format(new Date(startTime)));
+                   long end,start;
+                   if (progress == seekBar.getMax()) {
+                       start = intervals.get(currentInterval).startTime;
+                       end = start + (TIME_WINDOW*60L*1000L);
+                   } else if (progress == 0){
+                       end = intervals.get(currentInterval).endTime;
+                       start = end - (TIME_WINDOW*60L*1000L);
+                   } else {
+                       end = intervals.get(currentInterval).endTime - (progress * 1000 * 60 * TIME_STEP);
+                       start = end - (1000L * 60L * TIME_WINDOW);
+                   }
+                   startTime = start;
+                   Log.d(TAG,"New startTime="+sdf.format(new Date(startTime)));
+                   logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
+                   queryRunning = true;
+               }
+           }
+       });
 
         tfRegular = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
@@ -284,7 +359,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
 
     void setData() {
-        long start,end;
         ArrayList<Entry> values = new ArrayList<>();
         LineDataSet set = new LineDataSet(values, "Speed");
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
@@ -365,19 +439,11 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 spinner.setSelection(0);
             }
         });
-
-        long end,start;
-        end = intervals.get(0).endTime;
-        start = end - (1000L * 60L * 30L);
-        if (start < intervals.get(0).startTime)
-            start = intervals.get(0).startTime;
-        startTime = start;
-
-        logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
     }
 
     @Override
     public void logDataResult(List<LogManager.LogStatusEntry> statusList, List<LogManager.LogDebugEntry>  debugList) {
+        queryRunning = false;
         if (statusList.size() == 0 || debugList.size() == 0) {
             Log.d(TAG, "logQueryResult - no data found. Num status records=" + statusList.size()
                     + " Num debug records=" + debugList.size());
