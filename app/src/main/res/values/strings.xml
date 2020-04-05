@@ -166,7 +166,6 @@
     <string name="pedal_torque">Pedal Torque</string>
     <string name="cad_pulse">Cadence High %</string>
     <string name="adc_value">ADC value</string>
-
     <string name="controller_temp">Controller Temp.</string>
 
 
@@ -190,6 +189,8 @@
     <string name="pin_input_error">PIN is empty</string>
 
     <string name="title_activity_chart">Charts</string>
+    <string name="assistLevel">Assist Level</string>
+
 
     <string-array name="ota_types">
         <item> Select the App to update </item>

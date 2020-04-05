@@ -1,21 +1,25 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
-
-import android.content.DialogInterface;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.SparseBooleanArray;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -64,19 +68,26 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     protected Typeface tfRegular;
     protected Typeface tfLight;
 
-    private long tzOffset; // Timezone offset in seconds to GMT
+    private long tzOffset; // Timezone offset in minutes to GMT
     private LogManager logManager;
-    private boolean queryRunning = false;
+    private boolean queryRunning = false; // avoid to start a new query if the previous is not ended
 
     private List<LogManager.TimeInterval> intervals = null;
     private int currentInterval;
+
+    private List<LogManager.LogStatusEntry> statusData = null;
+    private List<LogManager.LogDebugEntry>  debugData  = null;
+    private long startTime = 0;
+
+    private AlertDialog dataDialog = null;
+    ArrayList<DataItem> selectedItemsList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
-
         setContentView(R.layout.activity_chart);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -100,11 +111,15 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     start = intervals.get(position).startTime;
                 startTime = start;
 
+                // calculate the length in minutes of the interval
                 long length = intervals.get(position).endTime - intervals.get(position).startTime;
                 length = length / 1000 / 60;
+                // if TIME_WINDOW cover all the interval disable the seek bar
                 if (length <= TIME_WINDOW)
                     seekbar.setEnabled(false);
                 else {
+                    // the seek bar moves the TIME_WINDOW by TIME_STEP minutes
+                    // set the seekbar max value according of the calculated length
                     length -= TIME_WINDOW;
                     seekbar.setEnabled(true);
                     seekbar.setMax((int)((length/TIME_STEP)+(length%TIME_STEP>0?1:0)));
@@ -120,16 +135,22 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         });
 
         seekbar.setProgress(0);
+        seekbar.setEnabled(false);
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
            @Override
            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+               // updates the From - To label in the view
                long end,start;
-               end = intervals.get(currentInterval).endTime/1000L/60L - (progress * TIME_STEP) + tzOffset;
-               if (progress == seekBar.getMax())
+               if (progress == seekBar.getMax()) {
                    start = intervals.get(currentInterval).startTime/1000L/60L + tzOffset;
-               else
+                   end = start + TIME_WINDOW;
+               } else if (progress == 0){
+                   end = intervals.get(currentInterval).endTime/1000L/60L + tzOffset;
                    start = end - TIME_WINDOW;
-
+               } else {
+                   end = intervals.get(currentInterval).endTime/1000L/60L + tzOffset - progress*TIME_STEP;
+                   start = end - TIME_WINDOW;
+               }
                int minutesStart = (int) (start % 60L);
                int hoursStart   = (int) ((start / 60L) % 24L);
                int minutesEnd = (int) (end % 60L);
@@ -145,6 +166,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
            @Override
            public void onStopTrackingTouch(SeekBar seekBar) {
                Log.d(TAG,"onStopTrackingTouch");
+               // TIME_WINDOW moved: start an new query
                if (!queryRunning) {
                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
                    long progress = seekBar.getProgress();
@@ -245,10 +267,8 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         leftAxis.setGranularityEnabled(true);
 
         chart.getAxisRight().setEnabled(false);
-
         chart.getViewPortHandler().setMaximumScaleY(1f);
         chart.getViewPortHandler().setMaximumScaleX(6f);
-
 
         /*
         YAxis rightAxis = chart.getAxisRight();
@@ -320,44 +340,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         return true;
     }
 
-    private void showDataSelectionDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getString(R.string.data_select));
-
-        String[] animals = {"speed", "cadence", "Voltage", "Amperes", "Motor Power", "Human Power", "torque", "level", "Motor Temp.", "PCB Temp."};
-        boolean[] checkedItems = {true, false, false, false, false, false, false, false, false, false};
-        builder.setMultiChoiceItems(animals, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                Log.d(TAG, "OnMultiChoiceClickListener: which="+which+" isChecked="+isChecked);
-                checkedItems[which] = isChecked;
-                if (((AlertDialog)dialog).getListView().getCheckedItemCount() > 2) {
-                    ((AlertDialog)dialog).getListView().setItemChecked(which, false);
-                    checkedItems[which]=false;
-                    Toast.makeText(getApplicationContext(),"You can select max 2 values",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        // add OK and Cancel buttons
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Log.d(TAG, "PositiveButton onClick: which="+which);
-                SparseBooleanArray sba = ((AlertDialog)dialog).getListView().getCheckedItemPositions();
-                for (int i=0;i<checkedItems.length;i++) {
-                    Log.d(TAG,animals[i]+"="+sba.get(i));
-                }
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-
-        // create and show the alert dialog
-        AlertDialog alertDialog = builder.create();
-        alertDialog.show();
-    }
-
-
     void setData() {
         ArrayList<Entry> values = new ArrayList<>();
         LineDataSet set = new LineDataSet(values, "Speed");
@@ -380,24 +362,57 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         logManager.queryLogIntervals();
     }
 
+    private static final float MAXSTEP = 0.1f;
     private void drawData() {
-
         ArrayList<Entry> values = new ArrayList<>();
-        for (int i=0; i<statusData.size(); i++) {
-            float x = (float)((statusData.get(i).time - startTime) / 1000) / 60f;
-            float y = (float)(50 + 10*Math.sin(x));
-            //float y = statusData.get(i).status.speed;
-            values.add(new Entry(x, y));
+        float prevx = -1;
+
+        int n = 0;
+        for (DataItem dataItem:  selectedItemsList) {
+            n++;
+            for (int i = 0; i < statusData.size(); i++) {
+                float x = (float) ((statusData.get(i).time - startTime) / 1000) / 60f;
+                if ((x - prevx) > 0.1f) {
+                    values.add(new Entry(prevx + 1 / 60f, 0));
+                    values.add(new Entry(x - 1 / 60f, 0));
+                }
+                prevx = x;
+                float y = (float) (30 + n*10 + 10 * Math.sin(x));
+                //float y = statusData.get(i).status.speed;
+                values.add(new Entry(x, y));
+            }
+            if (chart.getData().getDataSetCount() >= (n)) {
+                LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(n-1);
+                set.setValues(values);
+            } else {
+                LineData ld = chart.getData();
+                LineDataSet set = new LineDataSet(values, dataItem.name);
+                set.setAxisDependency(YAxis.AxisDependency.RIGHT);
+                set.setColor(ColorTemplate.getHoloBlue());
+                set.setCircleColor(Color.WHITE);
+                set.setLineWidth(2f);
+                set.setCircleRadius(3f);
+                set.setFillAlpha(65);
+                set.setFillColor(ColorTemplate.getHoloBlue());
+                set.setHighLightColor(Color.rgb(244, 117, 117));
+                set.setDrawCircleHole(false);
+                set.setDrawValues(false);
+                set.setDrawCircles(false);
+                set.setDrawFilled(false);
+                set.setValues(values);
+                ld.addDataSet(set);
+            }
         }
 
-        float max = (float)((statusData.get(statusData.size()-1).time - startTime) / 1000) / 60f;
+        float max = (float) ((statusData.get(statusData.size() - 1).time - startTime) / 1000) / 60f;
         if (max < 2)
             max = 2f;
         chart.getXAxis().setAxisMaximum(max);
         chart.getViewPortHandler().setMaximumScaleY(1f);
-        chart.getViewPortHandler().setMaximumScaleX(max/2f);
+        chart.getViewPortHandler().setMaximumScaleX(max / 2f);
 
         synchronized (this) {
+            chart.getData().getDataSetCount();
             LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
             set.setValues(values);
             chart.getData().notifyDataChanged();
@@ -405,11 +420,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             chart.postInvalidate();
         }
     }
-
-
-    private List<LogManager.LogStatusEntry> statusData = null;
-    private List<LogManager.LogDebugEntry>  debugData  = null;
-    private long startTime = 0;
 
     @Override
     public void logIntervalsResult(List<LogManager.TimeInterval> intervals) {
@@ -431,14 +441,11 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         final ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, spinnerArray);
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+        runOnUiThread(() -> {
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinner.setAdapter(adapter);
                 spinner.setSelection(0);
-            }
-        });
+            });
     }
 
     @Override
@@ -458,5 +465,172 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         Log.d(TAG, "logQueryResult Debug: - startTTime=" + sdf.format(new Date(debugData.get(0).time)) +
                 " endTime=" + sdf.format(new Date(debugData.get(debugData.size()-1).time)));
         drawData();
+    }
+
+
+    private enum DataType {
+        level(13), speed(0),cadence(1),pPower(2),mPower(3),current(4),
+        volt(5),energy(6),mTemp(7),cTemp(8),dCycle(9),erps(10),
+        foc(11),pTorque(12);
+
+        private final int value;
+        DataType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
+    public interface ChekedItemInterface {
+        void onItemChecked(int position, boolean checked, int numChecked);
+    }
+
+    public static class DataItem {
+        private final DataType type;
+        private final String name;
+        private Boolean checked;
+
+        DataItem(DataType type, String name, Boolean isChecked) {
+            this.type = type;
+            this.name = name;
+            this.checked = isChecked;
+        }
+    }
+
+    private static class DataItemAdapter extends BaseAdapter {
+        private final DataItem[] mData;
+        private Context mContext;
+        private ChekedItemInterface listener;
+        private int numChecked = 0;
+        private int powerCheched = 0;
+        private int temperatureChecked = 0;
+        private static final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        private final int cbId;
+
+        DataItemAdapter(DataItem[] items, Context context, ChekedItemInterface listener) {
+            for (DataItem i: items)
+                if (i.checked)
+                    numChecked++;
+            this.mData = items;
+            this.mContext = context;
+            this.listener = listener;
+            // generate CheckBox view id
+            cbId = View.generateViewId();
+            // sel left margin to 20dp
+            params.leftMargin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20f, mContext.getResources().getDisplayMetrics());
+        }
+
+        @Override
+        public int getCount() {
+            return mData.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = new LinearLayout(mContext);
+                convertView.setLayoutParams(params);
+                CheckBox cb = new CheckBox(mContext);
+                cb.setTextSize(TypedValue.COMPLEX_UNIT_SP,18f);
+                cb.setId(cbId);
+                ((LinearLayout)convertView).addView(cb, params);
+            }
+            CheckBox cb = convertView.findViewById(cbId);
+            cb.setChecked(mData[position].checked);
+            cb.setText(mData[position].name);
+            cb.setOnClickListener(v -> {
+                if (((CheckBox)v).isChecked()) {
+                    numChecked++;
+                    if (mData[position].type == DataType.mTemp || mData[position].type == DataType.cTemp)
+                        temperatureChecked++;
+                    if (mData[position].type == DataType.mPower || mData[position].type == DataType.pPower)
+                        powerCheched++;
+                } else {
+                    numChecked--;
+                    if (mData[position].type == DataType.mTemp || mData[position].type == DataType.cTemp)
+                        temperatureChecked--;
+                    if (mData[position].type == DataType.mPower || mData[position].type == DataType.pPower)
+                        powerCheched--;
+                }
+                super.notifyDataSetChanged();
+                Log.d(TAG,"toggle: " + " numChecked=" + numChecked + " powerCheched="+powerCheched+" temperatureChecked="+temperatureChecked);
+                this.listener.onItemChecked(position, ((CheckBox)v).isChecked(), numChecked);
+            });
+
+            if ((numChecked < 2) || cb.isChecked() || (numChecked==2 && (powerCheched==2 || temperatureChecked==2))) {
+                cb.setEnabled(true);
+            } else if (numChecked > 2) {
+                cb.setEnabled(false);
+            } else if ((powerCheched>0 && (
+                            mData[position].type==DataType.mPower ||
+                            mData[position].type==DataType.pPower)) ||
+                       (temperatureChecked>0 && (
+                            mData[position].type==DataType.mTemp ||
+                            mData[position].type==DataType.cTemp))) {
+                cb.setEnabled(true);
+            } else {
+                cb.setEnabled(false);
+            }
+            return convertView;
+        }
+    }
+
+    private void showDataSelectionDialog() {
+        if (dataDialog == null) {
+            DataItem[] dialogItemList = new DataItem[] {
+                    new DataItem(DataType.level, getString(R.string.assistLevel), false),
+                    new DataItem(DataType.speed, getString(R.string.speed), true),
+                    new DataItem(DataType.cadence, getString(R.string.cadence), false),
+                    new DataItem(DataType.pPower, getString(R.string.pedal_power), false),
+                    new DataItem(DataType.mPower, getString(R.string.motor_power), false),
+                    new DataItem(DataType.current, getString(R.string.motor_current), false),
+                    new DataItem(DataType.volt, getString(R.string.voltage), false),
+                    new DataItem(DataType.energy, getString(R.string.energy_used), false),
+                    new DataItem(DataType.mTemp, getString(R.string.motor_temp), false),
+                    new DataItem(DataType.cTemp, getString(R.string.controller_temp), false),
+                    new DataItem(DataType.dCycle, getString(R.string.duty_cycle), false),
+                    new DataItem(DataType.erps, getString(R.string.motor_erps), false),
+                    new DataItem(DataType.foc, getString(R.string.foc_angle), false),
+                    new DataItem(DataType.pTorque, getString(R.string.pedal_torque), false)
+            };
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(false);
+            builder.setTitle(getString(R.string.data_select));
+
+            DataItemAdapter mAdapter = new DataItemAdapter(dialogItemList, this, (position, checked, numChecked) -> {
+                    dialogItemList[position].checked = (checked);
+                    if (numChecked > 0)
+                        dataDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                    else
+                        dataDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+
+            });
+            builder.setAdapter(mAdapter, null);
+            builder.setPositiveButton(getString(R.string.ok), (dialogInterface, which) -> {
+                selectedItemsList.clear();
+                for (DataItem i:dialogItemList) {
+                    if (i.checked)
+                        selectedItemsList.add(i);
+                }
+            });
+            builder.setNegativeButton(getString(R.string.cancel), null);
+            dataDialog = builder.create();
+            ListView listView = dataDialog.getListView();
+            listView.setDivider(new ColorDrawable(Color.GRAY));
+            listView.setDividerHeight(2);
+        }
+        dataDialog.show();
     }
 }
