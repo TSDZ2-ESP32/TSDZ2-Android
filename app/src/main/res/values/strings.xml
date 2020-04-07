@@ -42,20 +42,29 @@
 
     <string name="speed">Speed</string>
     <string name="cadence">Cadence</string>
-    <string name="motor_temp">Motor Temperature</string>
+    <string name="motor_power">Motor Power</string>
     <string name="pedal_power">Pedal Power</string>
     <string name="motor_current">Motor Current</string>
-    <string name="motor_power">Motor Power</string>
     <string name="voltage">Battery Volt</string>
+    <string name="motor_temp">Motor Temp.</string>
     <string name="energy_used">Energy Used</string>
     <string name="speedField">%.1f Km/h</string>
     <string name="cadenceField">%1$d rmp</string>
-    <string name="temperatureField">%.1f °C</string>
     <string name="powerField">%1$d W</string>
-    <string name="voltageField">%.1f V</string>
     <string name="currentField">%.1f A</string>
-
+    <string name="voltageField">%.1f V</string>
+    <string name="temperatureField">%.1f °C</string>
     <string name="whField">%1$d Wh</string>
+
+    <string name="duty_cycle">Duty Cycle</string>
+    <string name="motor_erps">Motor ERPS</string>
+    <string name="foc_angle">FOC Angle</string>
+    <string name="torque_adc">Torque ADC</string>
+    <string name="pedal_torque">Pedal Torque</string>
+    <string name="cad_pulse">Cadence High %</string>
+    <string name="adc_value">ADC value</string>
+    <string name="controller_temp">Controller Temp.</string>
+
     <string name="tsdz_cfg">Bike Configuration</string>
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
     <string name="title_activity_stm8_ota">Bike Firmware Update</string>
@@ -159,14 +168,6 @@
     <string name="title_activity_cadence_sensor_calibration">Cadence sensor calibration</string>
 
     <string name="title_activity_esp32_config">ESP32 Configuration</string>
-    <string name="duty_cycle">Duty Cycle</string>
-    <string name="motor_erps">Motor ERPS</string>
-    <string name="foc_angle">FOC Angle</string>
-    <string name="torque_adc">Torque ADC</string>
-    <string name="pedal_torque">Pedal Torque</string>
-    <string name="cad_pulse">Cadence High %</string>
-    <string name="adc_value">ADC value</string>
-    <string name="controller_temp">Controller Temp.</string>
 
 
     <string name="cadenceStartError">Cannot start cadence calibration</string>

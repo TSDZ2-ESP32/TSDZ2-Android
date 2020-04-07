@@ -183,6 +183,7 @@ public class LogManager {
                         if (statusBuffer == null)
                             statusBuffer = StatusBuffer.obtain();
                         if (statusBuffer.addRecord(data, now)) {
+                            // statusBuffer is full, write it to disk
                             Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
                             mHandler.sendMessage(msg);
                             statusBuffer = null;
@@ -204,6 +205,7 @@ public class LogManager {
                         if (debugBuffer == null)
                             debugBuffer = DebugBuffer.obtain();
                         if (debugBuffer.addRecord(data, now)) {
+                            // debugBuffer is full, write it to disk
                             Message msg = mHandler.obtainMessage(MSG_DEBUG_LOG, debugBuffer);
                             mHandler.sendMessage(msg);
                             debugBuffer = null;

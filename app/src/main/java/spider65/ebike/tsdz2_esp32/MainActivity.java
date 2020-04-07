@@ -143,6 +143,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         fabButton = findViewById(R.id.fab);
         fabButton.setOnClickListener((View) -> {
+                if (MyApp.getPreferences().getString(BluetoothSetupActivity.KEY_DEVICE_NAME, null) == null) {
+                    Toast.makeText(this, "Please select the bluetooth device to connect", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 Intent intent = new Intent(MainActivity.this, TSDZBTService.class);
                 if (serviceRunning) {
                     intent.setAction(TSDZBTService.ACTION_STOP_FOREGROUND_SERVICE);
@@ -173,11 +177,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     @Override
     protected void onResume() {
         super.onResume();
-        if (MyApp.getPreferences().getString(BluetoothSetupActivity.KEY_DEVICE_NAME, null) == null) {
-            fabButton.setEnabled(false);
-            Toast.makeText(this, "Please select the bluetooth device to connect", Toast.LENGTH_LONG).show();
-        } else
-            fabButton.setEnabled(true);
         updateUIStatus();
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
     }

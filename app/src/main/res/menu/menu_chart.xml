@@ -8,6 +8,7 @@
         android:title="@string/data_select"
         app:showAsAction="ifRoom" />
 
+    <!--
     <group
         android:icon="@android:drawable/ic_menu_preferences"
         app:showAsAction="ifRoom">
@@ -25,4 +26,5 @@
             android:title="@string/actionToggleHighlight"/>
 
     </group>
+    -->
 </menu>

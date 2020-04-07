@@ -1,5 +1,16 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -35,16 +46,6 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import spider65.ebike.tsdz2_esp32.MyApp;
 import spider65.ebike.tsdz2_esp32.R;
@@ -55,10 +56,10 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
     private static final String TAG = "ChartActivity";
 
-    // x axis shift step in minutes
-    private static final long TIME_STEP=15;
+    // seekbar x axis shift step in minutes
+    private static final long TIME_STEP=20;
     // x axis graph width in minutes
-    private static final long TIME_WINDOW=45;
+    private static final long TIME_WINDOW=60;
 
     private LineChart chart;
     private Spinner spinner;
@@ -70,7 +71,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
     private long tzOffset; // Timezone offset in minutes to GMT
     private LogManager logManager;
-    private boolean queryRunning = false; // avoid to start a new query if the previous is not ended
 
     private List<LogManager.TimeInterval> intervals = null;
     private int currentInterval;
@@ -80,12 +80,63 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private long startTime = 0;
 
     private AlertDialog dataDialog = null;
-    ArrayList<DataItem> selectedItemsList = new ArrayList<>();
+    ArrayList<DataType> selectedItemsList = new ArrayList<>();
+
+
+    private enum DataType {
+        level, speed,cadence,pPower,mPower,current,
+        volt,energy,mTemp,cTemp,dCycle,erps,
+        foc,pTorque;
+
+        public String getName() {
+            switch (this) {
+                case level:
+                    return MyApp.getInstance().getString(R.string.assist_levels);
+                case speed:
+                    return MyApp.getInstance().getString(R.string.speed);
+                case cadence:
+                    return MyApp.getInstance().getString(R.string.cadence);
+                case pPower:
+                    return MyApp.getInstance().getString(R.string.pedal_power);
+                case mPower:
+                    return MyApp.getInstance().getString(R.string.motor_power);
+                case current:
+                    return MyApp.getInstance().getString(R.string.motor_current);
+                case volt:
+                    return MyApp.getInstance().getString(R.string.voltage);
+                case energy:
+                    return MyApp.getInstance().getString(R.string.energy_used);
+                case mTemp:
+                    return MyApp.getInstance().getString(R.string.motor_temp);
+                case cTemp:
+                    return MyApp.getInstance().getString(R.string.controller_temp);
+                case dCycle:
+                    return MyApp.getInstance().getString(R.string.duty_cycle);
+                case erps:
+                    return MyApp.getInstance().getString(R.string.motor_erps);
+                case foc:
+                    return MyApp.getInstance().getString(R.string.foc_angle);
+                case pTorque:
+                    return MyApp.getInstance().getString(R.string.pedal_torque);
+            }
+            return "";
+        }
+    }
+    private static final Set<DataType> STATUS_DATA_TYPES = new HashSet<>(Arrays.asList(
+            DataType.level, DataType.speed, DataType.cadence, DataType.pPower, DataType.mPower,
+            DataType.mTemp, DataType.volt, DataType.current, DataType.energy));
+    private static final Set<DataType> DEBUG_DATA_TYPES = new HashSet<>(Arrays.asList(
+            DataType.dCycle, DataType.erps, DataType.foc, DataType.pTorque, DataType.cTemp));
+    private static final Set<DataType> POWER_DATA_TYPES = new HashSet<>(Arrays.asList(
+            DataType.mPower, DataType.pPower));
+    private static final Set<DataType> TEMPERATURE_DATA_TYPES = new HashSet<>(Arrays.asList(
+            DataType.mTemp, DataType.cTemp));
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chart);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -100,9 +151,9 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                Log.d(TAG,"onItemSelected: position=" + position);
                 if (intervals == null)
                     return;
-                Log.d(TAG,"onItemSelected: position=" + position);
                 currentInterval = position;
                 long end,start;
                 end = intervals.get(currentInterval).endTime;
@@ -123,11 +174,10 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     length -= TIME_WINDOW;
                     seekbar.setEnabled(true);
                     seekbar.setMax((int)((length/TIME_STEP)+(length%TIME_STEP>0?1:0)));
-                    seekbar.setProgress(0);
                 }
-
-                logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
-                queryRunning = true;
+                seekbar.setProgress(0);
+                updateSeekbarLabel(0);
+                startQuery((int)(start/1000L/60L), (int)(end/1000L/60L));
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -139,24 +189,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
            @Override
            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-               // updates the From - To label in the view
-               long end,start;
-               if (progress == seekBar.getMax()) {
-                   start = intervals.get(currentInterval).startTime/1000L/60L + tzOffset;
-                   end = start + TIME_WINDOW;
-               } else if (progress == 0){
-                   end = intervals.get(currentInterval).endTime/1000L/60L + tzOffset;
-                   start = end - TIME_WINDOW;
-               } else {
-                   end = intervals.get(currentInterval).endTime/1000L/60L + tzOffset - progress*TIME_STEP;
-                   start = end - TIME_WINDOW;
-               }
-               int minutesStart = (int) (start % 60L);
-               int hoursStart   = (int) ((start / 60L) % 24L);
-               int minutesEnd = (int) (end % 60L);
-               int hoursEnd   = (int) ((end / 60L) % 24L);
-               fromToTV.setText(String.format(Locale.ITALY,"%02d:%02d  --  %02d:%02d",
-                       hoursStart, minutesStart, hoursEnd, minutesEnd));
+               updateSeekbarLabel(progress);
            }
 
            @Override
@@ -167,34 +200,32 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
            public void onStopTrackingTouch(SeekBar seekBar) {
                Log.d(TAG,"onStopTrackingTouch");
                // TIME_WINDOW moved: start an new query
-               if (!queryRunning) {
-                   SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
-                   long progress = seekBar.getProgress();
+               SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+               long progress = seekBar.getProgress();
 
-                   Log.d(TAG,"New offset="+progress*TIME_STEP+" minutes");
-                   Log.d(TAG,"Current startTime="+sdf.format(new Date(startTime)));
-                   long end,start;
-                   if (progress == seekBar.getMax()) {
-                       start = intervals.get(currentInterval).startTime;
-                       end = start + (TIME_WINDOW*60L*1000L);
-                   } else if (progress == 0){
-                       end = intervals.get(currentInterval).endTime;
-                       start = end - (TIME_WINDOW*60L*1000L);
-                   } else {
-                       end = intervals.get(currentInterval).endTime - (progress * 1000 * 60 * TIME_STEP);
-                       start = end - (1000L * 60L * TIME_WINDOW);
-                   }
-                   startTime = start;
-                   Log.d(TAG,"New startTime="+sdf.format(new Date(startTime)));
-                   logManager.queryLogData((int)(start/1000L/60L), (int)(end/1000L/60L));
-                   queryRunning = true;
+               Log.d(TAG,"New offset="+progress*TIME_STEP+" minutes");
+               Log.d(TAG,"Current startTime="+sdf.format(new Date(startTime)));
+               long end,start;
+               if (progress == seekBar.getMax()) {
+                   start = intervals.get(currentInterval).startTime;
+                   end = start + (TIME_WINDOW*60L*1000L);
+               } else if (progress == 0){
+                   end = intervals.get(currentInterval).endTime;
+                   start = end - (TIME_WINDOW*60L*1000L);
+               } else {
+                   end = intervals.get(currentInterval).endTime - (progress * 1000 * 60 * TIME_STEP);
+                   start = end - (1000L * 60L * TIME_WINDOW);
                }
+               startTime = start;
+               Log.d(TAG,"New startTime="+sdf.format(new Date(startTime)));
+               startQuery((int)(start/1000L/60L), (int)(end/1000L/60L));
            }
-       });
+        });
 
         tfRegular = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
 
+        // Init timezone offset in minutes
         TimeZone tz = Calendar.getInstance().getTimeZone();
         tzOffset = tz.getOffset(System.currentTimeMillis())/1000/60;
 
@@ -214,15 +245,17 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         // set an alternative background color
         chart.setBackgroundColor(Color.LTGRAY);
 
-        setData();
+        // create empty Data
+        LineData data = new LineData();
+        data.setHighlightEnabled(false);
+        chart.setData(data);
 
         // get the legend (only possible after setting data)
         Legend l = chart.getLegend();
-        // modify the legend ...
         l.setForm(Legend.LegendForm.LINE);
         l.setTypeface(tfLight);
         l.setTextSize(14f);
-        l.setTextColor(Color.WHITE);
+        l.setTextColor(Color.BLACK);
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
         l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
@@ -232,7 +265,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         XAxis xAxis = chart.getXAxis();
         xAxis.setTypeface(tfLight);
         xAxis.setTextSize(14f);
-        xAxis.setTextColor(Color.WHITE);
+        xAxis.setTextColor(Color.BLACK);
         xAxis.setDrawGridLines(true);
         xAxis.setDrawAxisLine(true);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -259,29 +292,33 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setTypeface(tfLight);
-        leftAxis.setTextColor(ColorTemplate.getHoloBlue());
+        leftAxis.setTextColor(Color.BLUE);
         leftAxis.setTextSize(14f);
         leftAxis.setAxisMaximum(100f);
         leftAxis.setAxisMinimum(0f);
-        leftAxis.setDrawGridLines(true);
-        leftAxis.setGranularityEnabled(true);
+        leftAxis.setDrawGridLines(false);
+        leftAxis.setDrawZeroLine(false);
+        leftAxis.setGranularityEnabled(false);
 
-        chart.getAxisRight().setEnabled(false);
-        chart.getViewPortHandler().setMaximumScaleY(1f);
-        chart.getViewPortHandler().setMaximumScaleX(6f);
-
-        /*
         YAxis rightAxis = chart.getAxisRight();
-        rightAxis.setEnabled(false);
         rightAxis.setTypeface(tfLight);
         rightAxis.setTextColor(Color.RED);
-        rightAxis.setAxisMaximum(900);
-        rightAxis.setAxisMinimum(-200);
+        rightAxis.setTextSize(14f);
+        rightAxis.setAxisMaximum(100);
+        rightAxis.setAxisMinimum(0);
         rightAxis.setDrawGridLines(false);
         rightAxis.setDrawZeroLine(false);
         rightAxis.setGranularityEnabled(false);
-        */
+        rightAxis.setEnabled(false);
+
+        chart.getViewPortHandler().setMaximumScaleY(1f);
+        chart.getViewPortHandler().setMaximumScaleX(6f);
+
+        selectedItemsList.add(DataType.speed);
+        selectedItemsList.add(DataType.pPower);
+        logManager.queryLogIntervals();
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -306,6 +343,11 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.menu_edit) {
+            showDataSelectionDialog();
+            return true;
+        }
+        /*
         switch (item.getItemId()) {
             case R.id.menu_edit:
                 showDataSelectionDialog();
@@ -337,90 +379,223 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 break;
             }
         }
+        */
         return true;
     }
 
-    void setData() {
-        ArrayList<Entry> values = new ArrayList<>();
-        LineDataSet set = new LineDataSet(values, "Speed");
-        set.setAxisDependency(YAxis.AxisDependency.LEFT);
-        set.setColor(ColorTemplate.getHoloBlue());
-        set.setCircleColor(Color.WHITE);
+    private void updateSeekbarLabel(int progress) {
+        if (!seekbar.isEnabled()) {
+            fromToTV.setText("");
+            return;
+        }
+
+        long end,start;
+        if (progress == seekbar.getMax()) {
+            start = intervals.get(currentInterval).startTime/1000L/60L + tzOffset;
+            end = start + TIME_WINDOW;
+        } else if (progress == 0){
+            end = intervals.get(currentInterval).endTime/1000L/60L + tzOffset;
+            start = end - TIME_WINDOW;
+        } else {
+            end = intervals.get(currentInterval).endTime/1000L/60L + tzOffset - progress*TIME_STEP;
+            start = end - TIME_WINDOW;
+        }
+        int minutesStart = (int) (start % 60L);
+        int hoursStart   = (int) ((start / 60L) % 24L);
+        int minutesEnd = (int) (end % 60L);
+        int hoursEnd   = (int) ((end / 60L) % 24L);
+        fromToTV.setText(String.format(Locale.ITALY,"%02d:%02d  --  %02d:%02d",
+                hoursStart, minutesStart, hoursEnd, minutesEnd));
+    }
+
+    // Avoid to have multiple query running on the same time.
+    // when a query is started, the interval spinner and the seekbar must be disabled
+    private boolean seekbarEnabled;
+    void startQuery(int start, int end) {
+        seekbarEnabled = seekbar.isEnabled();
+        seekbar.setEnabled(false);
+        spinner.setEnabled(false);
+        logManager.queryLogData(start, end);
+    }
+
+    // Re-enable interval spinner and seekbar at the end of the query
+    void endQuery() {
+        runOnUiThread(() -> {
+            seekbar.setEnabled(seekbarEnabled);
+            spinner.setEnabled(true);
+        });
+    }
+
+    // create and initialize a new LineDataSet
+    private LineDataSet newLineDataSet(List<Entry> values, String label, int color) {
+        LineDataSet set = new LineDataSet(values, label);
+        set.setColor(color);
         set.setLineWidth(2f);
-        set.setCircleRadius(3f);
         set.setFillAlpha(65);
-        set.setFillColor(ColorTemplate.getHoloBlue());
-        set.setHighLightColor(Color.rgb(244, 117, 117));
-        set.setDrawCircleHole(false);
+        set.setFillColor(color);
         set.setDrawValues(false);
         set.setDrawCircles(false);
         set.setDrawFilled(false);
-        LineData data = new LineData(set);
-        data.setHighlightEnabled(false);
-        chart.setData(data);
-
-        logManager.queryLogIntervals();
+        set.setHighlightEnabled(false);
+        set.setDrawHighlightIndicators(false);
+        set.setValues(values);
+        return set;
     }
 
-    private static final float MAXSTEP = 0.1f;
-    private void drawData() {
+    // Fill the data of a LineDataSet and update the relative YAxis maximum value
+    private ArrayList<Entry> fillData(DataType dataType, YAxis yAxis, float maxY) {
         ArrayList<Entry> values = new ArrayList<>();
         float prevx = -1;
-
-        int n = 0;
-        for (DataItem dataItem:  selectedItemsList) {
-            n++;
+        if (STATUS_DATA_TYPES.contains(dataType)) {
             for (int i = 0; i < statusData.size(); i++) {
                 float x = (float) ((statusData.get(i).time - startTime) / 1000) / 60f;
+                if ((x - prevx) > 0.2f) {
+                    values.add(new Entry(prevx + 1 / 60f, 0));
+                    values.add(new Entry(x - 1 / 60f, 0));
+                }
+                prevx = x;
+                float y = 0;
+                switch (dataType) {
+                    case level:
+                        y = statusData.get(i).status.assistLevel;
+                        break;
+                    case speed:
+                        y = statusData.get(i).status.speed;
+                        break;
+                    case cadence:
+                        y = statusData.get(i).status.cadence;
+                        break;
+                    case mTemp:
+                        y = statusData.get(i).status.motorTemperature;
+                        break;
+                    case pPower:
+                        y = statusData.get(i).status.pPower;
+                        break;
+                    case mPower:
+                        y = statusData.get(i).status.volts * statusData.get(i).status.amperes;
+                        break;
+                    case volt:
+                        y = statusData.get(i).status.volts;
+                        break;
+                    case current:
+                        y = statusData.get(i).status.amperes;
+                        break;
+                    case energy:
+                        y = statusData.get(i).status.wattHour;
+                        break;
+                }
+                //float y = (float) (40 + 10 * Math.sin(x));
+                if (y > maxY)
+                    maxY = y;
+                values.add(new Entry(x, y));
+            }
+        } else if (DEBUG_DATA_TYPES.contains(dataType)) {
+            for (int i = 0; i < debugData.size(); i++) {
+                float x = (float) ((debugData.get(i).time - startTime) / 1000) / 60f;
                 if ((x - prevx) > 0.1f) {
                     values.add(new Entry(prevx + 1 / 60f, 0));
                     values.add(new Entry(x - 1 / 60f, 0));
                 }
                 prevx = x;
-                float y = (float) (30 + n*10 + 10 * Math.sin(x));
-                //float y = statusData.get(i).status.speed;
+                float y = 0;
+                switch (dataType) {
+                    case dCycle:
+                        y = debugData.get(i).debug.dutyCycle;
+                        break;
+                    case erps:
+                        y = debugData.get(i).debug.motorERPS;
+                        break;
+                    case foc:
+                        y = debugData.get(i).debug.focAngle;
+                        break;
+                    case pTorque:
+                        y = debugData.get(i).debug.pTorque;
+                        break;
+                    case cTemp:
+                        y = debugData.get(i).debug.pcbTemperature;
+                        break;
+                }
+                if (y > maxY)
+                    maxY = y;
                 values.add(new Entry(x, y));
             }
-            if (chart.getData().getDataSetCount() >= (n)) {
-                LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(n-1);
-                set.setValues(values);
-            } else {
-                LineData ld = chart.getData();
-                LineDataSet set = new LineDataSet(values, dataItem.name);
-                set.setAxisDependency(YAxis.AxisDependency.RIGHT);
-                set.setColor(ColorTemplate.getHoloBlue());
-                set.setCircleColor(Color.WHITE);
-                set.setLineWidth(2f);
-                set.setCircleRadius(3f);
-                set.setFillAlpha(65);
-                set.setFillColor(ColorTemplate.getHoloBlue());
-                set.setHighLightColor(Color.rgb(244, 117, 117));
-                set.setDrawCircleHole(false);
-                set.setDrawValues(false);
-                set.setDrawCircles(false);
-                set.setDrawFilled(false);
-                set.setValues(values);
-                ld.addDataSet(set);
-            }
         }
+        if ((maxY * 0.1f) < 1f)
+            maxY += 1f;
+        else
+            maxY *= 1.1f;
+        yAxis.setAxisMaximum(maxY);
 
-        float max = (float) ((statusData.get(statusData.size() - 1).time - startTime) / 1000) / 60f;
-        if (max < 2)
-            max = 2f;
-        chart.getXAxis().setAxisMaximum(max);
-        chart.getViewPortHandler().setMaximumScaleY(1f);
-        chart.getViewPortHandler().setMaximumScaleX(max / 2f);
-
-        synchronized (this) {
-            chart.getData().getDataSetCount();
-            LineDataSet set = (LineDataSet) chart.getData().getDataSetByIndex(0);
-            set.setValues(values);
-            chart.getData().notifyDataChanged();
-            chart.notifyDataSetChanged();
-            chart.postInvalidate();
-        }
+        return values;
     }
 
+    // update a line dataset
+    private float updateDataSet(DataType dataType, int index, YAxis.AxisDependency axisDependency, int color, boolean resetYAxis) {
+        YAxis yAxis;
+        LineDataSet set;
+
+        if (axisDependency == YAxis.AxisDependency.LEFT)
+            yAxis = chart.getAxisLeft();
+        else
+            yAxis = chart.getAxisRight();
+        yAxis.setEnabled(true);
+
+        float prevMax = resetYAxis? 0: yAxis.getAxisMaximum();
+        ArrayList<Entry> values = fillData(dataType, yAxis, prevMax);
+        if (index >= chart.getData().getDataSetCount()) {
+            LineData ld = chart.getData();
+            set = newLineDataSet( values, dataType.getName(), color);
+            set.setAxisDependency(axisDependency);
+            ld.addDataSet(set);
+        } else {
+            set = (LineDataSet) chart.getData().getDataSetByIndex(0);
+            set.setValues(values);
+        }
+        return values.get(values.size()-1).getX();
+    }
+
+    // Redraw the graphs.
+    // selected data types are in selectedItemsList
+    // Must be synchronized because could be called from the Runnable started by the Data selection Dialog or
+    // by the LogManager Handler Thread (Query result)
+    private synchronized void drawData() {
+        chart.getData().clearValues();
+        chart.getAxisRight().setEnabled(false);
+
+        float maxX, val = 0;
+        maxX = updateDataSet(selectedItemsList.get(0), 0, YAxis.AxisDependency.LEFT, Color.BLUE, true);
+
+        if (selectedItemsList.size() > 1) {
+            if ((TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(0)) && TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(1))) ||
+                (POWER_DATA_TYPES.contains(selectedItemsList.get(0)) && POWER_DATA_TYPES.contains(selectedItemsList.get(1)))) {
+                val = updateDataSet(selectedItemsList.get(1), 1, YAxis.AxisDependency.LEFT, 0xFF0090FF, false);
+            } else {
+                val = updateDataSet(selectedItemsList.get(1), 1, YAxis.AxisDependency.RIGHT, Color.RED, true);
+            }
+        }
+        maxX = Math.max(maxX, val);
+
+        if (selectedItemsList.size() > 2) {
+            if ((TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(1)) && TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(2))) ||
+                (POWER_DATA_TYPES.contains(selectedItemsList.get(1)) && POWER_DATA_TYPES.contains(selectedItemsList.get(2)))) {
+                val = updateDataSet(selectedItemsList.get(2), 2, YAxis.AxisDependency.RIGHT, 0xFFB84000, false);
+            } else {
+                val = updateDataSet(selectedItemsList.get(2), 2, YAxis.AxisDependency.RIGHT, Color.RED, true);
+            }
+        }
+        maxX = Math.max(maxX, val);
+        if (maxX < 2)
+            maxX = 2f;
+        chart.getXAxis().setAxisMaximum(maxX);
+        chart.getViewPortHandler().setMaximumScaleY(2f);
+        chart.getViewPortHandler().setMaximumScaleX(maxX / 2f);
+        chart.getData().notifyDataChanged();
+        chart.notifyDataSetChanged();
+        chart.postInvalidate();
+    }
+
+    // Callabck called by the LogManager Class at the end of the queryLogIntervals
+    // The callback is called by the LogManager Handler Thread (not the Main Thread!)
     @Override
     public void logIntervalsResult(List<LogManager.TimeInterval> intervals) {
         if (intervals.size() == 0) {
@@ -448,41 +623,33 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             });
     }
 
+    // Callabck called by the LogManager Class at the end of the queryLogData
+    // The callback is called by the LogManager Handler Thread (not the Main Thread!)
     @Override
     public void logDataResult(List<LogManager.LogStatusEntry> statusList, List<LogManager.LogDebugEntry>  debugList) {
-        queryRunning = false;
         if (statusList.size() == 0 || debugList.size() == 0) {
-            Log.d(TAG, "logQueryResult - no data found. Num status records=" + statusList.size()
+            Log.d(TAG, "logDataResult - no data found. Num status records=" + statusList.size()
                     + " Num debug records=" + debugList.size());
             return;
         }
-        statusData = statusList;
-        debugData = debugList;
 
+        synchronized (this) {
+            statusData = statusList;
+            debugData = debugList;
+        }
+
+        /*
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
-        Log.d(TAG, "logQueryResult Status: startTTime=" + sdf.format(new Date(statusData.get(0).time)) +
+        Log.d(TAG, "logDataResult Status: startTTime=" + sdf.format(new Date(statusData.get(0).time)) +
                 " endTime=" + sdf.format(new Date(statusData.get(statusData.size()-1).time)));
-        Log.d(TAG, "logQueryResult Debug: - startTTime=" + sdf.format(new Date(debugData.get(0).time)) +
+        Log.d(TAG, "logDataResult Debug: - startTTime=" + sdf.format(new Date(debugData.get(0).time)) +
                 " endTime=" + sdf.format(new Date(debugData.get(debugData.size()-1).time)));
+        */
         drawData();
+        endQuery();
     }
 
-
-    private enum DataType {
-        level(13), speed(0),cadence(1),pPower(2),mPower(3),current(4),
-        volt(5),energy(6),mTemp(7),cTemp(8),dCycle(9),erps(10),
-        foc(11),pTorque(12);
-
-        private final int value;
-        DataType(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-    }
-
+    // follows Classes and interfaces used by the Data Type selection dialog
     public interface ChekedItemInterface {
         void onItemChecked(int position, boolean checked, int numChecked);
     }
@@ -492,9 +659,9 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         private final String name;
         private Boolean checked;
 
-        DataItem(DataType type, String name, Boolean isChecked) {
+        DataItem(DataType type, Boolean isChecked) {
             this.type = type;
-            this.name = name;
+            this.name = type.getName();
             this.checked = isChecked;
         }
     }
@@ -510,9 +677,15 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         private final int cbId;
 
         DataItemAdapter(DataItem[] items, Context context, ChekedItemInterface listener) {
-            for (DataItem i: items)
-                if (i.checked)
+            for (DataItem i: items) {
+                if (i.checked) {
                     numChecked++;
+                    if (i.type==DataType.mPower || i.type==DataType.pPower)
+                        powerCheched++;
+                    if (i.type==DataType.mTemp || i.type==DataType.cTemp)
+                        temperatureChecked++;
+                }
+            }
             this.mData = items;
             this.mContext = context;
             this.listener = listener;
@@ -565,7 +738,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                         powerCheched--;
                 }
                 super.notifyDataSetChanged();
-                Log.d(TAG,"toggle: " + " numChecked=" + numChecked + " powerCheched="+powerCheched+" temperatureChecked="+temperatureChecked);
+                //Log.d(TAG,"toggle: " + " numChecked=" + numChecked + " powerCheched="+powerCheched+" temperatureChecked="+temperatureChecked);
                 this.listener.onItemChecked(position, ((CheckBox)v).isChecked(), numChecked);
             });
 
@@ -590,20 +763,20 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private void showDataSelectionDialog() {
         if (dataDialog == null) {
             DataItem[] dialogItemList = new DataItem[] {
-                    new DataItem(DataType.level, getString(R.string.assistLevel), false),
-                    new DataItem(DataType.speed, getString(R.string.speed), true),
-                    new DataItem(DataType.cadence, getString(R.string.cadence), false),
-                    new DataItem(DataType.pPower, getString(R.string.pedal_power), false),
-                    new DataItem(DataType.mPower, getString(R.string.motor_power), false),
-                    new DataItem(DataType.current, getString(R.string.motor_current), false),
-                    new DataItem(DataType.volt, getString(R.string.voltage), false),
-                    new DataItem(DataType.energy, getString(R.string.energy_used), false),
-                    new DataItem(DataType.mTemp, getString(R.string.motor_temp), false),
-                    new DataItem(DataType.cTemp, getString(R.string.controller_temp), false),
-                    new DataItem(DataType.dCycle, getString(R.string.duty_cycle), false),
-                    new DataItem(DataType.erps, getString(R.string.motor_erps), false),
-                    new DataItem(DataType.foc, getString(R.string.foc_angle), false),
-                    new DataItem(DataType.pTorque, getString(R.string.pedal_torque), false)
+                    new DataItem(DataType.level, false),
+                    new DataItem(DataType.speed, true),
+                    new DataItem(DataType.cadence, false),
+                    new DataItem(DataType.pPower, true),
+                    new DataItem(DataType.mPower, false),
+                    new DataItem(DataType.current, false),
+                    new DataItem(DataType.volt, false),
+                    new DataItem(DataType.energy, false),
+                    new DataItem(DataType.mTemp, false),
+                    new DataItem(DataType.cTemp, false),
+                    new DataItem(DataType.dCycle, false),
+                    new DataItem(DataType.erps, false),
+                    new DataItem(DataType.foc,  false),
+                    new DataItem(DataType.pTorque, false)
             };
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(false);
@@ -618,13 +791,16 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
             });
             builder.setAdapter(mAdapter, null);
-            builder.setPositiveButton(getString(R.string.ok), (dialogInterface, which) -> {
-                selectedItemsList.clear();
-                for (DataItem i:dialogItemList) {
-                    if (i.checked)
-                        selectedItemsList.add(i);
+            builder.setPositiveButton(getString(R.string.ok), (dialogInterface, which) -> new Thread(() -> {
+                synchronized (ChartActivity.this) {
+                    selectedItemsList.clear();
+                    for (DataItem i:dialogItemList) {
+                        if (i.checked)
+                            selectedItemsList.add(i.type);
+                    }
+                    drawData();
                 }
-            });
+            }).start());
             builder.setNegativeButton(getString(R.string.cancel), null);
             dataDialog = builder.create();
             ListView listView = dataDialog.getListView();
