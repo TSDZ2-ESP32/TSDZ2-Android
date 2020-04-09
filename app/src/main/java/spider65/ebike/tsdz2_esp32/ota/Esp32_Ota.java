@@ -38,13 +38,7 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -69,14 +63,16 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     private static final String MAIN_APP_NAME = "TSDZ2-ESP32-Main";
     private static final String LOADER_APP_NAME = "TSDZ2-ESP32-OTA";
 
+    private static final String PORT = "8089";
+
     private File updateFile = null;
     Esp32AppImageTool.EspImageInfo imageInfo = null;
 
     private WifiManager.LocalOnlyHotspotReservation reservation = null;
+    private boolean apAlreadyOn = false;
     private boolean wifiState;
 
     private String ssid,pwd;
-    private Set<String> prevSet;
 
     private HttpdServer httpdServer = null;
     private IntentFilter mIntentFilter = new IntentFilter();
@@ -251,26 +247,13 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             return;
         }
         if (Build.VERSION.SDK_INT >= 26) {
-            prevSet = getAddresses();
             if (hotSpotCallback == null)
                 hotSpotCallback = new HotSpotCallback();
             wifiManager.startLocalOnlyHotspot(hotSpotCallback, null);
         } else {
             if (isApOn()) {
-                wifiState = true;
-                setWifiApState(false);
-                AlertDialog alertDialog = new AlertDialog.Builder(Esp32_Ota.this).create();
-                alertDialog.setTitle("Warning");
-                alertDialog.setMessage("Access Point was ON\n Wait some seconds and then press OK.");
-                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
-                        (DialogInterface dialog, int which) -> {
-                            dialog.dismiss();
-                            prevSet = getAddresses();
-                            setWifiApState(true);
-                        });
-                alertDialog.show();
+                apAlreadyOn = true;
             } else {
-                prevSet = getAddresses();
                 setWifiApState(true);
             }
         }
@@ -283,7 +266,9 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                 reservation = null;
             }
         } else {
-            setWifiApState(false);
+            // Stop Access Point if was activated
+            if (!apAlreadyOn)
+                setWifiApState(false);
         }
     }
 
@@ -361,6 +346,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             Method wifiControlMethod = wifimanager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class,boolean.class);
             wifiControlMethod.invoke(wifimanager, null, enable);
 
+            // When stopping Access Point, reset WiFi state to previous value
             if (!enable && wifiState) {
                 wifimanager.setWifiEnabled(true);
             }
@@ -378,9 +364,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             showDialog(getString(R.string.error), e.getMessage(), false);
             return;
         }
-        String hostAddress = getNewAddresses(prevSet);
-        String url = "http:" + "//" + hostAddress + ":8089";
-        byte[] command = new byte[ssid.length()+pwd.length()+url.length()+3];
+        byte[] command = new byte[ssid.length()+pwd.length()+PORT.length()+3];
         if (updateType == UpdateType.mainApp)
             command[0] = CMD_ESP_OTA_START;
         else
@@ -392,7 +376,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         System.arraycopy(pwd.getBytes(),0,command,pos,pwd.getBytes().length);
         pos += pwd.getBytes().length;
         command[pos++] = '|';
-        System.arraycopy(url.getBytes(),0,command,pos,url.getBytes().length);
+        System.arraycopy(PORT.getBytes(),0,command,pos,PORT.getBytes().length);
         Log.i(TAG, "Update start: "+ new String(command));
         TSDZBTService.getBluetoothService().writeCommand(command);
         updateInProgress = true;
@@ -463,38 +447,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             }
         );
         builder.show().setCanceledOnTouchOutside(false);
-    }
-
-    Set<String> getAddresses() {
-        Set<String> set = new HashSet<>();
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && !inetAddress.getHostAddress().contains(":")) {
-                        set.add(inetAddress.getHostAddress());
-                        Log.i(TAG, "if: " + intf.getDisplayName() + " - Host addr: " + inetAddress.getHostAddress());
-                    }
-                }
-            }
-        } catch (SocketException e) {
-            Log.e("Error occurred  ", e.toString());
-        }
-        return set;
-    }
-
-    String getNewAddresses(Set<String> prevSet) {
-        Set<String> newSet = getAddresses();
-        newSet.removeAll(prevSet);
-        Log.i(TAG, "newSet length = " + newSet.size());
-        if (newSet.isEmpty())
-            return null;
-        else {
-            String ret = newSet.iterator().next();
-            Log.i(TAG, "Host Address : " + ret);
-            return ret;
-        }
     }
 
     @Override

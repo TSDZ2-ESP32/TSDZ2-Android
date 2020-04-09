@@ -177,7 +177,7 @@
     <string name="commandError">Command not recognized</string>
     <string name="btUpdateSpeed">BT update speed</string>
     <string name="ds18b2_pin_nr">DS18B20 GPIO Pin</string>
-    <string name="lcd_uart_alt_pins">LCD UART alt. pins (32,33)</string>
+    <string name="logLevel">Log Level</string>
 
     <string name="enable_wifi">Wifi is disabled\nEnable Wifi and try again</string>
     <string name="cannot_change_pin">Image is signed\n cannot change BT PIN %1$d</string>
@@ -231,6 +231,14 @@
         <item> 2 msg/sec </item>
         <item> 1.5 msg/sec</item>
         <item> 1 msg/sec </item>
+    </string-array>
+    <string-array name="debug_levels">
+        <item> None </item>
+        <item> Error </item>
+        <item> Warning </item>
+        <item> Info </item>
+        <item> Debug </item>
+        <item> Verbose</item>
     </string-array>
 
 

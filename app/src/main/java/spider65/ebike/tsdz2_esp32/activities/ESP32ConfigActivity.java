@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 
@@ -29,9 +28,9 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
 
     private IntentFilter mIntentFilter = new IntentFilter();
 
-    private Spinner btDelaySpinner;
+    private Spinner  btDelaySpinner;
     private EditText ds18b20PinET;
-    private CheckBox lcdAltPinsCB;
+    private Spinner  dbgLevelSpinner;
     private Button   okButton;
 
     @Override
@@ -43,7 +42,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
 
         btDelaySpinner = findViewById(R.id.btDelaySP);
         ds18b20PinET = findViewById(R.id.ds18b20ET);
-        lcdAltPinsCB = findViewById(R.id.lcdCB);
+        dbgLevelSpinner = findViewById(R.id.logLevelSP);
         okButton = findViewById(R.id.okButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         cancelButton.setOnClickListener(this);
@@ -94,8 +93,9 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
                     false);
             return;
         }
+        idx = dbgLevelSpinner.getSelectedItemPosition();
         msg[3] = (byte)(val & 0xff);
-        msg[4] = (lcdAltPinsCB.isChecked()?(byte)1:(byte)0);
+        msg[4] = (byte)(idx & 0xff);
 
         TSDZBTService service = TSDZBTService.getBluetoothService();
         if (service != null && service.getConnectionStatus() == TSDZBTService.ConnectionState.CONNECTED)
@@ -142,7 +142,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
                     else
                         btDelaySpinner.setSelection(values.length - 1);
                     ds18b20PinET.setText(String.valueOf(data[4]));
-                    lcdAltPinsCB.setChecked(data[5] != 0);
+                    dbgLevelSpinner.setSelection(data[5]);
                     okButton.setEnabled(true);
                 }
             } else if (data[0] == TSDZConst.CMD_ESP32_CONFIG && data[1] == TSDZConst.CONFIG_SET) {
