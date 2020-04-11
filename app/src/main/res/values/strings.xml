@@ -1,13 +1,4 @@
 <resources>
-    <integer-array name="delay_values">
-        <item>20</item>
-        <item>25</item>
-        <item>33</item>
-        <item>40</item>
-        <item>50</item>
-        <item>66</item>
-        <item>100</item>
-    </integer-array>
 
     <string name="dash">-</string>
     <string name="calibration">Cal</string>
@@ -28,11 +19,9 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="save">Save</string>
-    <string name="esp32_app_version">ESP32 Main App FW version: %s</string>
-    <string name="esp32_ota_versione">ESP32 OTA App FW version: %s</string>
-
-
-    <string name="tsdz_version">TSDZ2 FW version: %d</string>
+    <string name="fw_versions">FW Versions</string>
+    <string name="esp32_fw_version">ESP32 FW version: %s</string>
+    <string name="tsdz_fw_version">TSDZ2 FW version: %s</string>
     <string name="choose">Choose</string>
     <string name="selectedDevice">Selected Device</string>
     <string name="discoveredDevices">Discovered Devices</string>
@@ -69,8 +58,6 @@
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
     <string name="title_activity_stm8_ota">Bike Firmware Update</string>
     <string name="current_version">Current Version: %1$s</string>
-    <string name="partition_not_found">Error: Loader not found</string>
-    <string name="partition_empty">Loader empty</string>
     <string name="new_version">New Version: %1$s</string>
     <string name="file_name">File Name: %1$s</string>
     <string name="start_update">Start Update</string>
@@ -223,15 +210,22 @@
         <item> Controller ADC </item>
         <item> ESP32 </item>
     </string-array>
+
     <string-array name="delay_labels">
         <item> 5 msg/sec </item>
         <item> 4 msg/sec </item>
         <item> 3 msg/sec </item>
-        <item> 2.5 msg/sec </item>
         <item> 2 msg/sec </item>
-        <item> 1.5 msg/sec</item>
         <item> 1 msg/sec </item>
     </string-array>
+    <integer-array name="delay_values">
+        <item>20</item>
+        <item>25</item>
+        <item>33</item>
+        <item>50</item>
+        <item>100</item>
+    </integer-array>
+
     <string-array name="debug_levels">
         <item> None </item>
         <item> Error </item>

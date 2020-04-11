@@ -46,6 +46,8 @@ import android.widget.Toast;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static java.util.Arrays.copyOfRange;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_GET_APP_VERSION;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 
@@ -368,24 +370,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     // is the Bike Controller FW version.
     // The two strings are up to 8 char and the last integer is between 0 and 127.
     private void showVersions(byte[] data) {
-        String s = new String(data, StandardCharsets.UTF_8);
+        String s = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
         Log.d(TAG, "Version string is: " + s);
-        String v1 = "-";
-        String v2 = "-";
-        int v3 = -1;
-        int i1 = s.indexOf('|');
-        if (i1 != -1)
-            v1 = s.substring(1, i1);
-        int i2 = s.indexOf('|', i1+1);
-        if (i2 != -1)
-            v2 = s.substring(i1+1, i2);
-        if (data.length > i2+1)
-            v3 = data[i2+1];
+        String[] versions = s.split("\\|");
+        if (versions.length != 2) {
+            Log.e(TAG, "showVersions: wrong string");
+            return;
+        }
+        if ("255".equals(versions[0]))
+            versions[0] = "n/a";
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("FW Versions");
-        String message = getString(R.string.esp32_app_version, v1) + "\n" +
-                    getString(R.string.esp32_ota_versione, v2) + "\n" +
-                    getString(R.string.tsdz_version, v3);
+        builder.setTitle(getString(R.string.fw_versions));
+        String message = getString(R.string.esp32_fw_version, versions[1]) + "\n" +
+                    getString(R.string.tsdz_fw_version, versions[0]);
         builder.setMessage(message);
         builder.setPositiveButton(android.R.string.ok, null);
         builder.show();
@@ -431,15 +428,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 					invalidateOptionsMenu();
 					break;
 				case TSDZBTService.TSDZ_COMMAND_BROADCAST:
-				    showVersions(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA));
-				    /*
-                    try {
-                        String version = new String(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA), StandardCharsets.UTF_8);
-                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.show_version) + " : " + version, Toast.LENGTH_LONG).show();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-				    */
+                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                    if (data[0] == CMD_GET_APP_VERSION)
+				        showVersions(data);
                     break;
                 case TSDZBTService.TSDZ_STATUS_BROADCAST:
                     data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);

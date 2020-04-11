@@ -27,11 +27,9 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.obsez.android.lib.filechooser.ChooserDialog;
@@ -52,7 +50,6 @@ import static android.view.View.INVISIBLE;
 import static java.util.Arrays.copyOfRange;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_ESP_OTA_START;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_GET_APP_VERSION;
-import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_LOADER_OTA_START;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_ESP_OTA_STATUS;
 
 
@@ -61,7 +58,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     private static final String TAG = "Esp32_Ota";
 
     private static final String MAIN_APP_NAME = "TSDZ2-ESP32-Main";
-    private static final String LOADER_APP_NAME = "TSDZ2-ESP32-OTA";
 
     private static final String PORT = "8089";
 
@@ -77,7 +73,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     private HttpdServer httpdServer = null;
     private IntentFilter mIntentFilter = new IntentFilter();
 
-    private Spinner otaTypeSP;
     private Button selFileButton, startUpdateBT;
     private TextView fileNameTV, currVerTV, newVerTV, messageTV;
     private ProgressBar progressBar;
@@ -88,15 +83,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
 
     private boolean updateInProgress = false;
 
-    private enum UpdateType {
-        none,
-        mainApp,
-        loader
-    }
     String mainAppVersion = "-";
-    String loaderVersion  = "-";
-
-    private UpdateType updateType = UpdateType.none;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,45 +92,11 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        otaTypeSP = findViewById(R.id.spinner);
-        otaTypeSP.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id) {
-                if (position == 1 && updateType != UpdateType.mainApp) {
-                    updateType = UpdateType.mainApp;
-                    currVerTV.setText(getString(R.string.current_version, mainAppVersion));
-                    updateFile = null;
-                    fileNameTV.setText("");
-                    newVerTV.setText("");
-                    selFileButton.setEnabled(true);
-                    startUpdateBT.setEnabled(false);
-                } else if (position == 2 && updateType != UpdateType.loader) {
-                    updateType = UpdateType.loader;
-                    currVerTV.setText(getString(R.string.current_version, loaderVersion));
-                    updateFile = null;
-                    fileNameTV.setText("");
-                    newVerTV.setText("");
-                    selFileButton.setEnabled(true);
-                    startUpdateBT.setEnabled(false);
-                } else {
-                    updateType = UpdateType.none;
-                    updateFile = null;
-                    fileNameTV.setText("");
-                    newVerTV.setText("");
-                    currVerTV.setText(getString(R.string.current_version, ""));
-                    selFileButton.setEnabled(false);
-                    startUpdateBT.setEnabled(false);
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+        updateFile = null;
 
         selFileButton = findViewById(R.id.selFileButton);
         selFileButton.setOnClickListener((View view) -> performFileSearch());
-        selFileButton.setEnabled(false);
+        selFileButton.setEnabled(true);
 
         startUpdateBT = findViewById(R.id.startUpdateButton);
         startUpdateBT.setOnClickListener((View view) -> startUpdate());
@@ -153,6 +106,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         currVerTV = findViewById(R.id.currVerTV);
         newVerTV = findViewById(R.id.newVerTV);
 
+        currVerTV.setText(getString(R.string.current_version, mainAppVersion));
         newVerTV.setText(getString(R.string.new_version, ""));
         fileNameTV.setText(getString(R.string.file_name, ""));
 
@@ -295,8 +249,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                 showDialog(getString(R.string.error), getString(R.string.fileNotValid), false);
                 return;
             }
-            if ((updateType == UpdateType.mainApp && !imageInfo.appName.equals(MAIN_APP_NAME)) ||
-                    (updateType == UpdateType.loader && !imageInfo.appName.equals(LOADER_APP_NAME))) {
+            if (!imageInfo.appName.equals(MAIN_APP_NAME))  {
                 showDialog(getString(R.string.error), getString(R.string.wrong_app_name), false);
                 imageInfo = null;
                 return;
@@ -306,12 +259,10 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             newVerTV.setText(getString(R.string.new_version, imageInfo.appVersion));
             startUpdateBT.setEnabled(true);
             fileNameTV.setText(getString(R.string.file_name, updateFile.getName()));
-            if (updateType == UpdateType.mainApp) {
-                if (imageInfo.signed) {
-                    showDialog(getString(R.string.warning), getString(R.string.cannot_change_pin, imageInfo.btPin), false);
-                } else {
-                    showPinChangeDialog();
-                }
+            if (imageInfo.signed) {
+                showDialog(getString(R.string.warning), getString(R.string.cannot_change_pin, imageInfo.btPin), false);
+            } else {
+                showPinChangeDialog();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -365,10 +316,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             return;
         }
         byte[] command = new byte[ssid.length()+pwd.length()+PORT.length()+3];
-        if (updateType == UpdateType.mainApp)
-            command[0] = CMD_ESP_OTA_START;
-        else
-            command[0] = CMD_LOADER_OTA_START;
+        command[0] = CMD_ESP_OTA_START;
         int pos = 1;
         System.arraycopy(ssid.getBytes(),0,command,pos,ssid.getBytes().length);
         pos += ssid.getBytes().length;
@@ -381,7 +329,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         TSDZBTService.getBluetoothService().writeCommand(command);
         updateInProgress = true;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        otaTypeSP.setEnabled(false);
         selFileButton.setEnabled(false);
         startUpdateBT.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
@@ -395,7 +342,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             httpdServer = null;
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        otaTypeSP.setEnabled(true);
         selFileButton.setEnabled(true);
         startUpdateBT.setEnabled(true);
         progressBar.setVisibility(INVISIBLE);
@@ -443,7 +389,8 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                 Dialog d = b2.show();
                 d.setCanceledOnTouchOutside(false);
                 TextView messageText = d.findViewById(android.R.id.message);
-                messageText.setGravity(Gravity.CENTER);
+                if (messageText != null)
+                    messageText.setGravity(Gravity.CENTER);
             }
         );
         builder.show().setCanceledOnTouchOutside(false);
@@ -494,34 +441,17 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
                         // Get Version response
                         case CMD_GET_APP_VERSION:
                             String tmp = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
-                            String[] out = tmp.split("\\|");
-                            if (out.length != 3) {
+                            String[] versions = tmp.split("\\|");
+                            if (versions.length != 2) {
                                 Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
                                 return;
                             }
-                            mainAppVersion = out[0];
-                            switch (out[1]) {
-                                case "ERR":
-                                    loaderVersion = getString(R.string.partition_not_found);
-                                    break;
-                                case "EMP":
-                                    loaderVersion = getString(R.string.partition_empty);
-                                    break;
-                                default:
-                                    loaderVersion = out[1];
-                                    break;
-                            }
+                            mainAppVersion = versions[1];
                             if (updateInProgress) {
                                 stopUpdate();
-                                if (updateType == UpdateType.mainApp)
-                                    showDialog(getString(R.string.rebootDone), getString(R.string.new_version, mainAppVersion), false);
-                                else if (updateType == UpdateType.loader)
-                                    showDialog(getString(R.string.rebootDone), getString(R.string.new_version, loaderVersion), false);
+                                showDialog(getString(R.string.rebootDone), getString(R.string.new_version, mainAppVersion), false);
                             }
-                            if (updateType == UpdateType.mainApp)
-                                currVerTV.setText(getString(R.string.current_version, mainAppVersion));
-                            else if (updateType == UpdateType.loader)
-                                currVerTV.setText(getString(R.string.current_version, loaderVersion));
+                            currVerTV.setText(getString(R.string.current_version, mainAppVersion));
                             break;
                         case CMD_ESP_OTA_STATUS:
                             if (data[1] != 0) {
