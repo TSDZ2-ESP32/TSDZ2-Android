@@ -332,7 +332,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         selFileButton.setEnabled(false);
         startUpdateBT.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
-        messageTV.setText(getString(R.string.updateStarted));
+        messageTV.setText(getString(R.string.waitingUploadStart));
     }
 
     private void stopUpdate() {

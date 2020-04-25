@@ -13,7 +13,6 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -38,13 +37,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
 
 import nl.lxtreme.binutils.hex.IntelHexReader;
 import spider65.ebike.tsdz2_esp32.R;
@@ -55,12 +48,14 @@ import static android.view.View.INVISIBLE;
 import static java.util.Arrays.copyOfRange;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_GET_APP_VERSION;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_STM8S_OTA_START;
-import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_STM_OTA_STATUS;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_STM8_OTA_STATUS;
 
 
 public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamListener {
 
     private static final String TAG = "Stm8_Ota";
+
+    private static final String PORT = "8089";
 
     private static final int MAX_BIN_SIZE = 0x8000;
     private static final int START_ADDRESS = 0x8000;
@@ -69,9 +64,9 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     private File updateFile = null;
     private WifiManager.LocalOnlyHotspotReservation reservation = null;
     private boolean wifiState;
+    private boolean apAlreadyOn = false;
 
     private String ssid,pwd;
-    private Set<String> prevSet;
 
     private HttpdServer httpdServer = null;
     private IntentFilter mIntentFilter = new IntentFilter();
@@ -84,7 +79,18 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
 
     private static final int READ_EXTERNAL_STORAGE_PERMISION_REQUEST = 3;
 
-    private boolean updateInProgress = false;
+    private UpdateProgess updateInProgress = UpdateProgess.notStarted;
+
+    private enum UpdateProgess {
+        notStarted,
+        started,
+        rebooting,
+        uploading,
+        uploaded,
+        writeinit,
+        writeInitialized,
+        writing
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +177,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     }
 
     private void cancel() {
-        if (updateInProgress) {
+        if (updateInProgress != UpdateProgess.notStarted) {
             AlertDialog alertDialog = new AlertDialog.Builder(Stm8_Ota.this).create();
             alertDialog.setTitle(getString(R.string.warning));
             alertDialog.setMessage(getString(R.string.exit_warning));
@@ -195,27 +201,13 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             return;
         }
         if (Build.VERSION.SDK_INT >= 26) {
-            prevSet = getAddresses();
-            wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if (hotSpotCallback == null)
                 hotSpotCallback = new HotSpotCallback();
             wifiManager.startLocalOnlyHotspot(hotSpotCallback, null);
         } else {
             if (isApOn()) {
-                wifiState = true;
-                setWifiApState(false);
-                AlertDialog alertDialog = new AlertDialog.Builder(Stm8_Ota.this).create();
-                alertDialog.setTitle("Warning");
-                alertDialog.setMessage("Access Point was ON\n Wait some seconds and then press OK.");
-                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
-                        (DialogInterface dialog, int which) -> {
-                            dialog.dismiss();
-                            prevSet = getAddresses();
-                            setWifiApState(true);
-                        });
-                alertDialog.show();
+                apAlreadyOn = true;
             } else {
-                prevSet = getAddresses();
                 setWifiApState(true);
             }
         }
@@ -228,7 +220,9 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                 reservation = null;
             }
         } else {
-            setWifiApState(false);
+            // Stop Access Point if was activated
+            if (!apAlreadyOn)
+                setWifiApState(false);
         }
     }
 
@@ -375,9 +369,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             showDialog(getString(R.string.error), e.getMessage(), false);
             return;
         }
-        String hostAddress = getNewAddresses(prevSet);
-        String url = "http:" + "//" + hostAddress + ":8089";
-        byte[] command = new byte[ssid.length()+pwd.length()+url.length()+3];
+        byte[] command = new byte[ssid.length()+pwd.length()+PORT.length()+3];
         command[0] = CMD_STM8S_OTA_START;
         int pos = 1;
         System.arraycopy(ssid.getBytes(),0,command,pos,ssid.getBytes().length);
@@ -386,19 +378,19 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         System.arraycopy(pwd.getBytes(),0,command,pos,pwd.getBytes().length);
         pos += pwd.getBytes().length;
         command[pos++] = '|';
-        System.arraycopy(url.getBytes(),0,command,pos,url.getBytes().length);
+        System.arraycopy(PORT.getBytes(),0,command,pos,PORT.getBytes().length);
         Log.i(TAG, "Update start: "+ new String(command));
         TSDZBTService.getBluetoothService().writeCommand(command);
-        updateInProgress = true;
+        updateInProgress = UpdateProgess.started;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         selFileButton.setEnabled(false);
         startUpdateBT.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
-        messageTV.setText(getString(R.string.updateStarted));
+        messageTV.setText(getString(R.string.waitingUploadStart));
     }
 
     private void stopUpdate() {
-        updateInProgress = false;
+        updateInProgress = UpdateProgess.notStarted;
         if (httpdServer != null) {
             httpdServer.stop();
             httpdServer = null;
@@ -423,41 +415,11 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         builder.show();
     }
 
-    Set<String> getAddresses() {
-        Set<String> set = new HashSet<>();
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && !inetAddress.getHostAddress().contains(":")) {
-                        set.add(inetAddress.getHostAddress());
-                        Log.i(TAG, "if: " + intf.getDisplayName() + " - Host addr: " + inetAddress.getHostAddress());
-                    }
-                }
-            }
-        } catch (SocketException e) {
-            Log.e("Error occurred  ", e.toString());
-        }
-        return set;
-    }
-
-    String getNewAddresses(Set<String> prevSet) {
-        Set<String> newSet = getAddresses();
-        newSet.removeAll(prevSet);
-        Log.i(TAG, "newSet length = " + newSet.size());
-        if (newSet.isEmpty())
-            return null;
-        else {
-            String ret = newSet.iterator().next();
-            Log.i(TAG, "Host Address : " + ret);
-            return ret;
-        }
-    }
-
     @Override
     public void progress(int percent) {
-        Stm8_Ota.this.runOnUiThread( () -> messageTV.setText(getString(R.string.uploading, percent)));
+        Stm8_Ota.this.runOnUiThread( () -> {
+            updateInProgress = UpdateProgess.uploading;
+            messageTV.setText(getString(R.string.uploading, percent));});
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -468,6 +430,28 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             Stm8_Ota.this.reservation = reservation;
             ssid = cfg.SSID;
             pwd = cfg.preSharedKey;
+        }
+    }
+
+    void showStatus(int status, int value) {
+        switch (status) {
+            case 0:
+                messageTV.setText(getString(R.string.upgrade_ok));
+                showDialog(getString(R.string.upgrade_ok), getString(R.string.stm8_upgrade_message), false);
+                stopUpdate();
+                break;
+            case 1:
+                messageTV.setText(getString(R.string.write_init));
+                updateInProgress = UpdateProgess.writeinit;
+                break;
+            case 2:
+                messageTV.setText(getString(R.string.start_programming));
+                updateInProgress = UpdateProgess.writeInitialized;
+                break;
+            case 3:
+                messageTV.setText(getString(R.string.writing, value));
+                updateInProgress = UpdateProgess.writing;
+                break;
         }
     }
 
@@ -489,7 +473,8 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                             if (data[1] != (byte)0x0) {
                                 stopUpdate();
                                 showDialog(getString(R.string.error), getString(R.string.updateError), false);
-                            }
+                            } else
+                                showDialog(getString(R.string.update_start_procedure), getString(R.string.update_start_description), false);
                             break;
                         // Get Version response
                         case CMD_GET_APP_VERSION:
@@ -504,34 +489,36 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                                 versions[0] = "n/a";
                             currVerTV.setText(getString(R.string.current_version, versions[0]));
                             break;
-                        case CMD_STM_OTA_STATUS:
-                            int phase = ((data[1] & 0x80) == 0) ? 0:1;
-                            int status = data[1] & 0x7f;
-                            Log.d(TAG, "CMD_STM_OTA_STATUS: phase=" + phase + " status=" + status);
-                            if (status > 0) { // Error!
-                                showDialog(getString(R.string.error), getString(R.string.update_error, phase, status), false);
+                        case CMD_STM8_OTA_STATUS:
+                            int status = data[1];
+                            int value = data[2];
+                            Log.d(TAG, "CMD_STM_OTA_STATUS: status=" + status + " value=" + value);
+                            if (data[1] == 4) { // Error!
+                                showDialog(getString(R.string.error), getString(R.string.update_error, value), false);
                                 stopUpdate();
-                            } else if (phase == 0) { // phase 0 (upload) done
-                                messageTV.setText(getString(R.string.upload_completed));
-                                showDialog(getString(R.string.update_start_procedure), getString(R.string.update_start_description), false);
-                            } else { // phase 1 (upgrade) done
-                                messageTV.setText(getString(R.string.upgrade_ok));
-                                showDialog(getString(R.string.upgrade_ok), getString(R.string.stm8_upgrade_message), false);
-                                stopUpdate();
+                                break;
                             }
+                            showStatus(status, value);
                             break;
                     }
                     break;
                 case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
-                    if (updateInProgress) {
-                        final Handler handler = new Handler();
-                        handler.postDelayed(() ->
-                                TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_STM_OTA_STATUS})
-                                ,3000);
+                    Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
+                    if (updateInProgress == UpdateProgess.uploading) {
+                        messageTV.setText(getString(R.string.uploadDone));
+                        updateInProgress = UpdateProgess.uploaded;
                     }
                     break;
                 case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
+                    Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
+                    // TODO
+                    break;
                 case TSDZBTService.CONNECTION_LOST_BROADCAST:
+                    Log.d(TAG, "CONNECTION_LOST_BROADCAST");
+                    if (updateInProgress == UpdateProgess.started) {
+                        messageTV.setText(getString(R.string.rebooting));
+                        updateInProgress = UpdateProgess.rebooting;
+                    }
                     break;
             }
         }

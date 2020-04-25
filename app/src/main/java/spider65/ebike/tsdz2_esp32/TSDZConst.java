@@ -6,7 +6,7 @@ public interface TSDZConst {
     byte CMD_GET_APP_VERSION = 0x02;
     byte CMD_STM8S_OTA_START = 0x03;
     byte CMD_ESP_OTA_STATUS = 0x05;
-    byte CMD_STM_OTA_STATUS = 0x06;
+    byte CMD_STM8_OTA_STATUS = 0x06;
     byte CMD_CADENCE_CALIBRATION = 0x07;
     byte CMD_ESP32_CONFIG = 0x08;
 
