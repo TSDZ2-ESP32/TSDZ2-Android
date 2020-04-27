@@ -397,13 +397,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             byte [] data;
             switch (intent.getAction()) {
                 case TSDZBTService.SERVICE_STARTED_BROADCAST:
+                    Log.d(TAG, "SERVICE_STARTED_BROADCAST");
                     fabButton.setImageResource(android.R.drawable.ic_media_pause);
-                    mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                            R.mipmap.bt_connecting, 0, 0, 0);
+                    TSDZBTService service = TSDZBTService.getBluetoothService();
+                    if (service != null && service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
+                        mTitle.setCompoundDrawablesWithIntrinsicBounds(
+                                R.mipmap.bt_connecting, 0, 0, 0);
                     serviceRunning = true;
 					invalidateOptionsMenu();
                     break;
                 case TSDZBTService.SERVICE_STOPPED_BROADCAST:
+                    Log.d(TAG, "SERVICE_STOPPED_BROADCAST");
                     fabButton.setImageResource(android.R.drawable.ic_media_play);
                     mTitle.setCompoundDrawablesWithIntrinsicBounds(
                     R.mipmap.bt_disconnected, 0, 0, 0);
@@ -411,17 +415,20 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 					invalidateOptionsMenu();
                     break;
                 case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
+                    Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
                     mTitle.setCompoundDrawablesWithIntrinsicBounds(
 					R.mipmap.bt_connected, 0, 0, 0);
 					invalidateOptionsMenu();
 					break;
                 case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
+                    Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
                     Toast.makeText(getApplicationContext(), "TSDZ-ESP32 Connection Failure.", Toast.LENGTH_LONG).show();
                     mTitle.setCompoundDrawablesWithIntrinsicBounds(
 					R.mipmap.bt_connecting, 0, 0, 0);
 					invalidateOptionsMenu();
 					break;
                 case TSDZBTService.CONNECTION_LOST_BROADCAST:
+                    Log.d(TAG, "CONNECTION_LOST_BROADCAST");
                     Toast.makeText(getApplicationContext(), "TSDZ-ESP32 Connection Lost.", Toast.LENGTH_LONG).show();
                     mTitle.setCompoundDrawablesWithIntrinsicBounds(
 					R.mipmap.bt_connecting, 0, 0, 0);

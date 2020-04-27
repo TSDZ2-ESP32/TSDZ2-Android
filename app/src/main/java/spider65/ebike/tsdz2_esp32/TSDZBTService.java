@@ -88,7 +88,8 @@ public class TSDZBTService extends Service {
     public enum ConnectionState {
         DISCONNECTED,
         CONNECTING,
-        CONNECTED
+        CONNECTED,
+        DISCONNECTING
     }
 
     public TSDZBTService() {
@@ -209,7 +210,6 @@ public class TSDZBTService extends Service {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                mConnectionState = ConnectionState.CONNECTED;
                 connectionRetry = 0;
                 Log.i(TAG, "onConnectionStateChange: Connected");
                 // Discover services after successful connection.
@@ -269,8 +269,6 @@ public class TSDZBTService extends Service {
                 // setCharacteristicNotification is asynchronous. Before to make a new call we
                 // must wait the end of the previous in the callback onDescriptorWrite
                 setCharacteristicNotification(tsdz_status_char,true);
-                Intent bi = new Intent(CONNECTION_SUCCESS_BROADCAST);
-                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -289,6 +287,15 @@ public class TSDZBTService extends Service {
                         setCharacteristicNotification(tsdz_debug_char,enable);
                     else if (descriptor.getCharacteristic().getUuid().equals(UUID_DEBUG_CHARACTERISTIC))
                         setCharacteristicNotification(tsdz_command_char,enable);
+                    else if (descriptor.getCharacteristic().getUuid().equals(UUID_COMMAND_CHARACTERISTIC))
+                        if (mConnectionState == ConnectionState.CONNECTING) {
+                            mConnectionState = ConnectionState.CONNECTED;
+                            Intent bi = new Intent(CONNECTION_SUCCESS_BROADCAST);
+                            LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                        } else {
+                            // DISCONNECTING
+                            mBluetoothGatt.disconnect();
+                        }
                 }
             }
         }
@@ -390,7 +397,10 @@ public class TSDZBTService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        if (mConnectionState != ConnectionState.DISCONNECTED)
+        if (mConnectionState == ConnectionState.CONNECTED) {
+            mConnectionState = ConnectionState.DISCONNECTING;
+            setCharacteristicNotification(tsdz_status_char,false);
+        } else
             mBluetoothGatt.disconnect();
     }
 
@@ -446,7 +456,10 @@ public class TSDZBTService extends Service {
 
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                 UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
-        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        if (enabled)
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        else
+            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         mBluetoothGatt.writeDescriptor(descriptor);
     }
 }
