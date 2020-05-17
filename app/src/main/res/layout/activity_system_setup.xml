@@ -244,6 +244,40 @@
                         android:inputType="number" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/torqueFixCB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:checked="@={cfg.torque_offset_fix}"
+                        android:onCheckedChanged="@{handler::onCheckedChanged}"
+                        android:text="@string/torque_offset_fix" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="15dp"
+                        android:text="@string/torque_adc_offset" />
+
+                    <EditText
+                        android:id="@+id/torqueADCOffsetET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="5dp"
+                        android:ems="3"
+                        android:text="@{String.valueOf(cfg.ui16_torque_offset_ADC)}"
+                        android:inputType="number"
+                        android:enabled="@{cfg.torque_offset_fix}"/>
+                </LinearLayout>
+
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="2dp"

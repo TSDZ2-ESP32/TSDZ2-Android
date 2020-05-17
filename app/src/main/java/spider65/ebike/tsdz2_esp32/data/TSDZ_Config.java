@@ -6,7 +6,7 @@ import android.util.Log;
 public class TSDZ_Config {
 
     private static final String TAG = "TSDZ_Config";
-    private static final int CFG_SIZE = 53;
+    private static final int CFG_SIZE = 56;
 
     public enum TempControl {
         none (0),
@@ -69,6 +69,8 @@ public class TSDZ_Config {
     public int[] ui8_torque_assist_level = new int[4];
     public int[] ui8_eMTB_assist_level = new int[4];
     public int[] ui8_walk_assist_level = new int[4];
+    public boolean torque_offset_fix;
+    public int ui16_torque_offset_ADC;
 
     /*
     #pragma pack(1)
@@ -107,6 +109,8 @@ public class TSDZ_Config {
       volatile uint8_t ui8_torque_assist_level[4];
       volatile uint8_t ui8_eMTB_assist_level[4];
       volatile uint8_t ui8_walk_assist_level[4];
+      volatile uint8_t ui8_torque_offset_fix;
+      volatile uint16_t ui16_torque_offset_value;
     } struct_tsdz_cfg;
     */
 
@@ -159,6 +163,8 @@ public class TSDZ_Config {
             ui8_eMTB_assist_level[i] = (data[45+i] & 255);
         for (int i=0;i<4;i++)
             ui8_walk_assist_level[i] = (data[49+i] & 255);
+        torque_offset_fix = (data[53] & 255 ) != 0; // ui8_torque_offset_fix
+        ui16_torque_offset_ADC = (data[54] & 255) + ((data[55] & 255) << 8);
         return true;
     }
 
@@ -208,6 +214,10 @@ public class TSDZ_Config {
             data[45+i] = (byte) ui8_eMTB_assist_level[i];
         for (int i=0;i<4;i++)
             data[49+i] = (byte)ui8_walk_assist_level[i];
+        data[53] = (byte)(torque_offset_fix? 1:0); // ui8_torque_offset_fix
+        data[54] = (byte)ui16_torque_offset_ADC;
+        data[55] = (byte)(ui16_torque_offset_ADC >>> 8);
+
         return data;
     }
 }

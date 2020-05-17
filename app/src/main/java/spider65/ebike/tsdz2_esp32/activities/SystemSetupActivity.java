@@ -83,6 +83,9 @@ public class SystemSetupActivity extends AppCompatActivity {
             case R.id.streetPowerCB:
                 binding.streetPowerET.setEnabled(checked);
                 break;
+            case R.id.torqueFixCB:
+                binding.torqueADCOffsetET.setEnabled(checked);
+                break;
         }
     }
 
@@ -135,6 +138,16 @@ public class SystemSetupActivity extends AppCompatActivity {
             return;
         }
         cfg.ui8_pedal_torque_per_10_bit_ADC_step_x100 = val;
+
+        checked = binding.torqueFixCB.isChecked();
+        if (checked) {
+            if ((val = checkRange(binding.torqueADCOffsetET, 0, 300)) == null) {
+                showDialog(getString(R.string.torque_adc_offset), getString(R.string.range_error, 0, 100));
+                return;
+            }
+            cfg.ui16_torque_offset_ADC = val;
+        }
+        cfg.torque_offset_fix = checked;
 
         if ((val = checkRange(binding.wheelPerimeterET, 1000, 2500)) == null) {
             showDialog(getString(R.string.wheel_perimeter), getString(R.string.range_error, 1000, 2500));

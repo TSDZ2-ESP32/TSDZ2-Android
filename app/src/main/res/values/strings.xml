@@ -104,6 +104,8 @@
     <string name="high_percent">High %</string>
     <string name="assit_wpr">Assist without\npedal rotation</string>
     <string name="torque_adc_step">Torque sensor ADC step</string>
+    <string name="torque_offset_fix">Torque Offset Fix</string>
+    <string name="torque_adc_offset">Torque ADC offset</string>
     <string name="threshold">Threshold</string>
     <string name="street_mode">Street Mode</string>
     <string name="cruise_mode_enabled">Cruise mode enabled</string>
