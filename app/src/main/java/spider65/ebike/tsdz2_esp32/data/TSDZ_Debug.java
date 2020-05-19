@@ -17,6 +17,8 @@ public class TSDZ_Debug {
     public float pTorque; // Torque in Nm
     public float cadencePulseHighPercentage; // motorTemperature mapped to 0-255
     public float pcbTemperature;
+    public int rxcErrors; // ESP32 RXC errors counter
+    public int rxlErrors; // ESP32 RXL errors counter
 
     /*
     #pragma pack(1)
@@ -48,7 +50,9 @@ public class TSDZ_Debug {
         pTorque = (float)(((data[9] & 255) << 8) + (data[8] & 255)) / 100;
         cadencePulseHighPercentage = (float)(((data[11] & 255) << 8) + (data[10] & 255)) / 10;
         short s = (short) ((data[12] & 0xff) | (data[13] << 8));
-        this.pcbTemperature = (float)(s) / 10;
+        pcbTemperature = (float)(s) / 10;
+        rxcErrors = (data[14] & 255);
+        rxlErrors = (data[15] & 255);
         return true;
     }
 }

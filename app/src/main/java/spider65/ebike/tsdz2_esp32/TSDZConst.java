@@ -24,7 +24,7 @@ public interface TSDZConst {
     byte MAX_DS18B20_PIN = 31;
 
     // size in bytes of the Status/Debug BT notifications
-    int DEBUG_ADV_SIZE = 14;
+    int DEBUG_ADV_SIZE = 16;
     int STATUS_ADV_SIZE = 17;
 
     // limit values used in the LevelSetupActivity
