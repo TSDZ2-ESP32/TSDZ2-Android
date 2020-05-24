@@ -2,6 +2,7 @@ package spider65.ebike.tsdz2_esp32;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -50,6 +51,8 @@ import static java.util.Arrays.copyOfRange;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_GET_APP_VERSION;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
+import static spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity.KEY_DEVICE_MAC;
+import static spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity.KEY_DEVICE_NAME;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
@@ -145,22 +148,22 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         fabButton = findViewById(R.id.fab);
         fabButton.setOnClickListener((View) -> {
-                if (MyApp.getPreferences().getString(BluetoothSetupActivity.KEY_DEVICE_NAME, null) == null) {
-                    Toast.makeText(this, "Please select the bluetooth device to connect", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                Intent intent = new Intent(MainActivity.this, TSDZBTService.class);
-                if (serviceRunning) {
-                    intent.setAction(TSDZBTService.ACTION_STOP_FOREGROUND_SERVICE);
-                } else{
-                    intent.setAction(TSDZBTService.ACTION_START_FOREGROUND_SERVICE);
-                    intent.putExtra(TSDZBTService.ADDRESS_EXTRA, MyApp.getPreferences().getString(BluetoothSetupActivity.KEY_DEVICE_MAC, null));
-                }
-                if (Build.VERSION.SDK_INT >= 26)
-                    startForegroundService(intent);
-                else
-                    startService(intent);
-            });
+            if (!checkDevice()) {
+                Toast.makeText(this, "Please select the bluetooth device to connect", Toast.LENGTH_LONG).show();
+                return;
+            }
+            Intent intent = new Intent(MainActivity.this, TSDZBTService.class);
+            if (serviceRunning) {
+                intent.setAction(TSDZBTService.ACTION_STOP_FOREGROUND_SERVICE);
+            } else{
+                intent.setAction(TSDZBTService.ACTION_START_FOREGROUND_SERVICE);
+                intent.putExtra(TSDZBTService.ADDRESS_EXTRA, MyApp.getPreferences().getString(KEY_DEVICE_MAC, null));
+            }
+            if (Build.VERSION.SDK_INT >= 26)
+                startForegroundService(intent);
+            else
+                startService(intent);
+        });
 
         checkPermissions();
 
@@ -174,6 +177,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         checkBT();
+    }
+
+    private boolean checkDevice() {
+        String mac = MyApp.getPreferences().getString(KEY_DEVICE_MAC, null);
+        if (mac != null) {
+            final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            final BluetoothAdapter btAdapter = btManager.getAdapter();
+            BluetoothDevice selectedDevice = btAdapter.getRemoteDevice(mac);
+            if (selectedDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

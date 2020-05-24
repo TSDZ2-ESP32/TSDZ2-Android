@@ -114,6 +114,11 @@
     <string name="range_error">Value must be between %1$d and %2$d</string>
     <string name="write_cfg_error">Configuration cannot be updated</string>
     <string name="read_cfg_error">Configuration cannot be readed</string>
+    <string name="esp32_cfg_error">ESP32 data wrong\nAndorid app and ESP32 FW misaligned?</string>
+
+    <string name="pairing_error">Pairing failed</string>
+    <string name="pairing_done">Pairing done</string>
+
     <string name="connection_error">Bike is not connected</string>
     <string name="title_activity_battery_setup">Battery Setup</string>
     <string name="cells_nr">Battery cells Nr.</string>
@@ -168,6 +173,7 @@
     <string name="cadenceSaveError">Cannot save cadence value</string>
 
     <string name="commandError">Command not recognized</string>
+    <string name="lock_bike">Bike locked at Power-on</string>
     <string name="btUpdateSpeed">BT update speed</string>
     <string name="ds18b2_pin_nr">DS18B20 GPIO Pin</string>
     <string name="logLevel">Log Level</string>

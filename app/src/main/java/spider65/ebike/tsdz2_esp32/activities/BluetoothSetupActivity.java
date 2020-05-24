@@ -6,11 +6,15 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import spider65.ebike.tsdz2_esp32.MyApp;
@@ -28,6 +32,8 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import static android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED;
+
 public class BluetoothSetupActivity extends AppCompatActivity {
 
     private static final String TAG = "BluetoothSetupActivity";
@@ -39,8 +45,8 @@ public class BluetoothSetupActivity extends AppCompatActivity {
     private ArrayList<BluetoothDevice> btDeviceList = new ArrayList<>();
     private ArrayAdapter<String> adapter;
 
-    private String selectedDevice;
-    private String selectedMac;
+    private String selectedDeviceString;
+    private BluetoothDevice selectedDevice;
 
     private Button scanButton;
     private TextView deviceTV;
@@ -48,9 +54,10 @@ public class BluetoothSetupActivity extends AppCompatActivity {
     private static final long SCAN_PERIOD = 10000; // millisecond
     private Handler mHandler = new Handler();
 
-    private BluetoothManager btManager;
     private BluetoothAdapter btAdapter;
     private BluetoothLeScanner btScanner;
+
+    private IntentFilter filter = new IntentFilter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +68,6 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         deviceTV = findViewById(R.id.deviceTextView);
-        selectedDevice = MyApp.getPreferences().getString(KEY_DEVICE_NAME, null);
-        updateDeviceTV();
         scanButton = findViewById(R.id.scanButton);
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -74,19 +79,19 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         Button okButton = findViewById(R.id.okButton);
         okButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (selectedMac != null) {
-                    SharedPreferences.Editor editor = MyApp.getPreferences().edit();
-                    editor.putString(KEY_DEVICE_NAME, selectedDevice);
-                    editor.putString(KEY_DEVICE_MAC, selectedMac);
-                    editor.apply();
-                }
-                finish();
+                stopScanning();
+                if (selectedDevice != null && (selectedDevice.getBondState() != BluetoothDevice.BOND_BONDED)) {
+                    if (!selectedDevice.createBond())
+                        showDialog(getString(R.string.error), getString(R.string.pairing_error),true);
+                } else
+                    finish();
             }
         });
 
         Button cancelButton = findViewById(R.id.cancelButton);
         cancelButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                stopScanning();
                 finish();
             }
         });
@@ -97,25 +102,88 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectedDevice = btDeviceList.get(position).getName();
-                selectedMac = btDeviceList.get(position).getAddress();
+                selectedDeviceString = deviceList.get(position);
+                selectedDevice = btDeviceList.get(position);
                 updateDeviceTV();
+                stopScanning();
             }
         });
 
-        btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         btScanner = btAdapter.getBluetoothLeScanner();
+        checkDevice();
+
+        filter.addAction(ACTION_BOND_STATE_CHANGED);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(mMessageReceiver, filter);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        unregisterReceiver(mMessageReceiver);
     }
 
+    private void checkDevice() {
+        String mac = MyApp.getPreferences().getString(KEY_DEVICE_MAC, null);
+        if (mac != null) {
+            selectedDevice = btAdapter.getRemoteDevice(mac);
+            if (selectedDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
+                selectedDeviceString = MyApp.getPreferences().getString(KEY_DEVICE_NAME, null);
+                updateDeviceTV();
+                selectedDevice = null;
+            }
+        }
+    }
+
+    private void showDialog (String title, String message, boolean exit) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if (title != null)
+            builder.setTitle(title);
+        builder.setMessage(message);
+        if (exit) {
+            builder.setOnCancelListener((dialog) -> BluetoothSetupActivity.this.finish());
+            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> BluetoothSetupActivity.this.finish());
+        } else
+            builder.setPositiveButton(android.R.string.ok, null);
+        builder.show();
+    }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //Log.d(TAG, "onReceive " + intent.getAction());
+            if (ACTION_BOND_STATE_CHANGED.equals(intent.getAction())) {
+                int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE);
+                switch (state) {
+                    case BluetoothDevice.BOND_BONDED:
+                        Log.d(TAG, "ACTION_BOND_STATE_CHANGED: BOND_BONDED");
+                        SharedPreferences.Editor editor = MyApp.getPreferences().edit();
+                        editor.putString(KEY_DEVICE_NAME, selectedDeviceString);
+                        editor.putString(KEY_DEVICE_MAC, selectedDevice.getAddress());
+                        editor.apply();
+                        BluetoothSetupActivity.this.showDialog(null, getString(R.string.pairing_done),true);
+                        break;
+                    case BluetoothDevice.BOND_NONE:
+                        Log.d(TAG, "ACTION_BOND_STATE_CHANGED: BOND_BONDED");
+                        BluetoothSetupActivity.this.showDialog(getString(R.string.error), getString(R.string.pairing_error),true);
+                        break;
+                    default:
+                        Log.d(TAG, "ACTION_BOND_STATE_CHANGED: state = " + state);
+                        break;
+                }
+            }
+        }
+    };
+
     private void updateDeviceTV() {
-        if (selectedDevice != null) {
-            deviceTV.setText(selectedDevice);
+        if (selectedDeviceString != null) {
+            deviceTV.setText(selectedDeviceString);
         }
     }
 
@@ -138,7 +206,6 @@ public class BluetoothSetupActivity extends AppCompatActivity {
     }
 
     public void stopScanning() {
-        System.out.println("stopping scanning");
         scanButton.setEnabled(true);
         AsyncTask.execute(new Runnable() {
             @Override
@@ -153,10 +220,13 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         public void onScanResult(int callbackType, ScanResult result) {
             Log.d(TAG, "onScanResult " + result.getDevice().getName());
             String devName = result.getDevice().getName();
-            if (devName != null && !devName.isEmpty() && !deviceList.contains(devName)) {
-                deviceList.add(devName);
-                btDeviceList.add(result.getDevice());
-                adapter.notifyDataSetChanged();
+            if (devName != null && !devName.isEmpty()) {
+                devName = devName.concat(" - ").concat(result.getDevice().getAddress());
+                if (!deviceList.contains(devName)) {
+                    deviceList.add(devName);
+                    btDeviceList.add(result.getDevice());
+                    adapter.notifyDataSetChanged();
+                }
             }
         }
         @Override

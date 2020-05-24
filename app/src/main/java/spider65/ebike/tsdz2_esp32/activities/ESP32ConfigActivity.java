@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Switch;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +29,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
 
     private IntentFilter mIntentFilter = new IntentFilter();
 
+    private Switch lockBikeSwitch;
     private Spinner  btDelaySpinner;
     private EditText ds18b20PinET;
     private Spinner  dbgLevelSpinner;
@@ -40,6 +42,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        lockBikeSwitch = findViewById(R.id.lockBikeSW);
         btDelaySpinner = findViewById(R.id.btDelaySP);
         ds18b20PinET = findViewById(R.id.ds18b20ET);
         dbgLevelSpinner = findViewById(R.id.logLevelSP);
@@ -81,7 +84,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void saveCfg() {
-        byte[] msg = new byte[] {TSDZConst.CMD_ESP32_CONFIG, TSDZConst.CONFIG_SET,0,0,0};
+        byte[] msg = new byte[] {TSDZConst.CMD_ESP32_CONFIG, TSDZConst.CONFIG_SET,0,0,0,0};
 
         int idx = btDelaySpinner.getSelectedItemPosition();
         int[] values = getResources().getIntArray(R.array.delay_values);
@@ -93,9 +96,10 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
                     false);
             return;
         }
-        idx = dbgLevelSpinner.getSelectedItemPosition();
         msg[3] = (byte)(val & 0xff);
+        idx = dbgLevelSpinner.getSelectedItemPosition();
         msg[4] = (byte)(idx & 0xff);
+        msg[5] = (byte)(lockBikeSwitch.isChecked()?1:0);
 
         TSDZBTService service = TSDZBTService.getBluetoothService();
         if (service != null && service.getConnectionStatus() == TSDZBTService.ConnectionState.CONNECTED)
@@ -127,6 +131,9 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
             byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
             Log.d(TAG, "TSDZ_COMMAND_BROADCAST Data: " + Utils.bytesToHex(data));
             if (data[0] == TSDZConst.CMD_ESP32_CONFIG && data[1] == TSDZConst.CONFIG_GET) {
+                if (data.length != 7) {
+                    showDialog(getString(R.string.error), getString(R.string.esp32_cfg_error), true);
+                }
                 if (data[2] != 0) {
                     showDialog(getString(R.string.error), getString(R.string.read_cfg_error), true);
                 } else {
@@ -143,6 +150,8 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
                         btDelaySpinner.setSelection(values.length - 1);
                     ds18b20PinET.setText(String.valueOf(data[4]));
                     dbgLevelSpinner.setSelection(data[5]);
+                    lockBikeSwitch.setChecked(data[6] != 0);
+
                     okButton.setEnabled(true);
                 }
             } else if (data[0] == TSDZConst.CMD_ESP32_CONFIG && data[1] == TSDZConst.CONFIG_SET) {

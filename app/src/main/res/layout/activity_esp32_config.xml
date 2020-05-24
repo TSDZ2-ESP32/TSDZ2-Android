@@ -51,16 +51,44 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="@string/lock_bike" />
+
+                    <Switch
+                        android:id="@+id/lockBikeSW"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="" />
+
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="@string/btUpdateSpeed" />
 
                     <Spinner
                         android:id="@+id/btDelaySP"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
+                        android:layout_marginStart="10dp"
                         android:gravity="center_vertical"
                         android:entries="@array/delay_labels" />
+
                 </LinearLayout>
+
+                <View
+                    android:id="@+id/divider6"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?android:attr/listDivider" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -79,7 +107,7 @@
                         android:layout_height="wrap_content"
                         android:ems="2"
                         android:inputType="number"
-                        android:layout_marginStart="5dp" />
+                        android:layout_marginStart="10dp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -97,7 +125,7 @@
                         android:id="@+id/logLevelSP"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
+                        android:layout_marginStart="10dp"
                         android:gravity="center_vertical"
                         android:entries="@array/debug_levels" />
                 </LinearLayout>
