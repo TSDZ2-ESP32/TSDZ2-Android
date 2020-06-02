@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,6 +41,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,6 +62,9 @@ import static spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity.KEY_D
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
     private static final String TAG = "MainActivity";
+
+    private static final String KEY_SCREEN_ON = "SCREEN_ON";
+
     private TextView mTitle;
     private boolean serviceRunning;
     private  FloatingActionButton fabButton;
@@ -88,6 +95,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         Log.d(TAG, "onCreate");
 
         setContentView(R.layout.activity_main);
+
+        boolean screenOn = MyApp.getPreferences().getBoolean(KEY_SCREEN_ON, false);
+        if (screenOn)
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager(), status, debug);
         viewPager = findViewById(R.id.view_pager);
@@ -209,6 +222,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        MenuItem item = menu.findItem(R.id.screenONCB);
+        item.setChecked(MyApp.getPreferences().getBoolean(KEY_SCREEN_ON, false));
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -259,6 +276,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 intent = new Intent(this, ESP32ConfigActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.screenONCB:
+                boolean isChecked = !item.isChecked();
+                item.setChecked(isChecked);
+                SharedPreferences.Editor editor = MyApp.getPreferences().edit();
+                editor.putBoolean(KEY_SCREEN_ON, isChecked);
+                editor.apply();
+                if (isChecked)
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                else
+                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             default:
                 return super.onOptionsItemSelected(item);
         }

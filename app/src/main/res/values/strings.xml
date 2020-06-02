@@ -6,6 +6,7 @@
     <string name="status">STATUS DATA</string>
     <string name="debug">DEBUG DATA</string>
     <string name="btSetup">Setup Bluetooth</string>
+    <string name="alwaysOn">Screen Always ON</string>
     <string name="espOTA">ESP32 FW update</string>
     <string name="bikeOTA">Bike FW update</string>
     <string name="config">Bike Configuration</string>

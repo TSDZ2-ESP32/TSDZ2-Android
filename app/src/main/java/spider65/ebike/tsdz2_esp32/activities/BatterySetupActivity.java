@@ -78,14 +78,14 @@ public class BatterySetupActivity extends AppCompatActivity {
         }
         cfg.ui8_battery_cells_number = val;
 
-        if ((val = checkRange(binding.whResetET, 280, 550)) == null) {
-            showDialog(getString(R.string.wh_reset_volt), getString(R.string.range_error, 280, 550));
+        if ((val = checkRange(binding.whResetET, 36*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.wh_reset_volt), getString(R.string.range_error, 36*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui16_battery_voltage_reset_wh_counter_x10 = val;
 
-        if ((val = checkRange(binding.batteryCutOffET, 240, 330)) == null) {
-            showDialog(getString(R.string.volt_cut_off), getString(R.string.range_error, 240, 330));
+        if ((val = checkRange(binding.batteryCutOffET, 24*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.volt_cut_off), getString(R.string.range_error, 24*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui16_battery_low_voltage_cut_off_x10 = val;
