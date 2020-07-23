@@ -74,9 +74,6 @@ public class SystemSetupActivity extends AppCompatActivity {
     //  invalidate all to hide/show the checkbox dependant fields
     public void onCheckedChanged(View view, boolean checked) {
         switch (view.getId()) {
-            case R.id.cadenceModeCB:
-                binding.cadenceThET.setEnabled(checked);
-                break;
             case R.id.assistCB:
                 binding.assistWPRET.setEnabled(checked);
                 break;
@@ -95,8 +92,8 @@ public class SystemSetupActivity extends AppCompatActivity {
 
         cfg.ui8_motor_type = binding.motorTypeSP.getSelectedItemPosition();
 
-        if ((val = checkRange(binding.accelerationET, 0, 50)) == null) {
-            showDialog(getString(R.string.acceleration), getString(R.string.range_error, 0, 50));
+        if ((val = checkRange(binding.accelerationET, 0, 100)) == null) {
+            showDialog(getString(R.string.acceleration), getString(R.string.range_error, 0, 100));
             return;
         }
         cfg.ui8_motor_acceleration = val;
@@ -112,16 +109,6 @@ public class SystemSetupActivity extends AppCompatActivity {
             return;
         }
         cfg.ui8_target_max_battery_power_div25 = val;
-
-        checked = binding.cadenceModeCB.isChecked();
-        if (checked) {
-            if ((val = checkRange(binding.cadenceThET, 100, 900)) == null) {
-                showDialog(getString(R.string.adv_cad_mode), getString(R.string.range_error, 100, 900));
-                return;
-            }
-            cfg.ui16_cadence_sensor_pulse_high_percentage_x10 = val;
-        }
-        cfg.advanced_cadence_sensor_mode = checked;
 
         checked = binding.assistCB.isChecked();
         if (checked) {

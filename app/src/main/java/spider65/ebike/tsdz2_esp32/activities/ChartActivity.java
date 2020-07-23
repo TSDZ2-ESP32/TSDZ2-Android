@@ -101,7 +101,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 case mPower:
                     return MyApp.getInstance().getString(R.string.motor_power);
                 case current:
-                    return MyApp.getInstance().getString(R.string.motor_current);
+                    return MyApp.getInstance().getString(R.string.battery_current);
                 case volt:
                     return MyApp.getInstance().getString(R.string.voltage);
                 case energy:

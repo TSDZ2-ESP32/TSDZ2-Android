@@ -28,8 +28,7 @@ public class TSDZ_Status {
         CADENCE_ASSIST_MODE(3),
         eMTB_ASSIST_MODE(4),
         WALK_ASSIST_MODE(5),
-        CRUISE_MODE(6),
-        CADENCE_SENSOR_CALIBRATION_MODE(7);
+        CRUISE_MODE(6);
 
         RidingMode(int value) {
             this.value = value;

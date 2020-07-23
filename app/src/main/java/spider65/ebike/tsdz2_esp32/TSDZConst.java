@@ -1,19 +1,28 @@
 package spider65.ebike.tsdz2_esp32;
 
 public interface TSDZConst {
+
+    int NO_ERROR                                  = 0;
+    int ERROR_MOTOR_BLOCKED                       = 1;
+    int ERROR_TORQUE_SENSOR                       = 2;
+    /*
+    int ERROR_BRAKE_APPLIED_DURING_POWER_ON       = 3;  // currently not used
+    int ERROR_THROTTLE_APPLIED_DURING_POWER_ON    = 4;  // currently not used
+    int ERROR_NO_SPEED_SENSOR_DETECTED            = 5;  // currently not used
+    */
+    int ERROR_LOW_CONTROLLER_VOLTAGE              = 6;  // controller works with no less than 15 V so give error code if voltage is too low
+    int ERROR_OVERVOLTAGE                         = 8;
+    int ERROR_TEMPERATURE_LIMIT                   = 9;
+    int ERROR_TEMPERATURE_MAX                     = 10;
+
+
     // BT Command request/notification codes
     byte CMD_ESP_OTA_START  = 0x01;
     byte CMD_GET_APP_VERSION = 0x02;
     byte CMD_STM8S_OTA_START = 0x03;
     byte CMD_ESP_OTA_STATUS = 0x05;
     byte CMD_STM8_OTA_STATUS = 0x06;
-    byte CMD_CADENCE_CALIBRATION = 0x07;
     byte CMD_ESP32_CONFIG = 0x08;
-
-    // sub commands of CMD_CADENCE_CALIBRATION
-    byte CALIBRATION_START = 0;
-    byte CALIBRATION_STOP = 1;
-    byte CALIBRATION_SAVE = 2;
 
     // sub commands of CMD_ESP32_CONFIG
     byte CONFIG_GET = 0;
