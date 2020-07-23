@@ -42,8 +42,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,7 +54,6 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_GET_APP_VERSION;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity.KEY_DEVICE_MAC;
-import static spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity.KEY_DEVICE_NAME;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
@@ -156,6 +153,47 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         modeLevelTV = findViewById(R.id.modeLevelTV);
         statusTV = findViewById(R.id.statusTV);
+        statusTV.setOnClickListener(v -> {
+            int val;
+            try {
+                val = Integer.parseInt(((TextView) v).getText().toString());
+            } catch (NumberFormatException e) {
+                return;
+            }
+            String title = null ,message = null;
+            switch (val) {
+                case TSDZConst.ERROR_MOTOR_BLOCKED:
+                    title = getString(R.string.error_motor_blocked);
+                    message = getString(R.string.check_motor_blocked);
+                    break;
+                case TSDZConst.ERROR_TORQUE_SENSOR:
+                    title = getString(R.string.error_torque_sensor);
+                    message = getString(R.string.check_torque_sensor);
+                    break;
+                case TSDZConst.ERROR_LOW_CONTROLLER_VOLTAGE:
+                    title = getString(R.string.error_low_voltage);
+                    message = getString(R.string.check_low_voltage);
+                    break;
+                case TSDZConst.ERROR_OVERVOLTAGE:
+                    title = getString(R.string.error_high_voltage);
+                    message = getString(R.string.check_high_voltage);
+                    break;
+                case TSDZConst.ERROR_TEMPERATURE_LIMIT:
+                    title = getString(R.string.error_limit_temperature);
+                    message = getString(R.string.check_limit_temperature);
+                    break;
+                case TSDZConst.ERROR_TEMPERATURE_MAX:
+                    title = getString(R.string.error_stop_temperature);
+                    message = getString(R.string.check_stop_temperature);
+                    break;
+            }
+            if (title != null) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle(title);
+                builder.setMessage(message);
+                builder.show();
+            }
+        });
         brakeIV = findViewById(R.id.brakeIV);
         streetModeIV = findViewById(R.id.streetModeIV);
 
@@ -198,9 +236,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             final BluetoothAdapter btAdapter = btManager.getAdapter();
             BluetoothDevice selectedDevice = btAdapter.getRemoteDevice(mac);
-            if (selectedDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
-                return true;
-            }
+            return selectedDevice.getBondState() == BluetoothDevice.BOND_BONDED;
         }
         return false;
     }
@@ -366,10 +402,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             case CRUISE_MODE:
                 modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cruise_mode_icon, 0, 0, 0);
                 modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
-            case CADENCE_SENSOR_CALIBRATION_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(R.string.calibration);
                 break;
         }
     }

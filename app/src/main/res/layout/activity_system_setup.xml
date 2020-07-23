@@ -162,40 +162,6 @@
                     android:orientation="horizontal">
 
                     <CheckBox
-                        android:id="@+id/cadenceModeCB"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:checked="@={cfg.advanced_cadence_sensor_mode}"
-                        android:onCheckedChanged="@{handler::onCheckedChanged}"
-                        android:text="@string/adv_cad_mode" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="15dp"
-                        android:text="@string/high_percent" />
-
-                    <EditText
-                        android:id="@+id/cadenceThET"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="5dp"
-                        android:text="@{String.valueOf(cfg.ui16_cadence_sensor_pulse_high_percentage_x10)}"
-                        android:ems="3"
-                        android:inputType="number"
-                        android:enabled="@{cfg.advanced_cadence_sensor_mode}" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_margin="5dp"
-                    android:orientation="horizontal">
-
-                    <CheckBox
                         android:id="@+id/assistCB"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

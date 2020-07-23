@@ -265,7 +265,7 @@
         android:id="@+id/currentTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/motor_current"
+        android:text="@string/battery_current"
         android:textAppearance="@android:style/TextAppearance.Material.Medium"
         app:layout_constraintTop_toTopOf="@+id/horiz3"
         app:layout_constraintBottom_toTopOf="@+id/currentValueTV"

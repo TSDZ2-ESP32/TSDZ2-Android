@@ -47,10 +47,6 @@
             android:label="@string/title_activity_temperature_setup"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activities.CadenceSensorCalibrationActivity"
-            android:label="@string/title_activity_cadence_sensor_calibration"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".activities.TSDZCfgActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity

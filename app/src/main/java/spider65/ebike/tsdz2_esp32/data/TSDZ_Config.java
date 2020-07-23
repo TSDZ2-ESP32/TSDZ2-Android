@@ -39,8 +39,8 @@ public class TSDZ_Config {
     public int ui8_motor_temperature_min_value_to_limit;
     public int ui8_motor_temperature_max_value_to_limit;
     public int ui8_motor_acceleration;
-    public boolean advanced_cadence_sensor_mode;
-    public int ui16_cadence_sensor_pulse_high_percentage_x10;
+    public int ui8_dummy;
+    public int ui16_dummy;
     public int ui8_pedal_torque_per_10_bit_ADC_step_x100;
     public TempControl temperature_control;
     public boolean throttleEnabled;
@@ -123,8 +123,8 @@ public class TSDZ_Config {
         ui8_motor_temperature_min_value_to_limit = (data[1] & 255);
         ui8_motor_temperature_max_value_to_limit = (data[2] & 255);
         ui8_motor_acceleration = (data[3] & 255);
-        advanced_cadence_sensor_mode = (data[4] & 255 ) != 0; // ui8_cadence_sensor_mode
-        ui16_cadence_sensor_pulse_high_percentage_x10 = (data[5] & 255) + ((data[6] & 255) << 8);
+        ui8_dummy = (data[4] & 255 ); // ui8_cadence_sensor_mode
+        ui16_dummy = (data[5] & 255) + ((data[6] & 255) << 8);
         ui8_pedal_torque_per_10_bit_ADC_step_x100 = (data[7] & 255);
         throttleEnabled = (data[8] & 255) == 2;
         ui8_assist_without_pedal_rotation_threshold = (data[9] & 255);
@@ -174,9 +174,9 @@ public class TSDZ_Config {
         data[1] = (byte)ui8_motor_temperature_min_value_to_limit;
         data[2] = (byte)ui8_motor_temperature_max_value_to_limit;
         data[3] = (byte)ui8_motor_acceleration;
-        data[4] = (byte)(advanced_cadence_sensor_mode? 1:0); // ui8_cadence_sensor_mode
-        data[5] = (byte)ui16_cadence_sensor_pulse_high_percentage_x10;
-        data[6] = (byte)(ui16_cadence_sensor_pulse_high_percentage_x10 >>> 8);
+        data[4] = (byte)ui8_dummy; // ui8_cadence_sensor_mode
+        data[5] = (byte)ui16_dummy;
+        data[6] = (byte)(ui16_dummy >>> 8);
         data[7] = (byte)ui8_pedal_torque_per_10_bit_ADC_step_x100;
         data[8] = (byte)(throttleEnabled ? 2:0); // ui8_optional_ADC_function
         data[8] = temperature_control == TempControl.tempADC ? (byte)1:data[8]; // ui8_optional_ADC_function

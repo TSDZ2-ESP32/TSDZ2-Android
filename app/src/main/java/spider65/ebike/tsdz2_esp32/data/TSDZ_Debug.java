@@ -15,7 +15,7 @@ public class TSDZ_Debug {
     public int adcThrottle; // value from ADC Throttle/Temperature
     public int throttle; // Throttled mapped to 0-255
     public float pTorque; // Torque in Nm
-    public float cadencePulseHighPercentage; // motorTemperature mapped to 0-255
+    public int notUsed; // motorTemperature mapped to 0-255
     public float pcbTemperature;
     public int rxcErrors; // ESP32 RXC errors counter
     public int rxlErrors; // ESP32 RXL errors counter
@@ -43,12 +43,12 @@ public class TSDZ_Debug {
         }
         adcThrottle = (data[0] & 255);
         throttle = (data[1] & 255);
-        torqueSensorValue = ((data[3] & 255) << 8) + ((data[2] & 255));
+        torqueSensorValue = ((data[3] & 255) << 8) + (data[2] & 255);
         dutyCycle = (data[4] & 255);
-        motorERPS = ((data[6] & 255) << 8) + ((data[5] & 255));
+        motorERPS = ((data[6] & 255) << 8) + (data[5] & 255);
         focAngle = (data[7] & 255);
         pTorque = (float)(((data[9] & 255) << 8) + (data[8] & 255)) / 100;
-        cadencePulseHighPercentage = (float)(((data[11] & 255) << 8) + (data[10] & 255)) / 10;
+        notUsed = ((data[11] & 255) << 8) + (data[10] & 255);
         short s = (short) ((data[12] & 0xff) | (data[13] << 8));
         pcbTemperature = (float)(s) / 10;
         rxcErrors = (data[14] & 255);

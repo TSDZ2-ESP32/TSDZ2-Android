@@ -1,5 +1,18 @@
 <resources>
 
+    <string name="error_motor_blocked">Motor Blocked!</string>
+    <string name="check_motor_blocked">Check motor and bike transimssion</string>
+    <string name="error_torque_sensor">Torque sensor error!</string>
+    <string name="check_torque_sensor">Take your feet off the pedals and restart the bike</string>
+    <string name="error_low_voltage">Battery low voltage!</string>
+    <string name="check_low_voltage">Check battery voltage or battery configuration parameters</string>
+    <string name="error_high_voltage">Battery overvoltage!</string>
+    <string name="check_high_voltage">Check battery voltage or battery configuration parameters</string>
+    <string name="error_limit_temperature">Warning temperature</string>
+    <string name="check_limit_temperature">The motor power is limited</string>
+    <string name="error_stop_temperature">Stop temperature!</string>
+    <string name="check_stop_temperature">Turn off the bike and wait for it to cool down</string>
+
     <string name="dash">-</string>
     <string name="calibration">Cal</string>
     <string name="app_name">TSDZ2_ESP32</string>
@@ -34,7 +47,7 @@
     <string name="cadence">Cadence</string>
     <string name="motor_power">Motor Power</string>
     <string name="pedal_power">Pedal Power</string>
-    <string name="motor_current">Motor Current</string>
+    <string name="battery_current">Battery Current</string>
     <string name="voltage">Battery Volt</string>
     <string name="motor_temp">Motor Temp.</string>
     <string name="energy_used">Energy Used</string>
@@ -51,7 +64,7 @@
     <string name="foc_angle">FOC Angle</string>
     <string name="torque_adc">Torque ADC</string>
     <string name="pedal_torque">Pedal Torque</string>
-    <string name="cad_pulse">Cadence High %</string>
+    <string name="not_used">Not Used</string>
     <string name="adc_value">ADC value</string>
     <string name="controller_temp">Controller Temp.</string>
 
