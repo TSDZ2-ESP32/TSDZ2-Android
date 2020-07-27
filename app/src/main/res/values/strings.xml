@@ -219,7 +219,6 @@
         <item> 48V (exp.)</item>
     </string-array>
 
-
     <string-array name="ligths_cfg">
         <item> Solid - Off</item>
         <item> Flashing - Off</item>
@@ -263,15 +262,8 @@
     </string-array>
 
 
-    <!--  Chart Example Values -->
+    <!--  Chart Values -->
     <string name="bike_sessions">Bike sessions</string>
-
     <string name="data_select">Select data</string>
-
-    <string name="actionToggleHighlight">Toggle Highlight</string>
-    <string name="actionTogglePinch">Toggle PinchZoom</string>
-    <string name="actionToggleAutoScale">Toggle Auto Scale</string>
-
-    <string name="actionToggleFilled">Toggle Filled</string>
 
 </resources>
