@@ -71,6 +71,16 @@ public class SystemSetupActivity extends AppCompatActivity {
         }
     }
 
+    public void onClickInductance(View view) {
+        switch (view.getId()) {
+            case R.id.inductance36BT:
+                binding.inductanceET.setText("80");
+                break;
+            case R.id.inductance48BT:
+                binding.inductanceET.setText("142");
+                break;
+        }
+    }
     //  invalidate all to hide/show the checkbox dependant fields
     public void onCheckedChanged(View view, boolean checked) {
         switch (view.getId()) {
@@ -89,8 +99,11 @@ public class SystemSetupActivity extends AppCompatActivity {
     private void saveCfg() {
         Integer val;
         boolean checked;
-
-        cfg.ui8_motor_type = binding.motorTypeSP.getSelectedItemPosition();
+        if ((val = checkRange(binding.inductanceET, 0, 150)) == null) {
+            showDialog(getString(R.string.motor_inductance), getString(R.string.range_error, 0, 150));
+            return;
+        }
+        cfg.ui8_motor_inductance_x1048576 = val;
 
         if ((val = checkRange(binding.accelerationET, 0, 100)) == null) {
             showDialog(getString(R.string.acceleration), getString(R.string.range_error, 0, 100));
@@ -197,7 +210,6 @@ public class SystemSetupActivity extends AppCompatActivity {
             case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
                 if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
                     binding.setCfg(cfg);
-                    binding.motorTypeSP.setSelection(cfg.ui8_motor_type);
                     binding.lightConfigSP.setSelection(cfg.ui8_lights_configuration);
                 }
                 break;
