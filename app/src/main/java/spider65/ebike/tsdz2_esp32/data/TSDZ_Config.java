@@ -35,7 +35,7 @@ public class TSDZ_Config {
         }
     }
 
-    public int ui8_motor_type;
+    public int ui8_motor_inductance_x1048576;
     public int ui8_motor_temperature_min_value_to_limit;
     public int ui8_motor_temperature_max_value_to_limit;
     public int ui8_motor_acceleration;
@@ -119,7 +119,7 @@ public class TSDZ_Config {
             Log.e(TAG, "setData: wrong data size");
             return false;
         }
-        ui8_motor_type = (data[0] & 255);
+        ui8_motor_inductance_x1048576 = (data[0] & 255);
         ui8_motor_temperature_min_value_to_limit = (data[1] & 255);
         ui8_motor_temperature_max_value_to_limit = (data[2] & 255);
         ui8_motor_acceleration = (data[3] & 255);
@@ -170,7 +170,7 @@ public class TSDZ_Config {
 
     public byte[] toByteArray() {
         byte[] data = new byte[CFG_SIZE];
-        data[0] = (byte)(ui8_motor_type & 0xff);
+        data[0] = (byte)(ui8_motor_inductance_x1048576 & 0xff);
         data[1] = (byte)ui8_motor_temperature_min_value_to_limit;
         data[2] = (byte)ui8_motor_temperature_max_value_to_limit;
         data[3] = (byte)ui8_motor_acceleration;

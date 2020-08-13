@@ -63,17 +63,36 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/motor_type"
+                        android:text="@string/motor_inductance"
                         android:layout_gravity="center_vertical" />
 
-                    <Spinner
-                        android:id="@+id/motorTypeSP"
+                    <EditText
+                        android:id="@+id/inductanceET"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:layout_marginStart="5dp"
-                        android:entries="@array/motor_types"
-                        android:minWidth="100dp"/>
+                        android:layout_weight="2"
+                        android:ems="2"
+                        android:inputType="number"
+                        android:text="@{String.valueOf(cfg.ui8_motor_inductance_x1048576)}" />
+
+                    <Button
+                        android:id="@+id/inductance36BT"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.2"
+                        android:onClick="@{handler::onClickInductance}"
+                        android:text="36V" />
+
+                    <Button
+                        android:id="@+id/inductance48BT"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.2"
+                        android:onClick="@{handler::onClickInductance}"
+                        android:text="48V" />
+
                 </LinearLayout>
 
                 <LinearLayout

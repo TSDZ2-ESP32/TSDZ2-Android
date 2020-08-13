@@ -107,6 +107,7 @@
     <string name="title_activity_system_setup">System Setup</string>
     <string name="motor">Motor</string>
     <string name="motor_type">Motor Type</string>
+    <string name="motor_inductance">Motor Inductance</string>
     <string name="acceleration">Acceleration</string>
     <string name="max_current">Max current (A)</string>
     <string name="max_power">Max Power (W)</string>
