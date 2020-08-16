@@ -86,7 +86,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private enum DataType {
         level, speed,cadence,pPower,mPower,current,
         volt,energy,mTemp,cTemp,dCycle,erps,
-        foc,pTorque;
+        foc,pTorque,fwAngle;
 
         public String getName() {
             switch (this) {
@@ -118,6 +118,8 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     return MyApp.getInstance().getString(R.string.foc_angle);
                 case pTorque:
                     return MyApp.getInstance().getString(R.string.pedal_torque);
+                case fwAngle:
+                    return MyApp.getInstance().getString(R.string.fw_angle);
             }
             return "";
         }
@@ -126,7 +128,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             DataType.level, DataType.speed, DataType.cadence, DataType.pPower, DataType.mPower,
             DataType.mTemp, DataType.volt, DataType.current, DataType.energy));
     private static final Set<DataType> DEBUG_DATA_TYPES = new HashSet<>(Arrays.asList(
-            DataType.dCycle, DataType.erps, DataType.foc, DataType.pTorque, DataType.cTemp));
+            DataType.dCycle, DataType.erps, DataType.foc, DataType.pTorque, DataType.cTemp, DataType.fwAngle));
     private static final Set<DataType> POWER_DATA_TYPES = new HashSet<>(Arrays.asList(
             DataType.mPower, DataType.pPower));
     private static final Set<DataType> TEMPERATURE_DATA_TYPES = new HashSet<>(Arrays.asList(
@@ -514,6 +516,9 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     case cTemp:
                         y = debugData.get(i).debug.pcbTemperature;
                         break;
+                    case fwAngle:
+                        y = debugData.get(i).debug.notUsed;
+                        break;
                 }
                 if (y > maxY)
                     maxY = y;
@@ -767,6 +772,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     new DataItem(DataType.speed, true),
                     new DataItem(DataType.cadence, false),
                     new DataItem(DataType.pPower, true),
+                    new DataItem(DataType.pTorque, false),
                     new DataItem(DataType.mPower, false),
                     new DataItem(DataType.current, false),
                     new DataItem(DataType.volt, false),
@@ -776,7 +782,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     new DataItem(DataType.dCycle, false),
                     new DataItem(DataType.erps, false),
                     new DataItem(DataType.foc,  false),
-                    new DataItem(DataType.pTorque, false)
+                    new DataItem(DataType.fwAngle, false)
             };
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(false);

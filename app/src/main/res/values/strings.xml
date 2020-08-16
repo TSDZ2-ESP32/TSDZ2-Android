@@ -67,6 +67,7 @@
     <string name="not_used">Not Used</string>
     <string name="adc_value">ADC value</string>
     <string name="controller_temp">Controller Temp.</string>
+    <string name="fw_angle">FW Angle</string>
 
     <string name="tsdz_cfg">Bike Configuration</string>
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
