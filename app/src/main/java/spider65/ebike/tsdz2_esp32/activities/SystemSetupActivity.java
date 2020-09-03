@@ -141,8 +141,8 @@ public class SystemSetupActivity extends AppCompatActivity {
 
         checked = binding.torqueFixCB.isChecked();
         if (checked) {
-            if ((val = checkRange(binding.torqueADCOffsetET, 0, 300)) == null) {
-                showDialog(getString(R.string.torque_adc_offset), getString(R.string.range_error, 0, 100));
+            if ((val = checkRange(binding.torqueADCOffsetET, 40, 300)) == null) {
+                showDialog(getString(R.string.torque_adc_offset), getString(R.string.range_error, 40, 300));
                 return;
             }
             cfg.ui16_torque_offset_ADC = val;

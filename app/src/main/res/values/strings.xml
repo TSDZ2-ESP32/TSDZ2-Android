@@ -117,7 +117,6 @@
     <string name="light">Light</string>
     <string name="ligth_config">Lights Configuration</string>
     <string name="adv_cad_mode">Cadence sensor\nAdvanced mode</string>
-    <string name="high_percent">High %</string>
     <string name="assit_wpr">Assist without\npedal rotation</string>
     <string name="torque_adc_step">Torque sensor ADC step</string>
     <string name="torque_offset_fix">Torque Offset Fix</string>
@@ -206,6 +205,13 @@
 
     <string name="title_activity_chart">Charts</string>
     <string name="assistLevel">Assist Level</string>
+
+    <string name="hal_1">HAL 1</string>
+    <string name="hal_2">HAL 2</string>
+    <string name="hal_3">HAL 3</string>
+    <string name="hal_4">HAL 4</string>
+    <string name="hal_5">HAL 5</string>
+    <string name="hal_6">HAL 6</string>
 
 
     <string-array name="ota_types">
