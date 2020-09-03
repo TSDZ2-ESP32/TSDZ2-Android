@@ -78,14 +78,14 @@ public class BatterySetupActivity extends AppCompatActivity {
         }
         cfg.ui8_battery_cells_number = val;
 
-        if ((val = checkRange(binding.whResetET, 36*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number)) == null) {
-            showDialog(getString(R.string.wh_reset_volt), getString(R.string.range_error, 36*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number));
+        if ((val = checkRange(binding.whResetET, 38*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.wh_reset_volt), getString(R.string.range_error, 38*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui16_battery_voltage_reset_wh_counter_x10 = val;
 
-        if ((val = checkRange(binding.batteryCutOffET, 24*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number)) == null) {
-            showDialog(getString(R.string.volt_cut_off), getString(R.string.range_error, 24*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number));
+        if ((val = checkRange(binding.batteryCutOffET, 26*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.volt_cut_off), getString(R.string.range_error, 26*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui16_battery_low_voltage_cut_off_x10 = val;
@@ -96,26 +96,26 @@ public class BatterySetupActivity extends AppCompatActivity {
         }
         cfg.ui16_battery_pack_resistance_x1000 = val;
 
-        if ((val = checkRange(binding.cellOvervoltET, 300, 440)) == null) {
-            showDialog(getString(R.string.cell_overvolt), getString(R.string.range_error, 300, 450));
+        if ((val = checkRange(binding.cellOvervoltET, 39*cfg.ui8_battery_cells_number, 44*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.cell_overvolt), getString(R.string.range_error, 39*cfg.ui8_battery_cells_number, 44*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui8_li_io_cell_overvolt_x100 = val;
 
-        if ((val = checkRange(binding.cellEmptyET, 250, 330)) == null) {
-            showDialog(getString(R.string.cell_empty), getString(R.string.range_error, 259, 330));
+        if ((val = checkRange(binding.cellEmptyET, 27*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.cell_empty), getString(R.string.range_error, 27*cfg.ui8_battery_cells_number, 33*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui8_li_io_cell_empty_x100 = val;
 
-        if ((val = checkRange(binding.cellOneBarET, 250, 340)) == null) {
-            showDialog(getString(R.string.cell_one_bar), getString(R.string.range_error, 250, 340));
+        if ((val = checkRange(binding.cellOneBarET, 28*cfg.ui8_battery_cells_number, 34*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.cell_one_bar), getString(R.string.range_error, 28*cfg.ui8_battery_cells_number, 34*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui8_li_io_cell_one_bar_x100 = val;
 
-        if ((val = checkRange(binding.cellAllBarsET, 370, 430)) == null) {
-            showDialog(getString(R.string.cell_all_bars), getString(R.string.range_error, 370, 430));
+        if ((val = checkRange(binding.cellAllBarsET, 38*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number)) == null) {
+            showDialog(getString(R.string.cell_all_bars), getString(R.string.range_error, 38*cfg.ui8_battery_cells_number, 43*cfg.ui8_battery_cells_number));
             return;
         }
         cfg.ui8_li_io_cell_full_bars_x100 = val;
