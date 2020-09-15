@@ -298,6 +298,27 @@
                         android:inputType="number" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/max_speed" />
+
+                    <EditText
+                        android:id="@+id/maxSpeedET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_max_speed)}"
+                        android:inputType="number" />
+                </LinearLayout>
+
                 <CheckBox
                     android:id="@+id/cruiseModeCB"
                     android:layout_width="wrap_content"
@@ -320,6 +341,27 @@
                     android:gravity="center_horizontal"
                     android:layout_marginTop="5dp"
                     android:text="@string/street_mode" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/max_speed" />
+
+                    <EditText
+                        android:id="@+id/maxStreetSpeedET"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ems="4"
+                        android:text="@{String.valueOf(cfg.ui8_street_max_speed)}"
+                        android:inputType="number" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"

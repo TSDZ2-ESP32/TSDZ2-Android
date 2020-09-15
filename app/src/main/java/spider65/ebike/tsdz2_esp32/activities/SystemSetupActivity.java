@@ -155,8 +155,20 @@ public class SystemSetupActivity extends AppCompatActivity {
         }
         cfg.ui16_wheel_perimeter = val;
 
+        if ((val = checkRange(binding.maxSpeedET, 10, 60)) == null) {
+            showDialog(getString(R.string.max_speed), getString(R.string.range_error, 10, 60));
+            return;
+        }
+        cfg.ui8_max_speed = val;
+
         checked = binding.cruiseModeCB.isChecked();
         cfg.ui8_cruise_enabled = checked;
+
+        if ((val = checkRange(binding.maxStreetSpeedET, 10, 45)) == null) {
+            showDialog(getString(R.string.max_speed), getString(R.string.range_error, 10, 45));
+            return;
+        }
+        cfg.ui8_street_max_speed = val;
 
         checked = binding.streetPowerCB.isChecked();
         if (checked) {

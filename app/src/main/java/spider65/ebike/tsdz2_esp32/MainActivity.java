@@ -36,8 +36,10 @@ import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
 import spider65.ebike.tsdz2_esp32.utils.OnSwipeListener;
 
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -196,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         });
         brakeIV = findViewById(R.id.brakeIV);
         streetModeIV = findViewById(R.id.streetModeIV);
+        registerForContextMenu(streetModeIV);
 
         fabButton = findViewById(R.id.fab);
         fabButton.setOnClickListener((View) -> {
@@ -228,6 +231,43 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         checkBT();
+    }
+
+    @Override
+    public void onCreateContextMenu (ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        if (v.getId() != R.id.streetModeIV)
+            return;
+        TSDZBTService service = TSDZBTService.getBluetoothService();
+        if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
+            return;
+
+        // create context menu for Street Mode Icon long press
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_street_mode, menu);
+        menu.setHeaderTitle(getResources().getString(R.string.street_mode));
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item){
+        // manage Street Mode icon context menu selection
+        TSDZBTService service = TSDZBTService.getBluetoothService();
+        if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
+            return false;
+
+        switch (item.getItemId()) {
+            case R.id.lcd_master:
+                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_LCD_MASTER});
+                break;
+            case R.id.force_off:
+                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_FORCE_OFF});
+                break;
+            case R.id.force_on:
+                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_FORCE_ON});
+                break;
+            default:
+                return false;
+        }
+        return true;
     }
 
     private boolean checkDevice() {
@@ -370,9 +410,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             statusTV.setVisibility(View.INVISIBLE);
 
         if (status.streetMode)
-            streetModeIV.setVisibility(View.VISIBLE);
+            streetModeIV.setImageResource(R.mipmap.street_icon_on);
         else
-            streetModeIV.setVisibility(View.INVISIBLE);
+            streetModeIV.setImageResource(R.mipmap.street_icon_off);
 
         switch (status.ridingMode) {
             case OFF_MODE:

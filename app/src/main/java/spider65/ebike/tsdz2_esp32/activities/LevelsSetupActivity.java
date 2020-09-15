@@ -100,27 +100,27 @@ public class LevelsSetupActivity extends AppCompatActivity {
             return;
         }
 
-        if ((val1 = checkRange(binding.powerAssist1ET, 1, 100)) == null) {
-            showDialog(getString(R.string.power_assist_level_1), getString(R.string.range_error, 1, 100));
+        if ((val1 = checkRange(binding.powerAssist1ET, 10, 500)) == null) {
+            showDialog(getString(R.string.power_assist_level_1), getString(R.string.range_error, 10, 500));
             return;
         }
-        if ((val2 = checkRange(binding.powerAssist2ET, 1, 100)) == null) {
-            showDialog(getString(R.string.power_assist_level_2), getString(R.string.range_error, 1, 100));
+        if ((val2 = checkRange(binding.powerAssist2ET, 10, 500)) == null) {
+            showDialog(getString(R.string.power_assist_level_2), getString(R.string.range_error, 10, 500));
             return;
         }
-        if ((val3 = checkRange(binding.powerAssist3ET, 1, 100)) == null) {
-            showDialog(getString(R.string.power_assist_level_3), getString(R.string.range_error, 1, 100));
+        if ((val3 = checkRange(binding.powerAssist3ET, 10, 500)) == null) {
+            showDialog(getString(R.string.power_assist_level_3), getString(R.string.range_error, 10, 500));
             return;
         }
-        if ((val4 = checkRange(binding.powerAssist4ET, 1, 100)) == null) {
-            showDialog(getString(R.string.power_assist_level_4), getString(R.string.range_error, 1, 100));
+        if ((val4 = checkRange(binding.powerAssist4ET, 10, 500)) == null) {
+            showDialog(getString(R.string.power_assist_level_4), getString(R.string.range_error, 10, 500));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
-            cfg.ui8_power_assist_level[0] = val1;
-            cfg.ui8_power_assist_level[1] = val2;
-            cfg.ui8_power_assist_level[2] = val3;
-            cfg.ui8_power_assist_level[3] = val4;
+            cfg.ui8_power_assist_level[0] = val1/2;
+            cfg.ui8_power_assist_level[1] = val2/2;
+            cfg.ui8_power_assist_level[2] = val3/2;
+            cfg.ui8_power_assist_level[3] = val4/2;
         } else {
             showDialog(getString(R.string.power_mode), getString(R.string.level_error));
             return;

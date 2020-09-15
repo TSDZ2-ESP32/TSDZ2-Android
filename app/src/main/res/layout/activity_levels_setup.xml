@@ -169,7 +169,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
                         android:ems="4"
-                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[0])}"
+                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[0]*2)}"
                         android:inputType="number" />
                 </LinearLayout>
 
@@ -190,7 +190,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
                         android:ems="4"
-                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[1])}"
+                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[1]*2)}"
                         android:inputType="number" />
                 </LinearLayout>
 
@@ -211,7 +211,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
                         android:ems="4"
-                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[2])}"
+                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[2]*2)}"
                         android:inputType="number" />
                 </LinearLayout>
 
@@ -232,7 +232,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
                         android:ems="4"
-                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[3])}"
+                        android:text="@{String.valueOf(cfg.ui8_power_assist_level[3]*2)}"
                         android:inputType="number" />
                 </LinearLayout>
 

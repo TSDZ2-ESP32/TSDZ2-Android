@@ -40,7 +40,8 @@ public class TSDZ_Config {
     public int ui8_motor_temperature_max_value_to_limit;
     public int ui8_motor_acceleration;
     public int ui8_dummy;
-    public int ui16_dummy;
+    public int ui8_max_speed;
+    public int ui8_street_max_speed;
     public int ui8_pedal_torque_per_10_bit_ADC_step_x100;
     public TempControl temperature_control;
     public boolean throttleEnabled;
@@ -59,7 +60,7 @@ public class TSDZ_Config {
     public int ui8_li_io_cell_full_bars_x100;
     public int ui8_li_io_cell_one_bar_x100;
     public int ui8_li_io_cell_empty_x100;
-    public boolean ui8_street_mode_enabled;
+    public boolean ui8_dummy2;
     public boolean ui8_street_mode_power_limit_enabled;
     public boolean ui8_street_mode_throttle_enabled;
     public int ui8_street_mode_power_limit_div25;
@@ -74,43 +75,43 @@ public class TSDZ_Config {
 
     /*
     #pragma pack(1)
-    typedef struct _tsdz_cfg
-    {
-      volatile uint8_t ui8_motor_type;
-      volatile uint8_t ui8_motor_temperature_min_value_to_limit;
-      volatile uint8_t ui8_motor_temperature_max_value_to_limit;
-      volatile uint8_t ui8_motor_acceleration;
-      volatile uint8_t ui8_cadence_sensor_mode;
-      volatile uint16_t ui16_cadence_sensor_pulse_high_percentage_x10;
-      volatile uint8_t ui8_pedal_torque_per_10_bit_ADC_step_x100;
-      volatile uint8_t ui8_optional_ADC_function;
-      volatile uint8_t ui8_assist_without_pedal_rotation_threshold;
-      volatile uint8_t ui8_lights_configuration;
-      volatile uint16_t ui16_wheel_perimeter;
-      volatile uint8_t ui8_cruise_enabled;
-      volatile uint16_t ui16_battery_voltage_reset_wh_counter_x10;
-      volatile uint8_t ui8_battery_max_current;
-      volatile uint8_t ui8_target_max_battery_power_div25;
-      volatile uint8_t ui8_battery_cells_number;
-      volatile uint16_t ui16_battery_pack_resistance_x1000;
-      volatile uint16_t ui16_battery_low_voltage_cut_off_x10;
-      volatile uint8_t ui8_li_io_cell_overvolt_x100;
-      volatile uint8_t ui8_li_io_cell_full_bars_x100;
-      volatile uint8_t ui8_li_io_cell_one_bar_x100;
-      volatile uint8_t ui8_li_io_cell_empty_x100;
-      volatile uint8_t ui8_street_mode_enabled;
-      volatile uint8_t ui8_street_mode_power_limit_enabled;
-      volatile uint8_t ui8_street_mode_throttle_enabled;
-      volatile uint8_t ui8_street_mode_power_limit_div25;
-      volatile uint8_t ui8_street_mode_speed_limit;
-      volatile uint8_t ui8_esp32_temp_control;
-      volatile uint8_t ui8_cadence_assist_level[4];
-      volatile uint8_t ui8_power_assist_level[4];
-      volatile uint8_t ui8_torque_assist_level[4];
-      volatile uint8_t ui8_eMTB_assist_level[4];
-      volatile uint8_t ui8_walk_assist_level[4];
-      volatile uint8_t ui8_torque_offset_fix;
-      volatile uint16_t ui16_torque_offset_value;
+    typedef struct _tsdz_cfg {
+        volatile uint8_t ui8_motor_inductance_x1048576;
+        volatile uint8_t ui8_motor_temperature_min_value_to_limit;
+        volatile uint8_t ui8_motor_temperature_max_value_to_limit;
+        volatile uint8_t ui8_motor_acceleration;
+        volatile uint8_t ui8_dummy;
+        volatile uint8_t ui8_max_speed;
+        volatile uint8_t ui8_street_max_speed;
+        volatile uint8_t ui8_pedal_torque_per_10_bit_ADC_step_x100;
+        volatile uint8_t ui8_optional_ADC_function;
+        volatile uint8_t ui8_assist_without_pedal_rotation_threshold;
+        volatile uint8_t ui8_lights_configuration;
+        volatile uint16_t ui16_wheel_perimeter;
+        volatile uint8_t ui8_cruise_mode_enabled;
+        volatile uint16_t ui16_battery_voltage_reset_wh_counter_x10;
+        volatile uint8_t ui8_battery_max_current;
+        volatile uint8_t ui8_target_max_battery_power_div25;
+        volatile uint8_t ui8_battery_cells_number;
+        volatile uint16_t ui16_battery_pack_resistance_x1000;
+        volatile uint16_t ui16_battery_low_voltage_cut_off_x10;
+        volatile uint8_t ui8_li_io_cell_overvolt_x100;
+        volatile uint8_t ui8_li_io_cell_full_bars_x100;
+        volatile uint8_t ui8_li_io_cell_one_bar_x100;
+        volatile uint8_t ui8_li_io_cell_empty_x100;
+        volatile uint8_t ui8_dummy2;
+        volatile uint8_t ui8_street_mode_power_limit_enabled;
+        volatile uint8_t ui8_street_mode_throttle_enabled;
+        volatile uint8_t ui8_street_mode_power_limit_div25;
+        volatile uint8_t ui8_street_mode_speed_limit;
+        volatile uint8_t ui8_esp32_temp_control;
+        volatile uint8_t ui8_cadence_assist_level[4];
+        volatile uint8_t ui8_power_assist_level[4];
+        volatile uint8_t ui8_torque_assist_level[4];
+        volatile uint8_t ui8_eMTB_assist_sensitivity[4];
+        volatile uint8_t ui8_walk_assist_level[4];
+        volatile uint8_t ui8_torque_offset_fix;
+        volatile uint16_t ui16_torque_offset_value;
     } struct_tsdz_cfg;
     */
 
@@ -124,7 +125,8 @@ public class TSDZ_Config {
         ui8_motor_temperature_max_value_to_limit = (data[2] & 255);
         ui8_motor_acceleration = (data[3] & 255);
         ui8_dummy = (data[4] & 255 ); // ui8_cadence_sensor_mode
-        ui16_dummy = (data[5] & 255) + ((data[6] & 255) << 8);
+        ui8_max_speed = (data[5] & 255);
+        ui8_street_max_speed = (data[6] & 255);
         ui8_pedal_torque_per_10_bit_ADC_step_x100 = (data[7] & 255);
         throttleEnabled = (data[8] & 255) == 2;
         ui8_assist_without_pedal_rotation_threshold = (data[9] & 255);
@@ -142,7 +144,7 @@ public class TSDZ_Config {
         ui8_li_io_cell_full_bars_x100 = (data[24] & 255) + 200;
         ui8_li_io_cell_one_bar_x100 = (data[25] & 255) + 200;
         ui8_li_io_cell_empty_x100 = (data[26] & 255) + 200;
-        ui8_street_mode_enabled = (data[27] & 255) != 0;
+        ui8_dummy2 = (data[27] & 255) != 0;
         ui8_street_mode_power_limit_enabled = (data[28] & 255) != 0;
         ui8_street_mode_throttle_enabled = (data[29] & 255) != 0;
         ui8_street_mode_power_limit_div25 = (data[30] & 255) * 25;
@@ -174,9 +176,9 @@ public class TSDZ_Config {
         data[1] = (byte)ui8_motor_temperature_min_value_to_limit;
         data[2] = (byte)ui8_motor_temperature_max_value_to_limit;
         data[3] = (byte)ui8_motor_acceleration;
-        data[4] = (byte)ui8_dummy; // ui8_cadence_sensor_mode
-        data[5] = (byte)ui16_dummy;
-        data[6] = (byte)(ui16_dummy >>> 8);
+        data[4] = (byte)ui8_dummy;
+        data[5] = (byte)ui8_max_speed;
+        data[6] = (byte)(ui8_street_max_speed);
         data[7] = (byte)ui8_pedal_torque_per_10_bit_ADC_step_x100;
         data[8] = (byte)(throttleEnabled ? 2:0); // ui8_optional_ADC_function
         data[8] = temperature_control == TempControl.tempADC ? (byte)1:data[8]; // ui8_optional_ADC_function
@@ -198,7 +200,7 @@ public class TSDZ_Config {
         data[24] = (byte)(ui8_li_io_cell_full_bars_x100 - 200);
         data[25] = (byte)(ui8_li_io_cell_one_bar_x100 - 200);
         data[26] = (byte)(ui8_li_io_cell_empty_x100 - 200);
-        data[27] = (byte)(ui8_street_mode_enabled? 1:0);
+        data[27] = (byte)(ui8_dummy2 ? 1:0);
         data[28] = (byte)(ui8_street_mode_power_limit_enabled? 1:0);
         data[29] = (byte)(ui8_street_mode_throttle_enabled? 1:0);
         data[30] = (byte)(ui8_street_mode_power_limit_div25/25);

@@ -206,6 +206,11 @@
     <string name="title_activity_chart">Charts</string>
     <string name="assistLevel">Assist Level</string>
 
+    <string name="on">Force On</string>
+    <string name="off">Force Off</string>
+    <string name="lcd_master">LCD Master</string>
+    <string name="max_speed">Max Speed</string>
+
     <string name="hal_1">HAL 1</string>
     <string name="hal_2">HAL 2</string>
     <string name="hal_3">HAL 3</string>

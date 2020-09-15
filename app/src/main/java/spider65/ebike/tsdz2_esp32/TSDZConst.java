@@ -23,6 +23,11 @@ public interface TSDZConst {
     byte CMD_ESP_OTA_STATUS = 0x05;
     byte CMD_STM8_OTA_STATUS = 0x06;
     byte CMD_ESP32_CONFIG = 0x08;
+    byte CMD_STREET_MODE = 0x09;
+
+    byte STREET_MODE_LCD_MASTER = 0;
+    byte STREET_MODE_FORCE_OFF = 1;
+    byte STREET_MODE_FORCE_ON = 2;
 
     // sub commands of CMD_ESP32_CONFIG
     byte CONFIG_GET = 0;
