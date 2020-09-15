@@ -80,9 +80,18 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         okButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 stopScanning();
-                if (selectedDevice != null && (selectedDevice.getBondState() != BluetoothDevice.BOND_BONDED)) {
-                    if (!selectedDevice.createBond())
-                        showDialog(getString(R.string.error), getString(R.string.pairing_error),true);
+                if (selectedDevice != null) {
+                    if (selectedDevice.getBondState() != BluetoothDevice.BOND_BONDED) {
+                        if (!selectedDevice.createBond())
+                            showDialog(getString(R.string.error), getString(R.string.pairing_error), true);
+                    } else {
+                        // device is already bonded
+                        SharedPreferences.Editor editor = MyApp.getPreferences().edit();
+                        editor.putString(KEY_DEVICE_NAME, selectedDeviceString);
+                        editor.putString(KEY_DEVICE_MAC, selectedDevice.getAddress());
+                        editor.apply();
+                        BluetoothSetupActivity.this.showDialog(null, getString(R.string.pairing_done),true);
+                    }
                 } else
                     finish();
             }
@@ -105,7 +114,6 @@ public class BluetoothSetupActivity extends AppCompatActivity {
                 selectedDeviceString = deviceList.get(position);
                 selectedDevice = btDeviceList.get(position);
                 updateDeviceTV();
-                stopScanning();
             }
         });
 
