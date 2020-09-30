@@ -153,7 +153,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mTitle = toolbar.findViewById(R.id.toolbar_title);
         mTitle.setText(R.string.status);
 
-        modeLevelTV = findViewById(R.id.modeLevelTV);
         statusTV = findViewById(R.id.statusTV);
         statusTV.setOnClickListener(v -> {
             int val;
@@ -197,6 +196,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
         brakeIV = findViewById(R.id.brakeIV);
+        modeLevelTV = findViewById(R.id.modeLevelTV);
+        registerForContextMenu(modeLevelTV);
         streetModeIV = findViewById(R.id.streetModeIV);
         registerForContextMenu(streetModeIV);
 
@@ -231,54 +232,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         checkBT();
-    }
-
-    @Override
-    public void onCreateContextMenu (ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        if (v.getId() != R.id.streetModeIV)
-            return;
-        TSDZBTService service = TSDZBTService.getBluetoothService();
-        if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
-            return;
-
-        // create context menu for Street Mode Icon long press
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_street_mode, menu);
-        menu.setHeaderTitle(getResources().getString(R.string.street_mode));
-    }
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item){
-        // manage Street Mode icon context menu selection
-        TSDZBTService service = TSDZBTService.getBluetoothService();
-        if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
-            return false;
-
-        switch (item.getItemId()) {
-            case R.id.lcd_master:
-                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_LCD_MASTER});
-                break;
-            case R.id.force_off:
-                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_FORCE_OFF});
-                break;
-            case R.id.force_on:
-                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_FORCE_ON});
-                break;
-            default:
-                return false;
-        }
-        return true;
-    }
-
-    private boolean checkDevice() {
-        String mac = MyApp.getPreferences().getString(KEY_DEVICE_MAC, null);
-        if (mac != null) {
-            final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-            final BluetoothAdapter btAdapter = btManager.getAdapter();
-            BluetoothDevice selectedDevice = btAdapter.getRemoteDevice(mac);
-            return selectedDevice.getBondState() == BluetoothDevice.BOND_BONDED;
-        }
-        return false;
     }
 
     @Override
@@ -368,6 +321,68 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     @Override
+    public void onCreateContextMenu (ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        TSDZBTService service = TSDZBTService.getBluetoothService();
+        if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
+            return;
+
+        MenuInflater inflater;
+        switch (v.getId()) {
+            case R.id.streetModeIV:
+                // create context menu for Street Mode Icon long press
+                inflater = getMenuInflater();
+                inflater.inflate(R.menu.menu_street_mode, menu);
+                menu.setHeaderTitle(getResources().getString(R.string.street_mode));
+                break;
+            case R.id.modeLevelTV:
+                // create context menu for Assist Mode Icon long press
+                inflater = getMenuInflater();
+                inflater.inflate(R.menu.menu_assist_mode, menu);
+                menu.setHeaderTitle(getResources().getString(R.string.assist_mode));
+                break;
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item){
+        TSDZBTService service = TSDZBTService.getBluetoothService();
+        if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
+            return false;
+
+        switch (item.getItemId()) {
+            // manage Street Mode context menu selection
+            case R.id.street_lcd_master:
+                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_LCD_MASTER});
+                break;
+            case R.id.street_force_off:
+                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_FORCE_OFF});
+                break;
+            case R.id.street_force_on:
+                service.writeCommand(new byte[] {TSDZConst.CMD_STREET_MODE, TSDZConst.STREET_MODE_FORCE_ON});
+                break;
+            // manage Assist Mode context menu selection
+            case R.id.assist_lcd_master:
+                service.writeCommand(new byte[] {TSDZConst.CMD_ASSIST_MODE, TSDZConst.ASSIST_MODE_LCD_MASTER});
+                break;
+            case R.id.assist_power:
+                service.writeCommand(new byte[] {TSDZConst.CMD_ASSIST_MODE, TSDZConst.ASSIST_MODE_FORCE_POWER});
+                break;
+            case R.id.assist_emtb:
+                service.writeCommand(new byte[] {TSDZConst.CMD_ASSIST_MODE, TSDZConst.ASSIST_MODE_FORCE_EMTB});
+                break;
+            case R.id.assist_torque:
+                service.writeCommand(new byte[] {TSDZConst.CMD_ASSIST_MODE, TSDZConst.ASSIST_MODE_FORCE_TORQUE});
+                break;
+            case R.id.assist_cadence:
+                service.writeCommand(new byte[] {TSDZConst.CMD_ASSIST_MODE, TSDZConst.ASSIST_MODE_FORCE_CADENCE});
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode,resultCode,data);
         if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
@@ -395,6 +410,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 builder.show();
             }
         }
+    }
+
+    private boolean checkDevice() {
+        String mac = MyApp.getPreferences().getString(KEY_DEVICE_MAC, null);
+        if (mac != null) {
+            final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            final BluetoothAdapter btAdapter = btManager.getAdapter();
+            BluetoothDevice selectedDevice = btAdapter.getRemoteDevice(mac);
+            return selectedDevice.getBondState() == BluetoothDevice.BOND_BONDED;
+        }
+        return false;
     }
 
     private void refreshView() {

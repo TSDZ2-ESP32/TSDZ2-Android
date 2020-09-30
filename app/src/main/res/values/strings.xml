@@ -211,6 +211,9 @@
     <string name="lcd_master">LCD Master</string>
     <string name="max_speed">Max Speed</string>
 
+    <string name="assist_mode">Assist Mode</string>
+
+
     <string name="hal_1">HAL 1</string>
     <string name="hal_2">HAL 2</string>
     <string name="hal_3">HAL 3</string>
