@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item  android:id="@+id/assist_lcd_master"
+        android:title="@string/lcd_master"/>
+    <item  android:id="@+id/assist_power"
+        android:title="@string/power_mode" />
+    <item  android:id="@+id/assist_emtb"
+        android:title="@string/eMTB_mode"/>
+    <item  android:id="@+id/assist_torque"
+        android:title="@string/torque_mode"/>
+    <item  android:id="@+id/assist_cadence"
+        android:title="@string/cadence_mode"/>
+</menu>
