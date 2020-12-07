@@ -126,20 +126,20 @@ public class LevelsSetupActivity extends AppCompatActivity {
             return;
         }
 
-        if ((val1 = checkRange(binding.torqueAssist1ET, 1, 100)) == null) {
-            showDialog(getString(R.string.torque_assist_level_1), getString(R.string.range_error, 1, 100));
+        if ((val1 = checkRange(binding.torqueAssist1ET, 1, 200)) == null) {
+            showDialog(getString(R.string.torque_assist_level_1), getString(R.string.range_error, 1, 200));
             return;
         }
-        if ((val2 = checkRange(binding.torqueAssist2ET, 1, 100)) == null) {
-            showDialog(getString(R.string.torque_assist_level_2), getString(R.string.range_error, 1, 100));
+        if ((val2 = checkRange(binding.torqueAssist2ET, 1, 200)) == null) {
+            showDialog(getString(R.string.torque_assist_level_2), getString(R.string.range_error, 1, 200));
             return;
         }
-        if ((val3 = checkRange(binding.torqueAssist3ET, 1, 100)) == null) {
-            showDialog(getString(R.string.torque_assist_level_3), getString(R.string.range_error, 1, 100));
+        if ((val3 = checkRange(binding.torqueAssist3ET, 1, 200)) == null) {
+            showDialog(getString(R.string.torque_assist_level_3), getString(R.string.range_error, 1, 200));
             return;
         }
-        if ((val4 = checkRange(binding.torqueAssist4ET, 1, 100)) == null) {
-            showDialog(getString(R.string.torque_assist_level_4), getString(R.string.range_error, 1, 100));
+        if ((val4 = checkRange(binding.torqueAssist4ET, 1, 200)) == null) {
+            showDialog(getString(R.string.torque_assist_level_4), getString(R.string.range_error, 1, 200));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
