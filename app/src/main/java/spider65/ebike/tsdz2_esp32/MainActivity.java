@@ -1,6 +1,7 @@
 package spider65.ebike.tsdz2_esp32;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -28,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
 import spider65.ebike.tsdz2_esp32.activities.ChartActivity;
 import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
+import spider65.ebike.tsdz2_esp32.activities.MotorTuningActivity;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
@@ -88,6 +90,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private GestureDetector gestureDetector;
 
+    private enum BTStatus {
+        Disconnected,
+        Connecting,
+        Connected
+    }
+
+    private BTStatus btStatus = BTStatus.Disconnected;
+    private boolean commError = false;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,6 +164,23 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             actionBar.setDisplayShowTitleEnabled(false);
         mTitle = toolbar.findViewById(R.id.toolbar_title);
         mTitle.setText(R.string.status);
+        mTitle.setOnClickListener(v -> {
+            if ((status.status & 0xc0) == 0)
+                return;
+            String title, message;
+            if ((status.status & 0x80) != 0) {
+                title = getString(R.string.error);
+                message = getString(R.string.error_controller_comm);
+            } else {
+                title = getString(R.string.error);
+                message = getString(R.string.error_lcd_comm);
+            }
+            final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle(title);
+            builder.setMessage(message);
+            builder.setPositiveButton(getString(R.string.ok), null);
+            builder.show();
+        });
 
         statusTV = findViewById(R.id.statusTV);
         statusTV.setOnClickListener(v -> {
@@ -192,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setTitle(title);
                 builder.setMessage(message);
+                builder.setPositiveButton(getString(R.string.ok), null);
                 builder.show();
             }
         });
@@ -232,6 +262,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         checkBT();
+        updateUIStatus();
     }
 
     @Override
@@ -267,12 +298,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             menu.findItem(R.id.showVersion).setEnabled(true);
             menu.findItem(R.id.config).setEnabled(true);
             menu.findItem(R.id.esp32Config).setEnabled(true);
+            menu.findItem(R.id.motorTest).setEnabled(true);
         } else {
             menu.findItem(R.id.bikeOTA).setEnabled(false);
             menu.findItem(R.id.espOTA).setEnabled(false);
             menu.findItem(R.id.showVersion).setEnabled(false);
             menu.findItem(R.id.config).setEnabled(false);
             menu.findItem(R.id.esp32Config).setEnabled(false);
+            menu.findItem(R.id.motorTest).setEnabled(false);
         }
         return true;
     }
@@ -303,6 +336,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 return true;
             case R.id.esp32Config:
                 intent = new Intent(this, ESP32ConfigActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.motorTest:
+                intent = new Intent(this, MotorTuningActivity.class);
                 startActivity(intent);
                 return true;
             case R.id.screenONCB:
@@ -429,11 +466,21 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         else
             brakeIV.setVisibility(View.INVISIBLE);
 
-        if (status.status != 0) {
+        // Motor Status are in the bits 0-5
+        if ((status.status & 0x3f) != 0) {
             statusTV.setVisibility(View.VISIBLE);
-            statusTV.setText(String.valueOf(status.status));
+            statusTV.setText(String.valueOf(status.status & 0x3f));
         } else
             statusTV.setVisibility(View.INVISIBLE);
+
+        // Communication Status are in the bits 6-7
+        if (((status.status & 0xc0) != 0) && !commError) {
+            commError = true;
+            updateStatusIcons();
+        } else if (((status.status & 0xc0) == 0) && commError) {
+            commError = false;
+            updateStatusIcons();
+        }
 
         if (status.streetMode)
             streetModeIV.setImageResource(R.mipmap.street_icon_on);
@@ -472,19 +519,45 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+
+    private void updateStatusIcons() {
+        switch (btStatus) {
+            case Disconnected:
+                if (commError)
+                    mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_disconnected, 0, R.drawable.comm_error, 0);
+                else
+                    mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_disconnected, 0, 0, 0);
+                break;
+            case Connecting:
+                if (commError)
+                    mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_connecting, 0, R.drawable.comm_error, 0);
+                else
+                    mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_connecting, 0, 0, 0);
+                break;
+            case Connected:
+                if (commError)
+                    mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_connected, 0, R.drawable.comm_error, 0);
+                else
+                    mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_connected, 0, 0, 0);
+                break;
+        }
+    }
+
+
     private void updateUIStatus() {
         if (TSDZBTService.getBluetoothService() != null) {
             fabButton.setImageResource(android.R.drawable.ic_media_pause);
             serviceRunning = true;
             if (TSDZBTService.getBluetoothService().getConnectionStatus() == TSDZBTService.ConnectionState.CONNECTED)
-                mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_connected, 0, 0, 0);
+                btStatus = BTStatus.Connected;
             else
-                mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_connecting, 0, 0, 0);
+                btStatus = BTStatus.Connecting;
         } else {
             fabButton.setImageResource(android.R.drawable.ic_media_play);
-            mTitle.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.bt_disconnected, 0, 0, 0);
             serviceRunning = false;
+            btStatus = BTStatus.Disconnected;
         }
+        updateStatusIcons();
     }
 
     private void checkBT() {
@@ -541,38 +614,39 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     Log.d(TAG, "SERVICE_STARTED_BROADCAST");
                     fabButton.setImageResource(android.R.drawable.ic_media_pause);
                     TSDZBTService service = TSDZBTService.getBluetoothService();
-                    if (service != null && service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
-                        mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                                R.mipmap.bt_connecting, 0, 0, 0);
+                    if (service != null && service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
+                        btStatus = BTStatus.Connecting;
+                        updateStatusIcons();
+                    }
                     serviceRunning = true;
 					invalidateOptionsMenu();
                     break;
                 case TSDZBTService.SERVICE_STOPPED_BROADCAST:
                     Log.d(TAG, "SERVICE_STOPPED_BROADCAST");
                     fabButton.setImageResource(android.R.drawable.ic_media_play);
-                    mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                    R.mipmap.bt_disconnected, 0, 0, 0);
+                    btStatus = BTStatus.Disconnected;
+                    updateStatusIcons();
                     serviceRunning = false;
 					invalidateOptionsMenu();
                     break;
                 case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
                     Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
-                    mTitle.setCompoundDrawablesWithIntrinsicBounds(
-					R.mipmap.bt_connected, 0, 0, 0);
+                    btStatus = BTStatus.Connected;
+                    updateStatusIcons();
 					invalidateOptionsMenu();
 					break;
                 case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
                     Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
                     Toast.makeText(getApplicationContext(), "TSDZ-ESP32 Connection Failure.", Toast.LENGTH_LONG).show();
-                    mTitle.setCompoundDrawablesWithIntrinsicBounds(
-					R.mipmap.bt_connecting, 0, 0, 0);
+                    btStatus = BTStatus.Connecting;
+                    updateStatusIcons();
 					invalidateOptionsMenu();
 					break;
                 case TSDZBTService.CONNECTION_LOST_BROADCAST:
                     Log.d(TAG, "CONNECTION_LOST_BROADCAST");
                     Toast.makeText(getApplicationContext(), "TSDZ-ESP32 Connection Lost.", Toast.LENGTH_LONG).show();
-                    mTitle.setCompoundDrawablesWithIntrinsicBounds(
-					R.mipmap.bt_connecting, 0, 0, 0);
+                    btStatus = BTStatus.Connecting;
+                    updateStatusIcons();
 					invalidateOptionsMenu();
 					break;
 				case TSDZBTService.TSDZ_COMMAND_BROADCAST:
@@ -607,6 +681,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     };
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         gestureDetector.onTouchEvent(event);

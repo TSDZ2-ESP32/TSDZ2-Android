@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".activities.HalSensorCalibrationActivity"
+    tools:context=".activities.HallCalibrationActivity"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -57,32 +57,55 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="10dp"
+                        android:minEms="6"
+                        android:maxEms="6"
                         android:textSize="20sp"
-                        android:text="prova" />
+                        android:text="@string/dash" />
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="?android:attr/listDivider" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
+                    android:layout_margin="5dp"
                     android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:textSize="20sp"
-                    android:text="@string/hal_1" />
-                <TextView
-                    android:id="@+id/hal1TV"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:textSize="20sp"
-                    android:text="prova" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/hal_1" />
+                    <TextView
+                        android:id="@+id/hal1TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="5"
+                        android:maxEms="5"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
+
+                    <View
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/listDivider" />
+
+                    <TextView
+                        android:id="@+id/hal1rTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
+                    android:layout_margin="5dp"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="wrap_content"
@@ -94,14 +117,29 @@
                         android:id="@+id/hal2TV"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minEms="5"
+                        android:maxEms="5"
                         android:layout_margin="10dp"
                         android:textSize="20sp"
-                        android:text="prova" />
+                        android:text="@string/dash" />
+
+                    <View
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/listDivider" />
+
+                    <TextView
+                        android:id="@+id/hal2rTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
+                    android:layout_margin="5dp"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="wrap_content"
@@ -113,14 +151,29 @@
                         android:id="@+id/hal3TV"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minEms="5"
+                        android:maxEms="5"
                         android:layout_margin="10dp"
                         android:textSize="20sp"
-                        android:text="prova" />
+                        android:text="@string/dash" />
+
+                    <View
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/listDivider" />
+
+                    <TextView
+                        android:id="@+id/hal3rTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
+                    android:layout_margin="5dp"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="wrap_content"
@@ -132,14 +185,29 @@
                         android:id="@+id/hal4TV"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minEms="5"
+                        android:maxEms="5"
                         android:layout_margin="10dp"
                         android:textSize="20sp"
-                        android:text="prova" />
+                        android:text="@string/dash" />
+
+                    <View
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/listDivider" />
+
+                    <TextView
+                        android:id="@+id/hal4rTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
+                    android:layout_margin="5dp"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="wrap_content"
@@ -151,14 +219,29 @@
                         android:id="@+id/hal5TV"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minEms="5"
+                        android:maxEms="5"
                         android:layout_margin="10dp"
                         android:textSize="20sp"
-                        android:text="prova" />
+                        android:text="@string/dash" />
+
+                    <View
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/listDivider" />
+
+                    <TextView
+                        android:id="@+id/hal5rTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
+                    android:layout_margin="5dp"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="wrap_content"
@@ -170,9 +253,24 @@
                         android:id="@+id/hal6TV"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minEms="5"
+                        android:maxEms="5"
                         android:layout_margin="10dp"
                         android:textSize="20sp"
-                        android:text="prova" />
+                        android:text="@string/dash" />
+
+                    <View
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/listDivider" />
+
+                    <TextView
+                        android:id="@+id/hal6rTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:textSize="20sp"
+                        android:text="@string/dash" />
                 </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -220,7 +318,7 @@
 
                 android:onClick="onButtonClick"
                 app:layout_constraintTop_toTopOf="parent"
-                android:text="@string/cancel" />
+                android:text="@string/exit" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

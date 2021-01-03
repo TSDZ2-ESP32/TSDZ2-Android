@@ -5,7 +5,7 @@
     tools:context=".activities.SystemSetupActivity">
     <data>
         <variable name="cfg"     type="spider65.ebike.tsdz2_esp32.data.TSDZ_Config"/>
-        <variable name="handler" type="spider65.ebike.tsdz2_esp32.activities.SystemSetupActivity"/>
+        <variable name="clickHandler" type="spider65.ebike.tsdz2_esp32.activities.SystemSetupActivity"/>
     </data>
 
 <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -82,7 +82,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="0.2"
-                        android:onClick="@{handler::onClickInductance}"
+                        android:onClick="@{clickHandler::onClickInductance}"
                         android:text="36V" />
 
                     <Button
@@ -90,7 +90,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="0.2"
-                        android:onClick="@{handler::onClickInductance}"
+                        android:onClick="@{clickHandler::onClickInductance}"
                         android:text="48V" />
 
                 </LinearLayout>
@@ -186,7 +186,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:checked="@={cfg.assist_without_pedal_rotation}"
-                        android:onCheckedChanged="@{handler::onCheckedChanged}"
+                        android:onCheckedChanged="@{clickHandler::onCheckedChanged}"
                         android:text="@string/assit_wpr" />
 
                     <TextView
@@ -241,7 +241,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:checked="@={cfg.torque_offset_fix}"
-                        android:onCheckedChanged="@{handler::onCheckedChanged}"
+                        android:onCheckedChanged="@{clickHandler::onCheckedChanged}"
                         android:text="@string/torque_offset_fix" />
 
                     <TextView
@@ -375,7 +375,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:checked="@={cfg.ui8_street_mode_power_limit_enabled}"
-                        android:onCheckedChanged="@{handler::onCheckedChanged}"
+                        android:onCheckedChanged="@{clickHandler::onCheckedChanged}"
                         android:text="@string/max_power" />
 
                     <EditText
@@ -460,7 +460,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="@{handler::onOkCancelClick}"
+                android:onClick="@{clickHandler::onOkCancelClick}"
                 android:text="@string/ok" />
 
             <Button
@@ -468,7 +468,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="@{handler::onOkCancelClick}"
+                android:onClick="@{clickHandler::onOkCancelClick}"
                 app:layout_constraintTop_toTopOf="parent"
                 android:text="@string/cancel" />
         </LinearLayout>

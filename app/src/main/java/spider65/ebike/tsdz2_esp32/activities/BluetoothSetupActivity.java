@@ -239,7 +239,7 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         }
         @Override
         public void onScanFailed(int errorCode) {
-            Toast.makeText(BluetoothSetupActivity.this, "LE Scan Error", Toast.LENGTH_LONG);
+            Toast.makeText(BluetoothSetupActivity.this, "LE Scan Error", Toast.LENGTH_LONG).show();
             scanButton.setEnabled(true);
         }
     };

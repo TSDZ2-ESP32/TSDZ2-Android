@@ -16,6 +16,8 @@
         android:title="@string/show_version" />
     <item  android:id="@+id/btSetup"
         android:title="@string/btSetup"/>
+    <item  android:id="@+id/motorTest"
+        android:title="@string/motorTest"/>
     <item
         android:id="@+id/screenONCB"
         android:checkable="true"

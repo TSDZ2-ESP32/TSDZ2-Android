@@ -54,11 +54,11 @@
                 android:text="@string/battery" />
 
             <Button
-            android:id="@+id/levels_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/assist_levels" />
+                android:id="@+id/levels_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/assist_levels" />
 
             <Button
                 android:id="@+id/temperature_control"
@@ -66,6 +66,13 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:text="@string/temp_control" />
+
+            <Button
+                android:id="@+id/hall_calib_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/hall_calib" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 

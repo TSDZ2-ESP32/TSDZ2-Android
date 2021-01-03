@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".fragments.FragmentDebug">
     <data>
-        <variable name="debug" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Debug"/>
+        <variable name="tsdz_debug" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Debug"/>
     </data>
 
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -172,7 +172,7 @@
         app:string_title="@string/duty_cycle"
         app:is_need_dial="false"
         app:back_color="@android:color/darker_gray"
-        app:current_value="@{(float)debug.dutyCycle}"
+        app:current_value="@{(float)tsdz_debug.dutyCycle}"
         />
     -->
 
@@ -192,7 +192,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.dutyCycle)}"
+        android:text="@{String.valueOf(tsdz_debug.dutyCycle)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz2"
         app:layout_constraintEnd_toStartOf="@+id/vert2"
@@ -216,7 +216,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.motorERPS)}"
+        android:text="@{String.valueOf(tsdz_debug.motorERPS)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz2"
         app:layout_constraintEnd_toStartOf="@+id/vert3"
@@ -241,7 +241,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.focAngle)}"
+        android:text="@{String.valueOf(tsdz_debug.focAngle)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz3"
         app:layout_constraintEnd_toStartOf="@+id/vert2"
@@ -265,7 +265,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.torqueSensorValue)}"
+        android:text="@{String.valueOf(tsdz_debug.torqueSensorValue)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz3"
         app:layout_constraintEnd_toStartOf="@+id/vert3"
@@ -290,7 +290,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.pTorque)}"
+        android:text="@{String.valueOf(tsdz_debug.pTorque)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz4"
         app:layout_constraintEnd_toStartOf="@+id/vert2"
@@ -314,7 +314,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.notUsed)}"
+        android:text="@{String.valueOf(tsdz_debug.notUsed)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz4"
         app:layout_constraintEnd_toStartOf="@+id/vert3"
@@ -339,7 +339,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(debug.adcThrottle)}"
+        android:text="@{String.valueOf(tsdz_debug.adcThrottle)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz5"
         app:layout_constraintEnd_toStartOf="@+id/vert2"
@@ -363,7 +363,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{@string/temperatureField(debug.pcbTemperature)}"
+        android:text="@{@string/temperatureField(tsdz_debug.pcbTemperature)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz5"
         app:layout_constraintEnd_toStartOf="@+id/vert3"

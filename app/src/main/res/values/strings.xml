@@ -11,14 +11,16 @@
     <string name="error_limit_temperature">Warning temperature</string>
     <string name="check_limit_temperature">The motor power is limited</string>
     <string name="error_stop_temperature">Stop temperature!</string>
-    <string name="check_stop_temperature">Turn off the bike and wait for it to cool down</string>
+    <string name="check_stop_temperature">Turn off the motor and wait for it to cool down</string>
+    <string name="error_lcd_comm">LCD communication Error</string>
+    <string name="error_controller_comm">Controller communication Error</string>
 
     <string name="dash">-</string>
-    <string name="calibration">Cal</string>
     <string name="app_name">TSDZ2_ESP32</string>
     <string name="status">STATUS DATA</string>
     <string name="debug">DEBUG DATA</string>
     <string name="btSetup">Setup Bluetooth</string>
+    <string name="motorTest">Motor Test</string>
     <string name="alwaysOn">Screen Always ON</string>
     <string name="espOTA">ESP32 FW update</string>
     <string name="bikeOTA">Bike FW update</string>
@@ -28,6 +30,7 @@
     <string name="title_activity_bluetooth_setup">Bluetooth Setup</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="exit">Exit</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="start">Start</string>
@@ -60,7 +63,7 @@
     <string name="whField">%1$d Wh</string>
 
     <string name="duty_cycle">Duty Cycle</string>
-    <string name="motor_erps">Motor ERPS</string>
+    <string name="motor_erps">Motor ERPS:</string>
     <string name="foc_angle">FOC Angle</string>
     <string name="torque_adc">Torque ADC</string>
     <string name="pedal_torque">Pedal Torque</string>
@@ -104,10 +107,9 @@
     <string name="battery">Battery</string>
     <string name="assist_levels">Assist Levels</string>
     <string name="temp_control">Temperature and Throttle</string>
-    <string name="cadence_calib">Cadence sensor calibration</string>
+    <string name="hall_calib">Hall sensors calibration</string>
     <string name="title_activity_system_setup">System Setup</string>
     <string name="motor">Motor</string>
-    <string name="motor_type">Motor Type</string>
     <string name="motor_inductance">Motor Inductance</string>
     <string name="acceleration">Acceleration</string>
     <string name="max_current">Max current (A)</string>
@@ -116,7 +118,6 @@
     <string name="wheel_cruise">Wheel / Cruise</string>
     <string name="light">Light</string>
     <string name="ligth_config">Lights Configuration</string>
-    <string name="adv_cad_mode">Cadence sensor\nAdvanced mode</string>
     <string name="assit_wpr">Assist without\npedal rotation</string>
     <string name="torque_adc_step">Torque sensor ADC step</string>
     <string name="torque_offset_fix">Torque Offset Fix</string>
@@ -178,14 +179,8 @@
     <string name="stop_temp">Shutoff Temperature</string>
     <string name="throttle_control">Throttle Control</string>
     <string name="throttle_enabled">Throttle Enabled</string>
-    <string name="title_activity_cadence_sensor_calibration">Cadence sensor calibration</string>
 
     <string name="title_activity_esp32_config">ESP32 Configuration</string>
-
-
-    <string name="cadenceStartError">Cannot start cadence calibration</string>
-    <string name="cadenceStopError">Cannot stop cadence calibration</string>
-    <string name="cadenceSaveError">Cannot save cadence value</string>
 
     <string name="commandError">Command not recognized</string>
     <string name="lock_bike">Bike locked at Power-on</string>
@@ -204,7 +199,6 @@
     <string name="pin_input_error">PIN is empty</string>
 
     <string name="title_activity_chart">Charts</string>
-    <string name="assistLevel">Assist Level</string>
 
     <string name="on">Force On</string>
     <string name="off">Force Off</string>
@@ -213,7 +207,6 @@
 
     <string name="assist_mode">Assist Mode</string>
 
-
     <string name="hal_1">HAL 1</string>
     <string name="hal_2">HAL 2</string>
     <string name="hal_3">HAL 3</string>
@@ -221,19 +214,16 @@
     <string name="hal_5">HAL 5</string>
     <string name="hal_6">HAL 6</string>
 
+    <string name="rotor_angle">Angle adj.</string>
+    <string name="auto_tune">Auto Tune</string>
+    <string name="dc_step">D.C. step</string>
+    <string name="dc_max">D.C. Max</string>
+    <string name="max_angle">Angle (+/-)</string>
+    <string name="step_time">Step Samples</string>
+    <string name="motorTestStartError">Cannot start motor test</string>
+    <string name="motorTestStopError">Cannot stop motor test</string>
+    <string name="exitHallError">Calibration is running\nStop calibration then exit</string>
 
-    <string-array name="ota_types">
-        <item> Select the App to update </item>
-        <item> Main ESP32 App </item>
-        <item> STM8 Loader App</item>
-    </string-array>
-
-    <string-array name="motor_types">
-        <item> 36V </item>
-        <item> 48V </item>
-        <item> 36V (exp.)</item>
-        <item> 48V (exp.)</item>
-    </string-array>
 
     <string-array name="ligths_cfg">
         <item> Solid - Off</item>
@@ -246,6 +236,7 @@
         <item> Flashing - On</item>
         <item> Flashing - Flashing</item>
     </string-array>
+
     <string-array name="temperature_types">
         <item> None </item>
         <item> Controller ADC </item>

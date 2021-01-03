@@ -1,12 +1,10 @@
 package spider65.ebike.tsdz2_esp32.fragments;
 
-import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import spider65.ebike.tsdz2_esp32.R;
-import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.databinding.FragmentStatusBinding;
 
@@ -25,7 +23,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
 
     //private IntentFilter mIntentFilter = new IntentFilter();
 
-    private TSDZ_Status status;
+    private TSDZ_Status tsdz_status;
 
     private FragmentStatusBinding binding;
 
@@ -39,8 +37,8 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
         return new FragmentStatus(status);
     }
 
-    private FragmentStatus(TSDZ_Status status) {
-        this.status = status;
+    private FragmentStatus(TSDZ_Status tsdz_status) {
+        this.tsdz_status = tsdz_status;
     }
 
     @Override
@@ -57,7 +55,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
         Log.d(TAG, "onCreateView");
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_status, container, false);
-        binding.setStatus(status);
+        binding.setTsdzStatus(tsdz_status);
         return binding.getRoot();
     }
 

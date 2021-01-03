@@ -14,6 +14,7 @@ import android.widget.Switch;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -29,7 +30,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
 
     private IntentFilter mIntentFilter = new IntentFilter();
 
-    private Switch lockBikeSwitch;
+    private SwitchCompat lockBikeSwitch;
     private Spinner  btDelaySpinner;
     private EditText ds18b20PinET;
     private Spinner  dbgLevelSpinner;

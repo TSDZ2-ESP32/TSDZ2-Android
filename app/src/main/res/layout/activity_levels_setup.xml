@@ -5,7 +5,7 @@
     tools:context=".activities.SystemSetupActivity">
     <data>
         <variable name="cfg"     type="spider65.ebike.tsdz2_esp32.data.TSDZ_Config"/>
-        <variable name="handler" type="spider65.ebike.tsdz2_esp32.activities.LevelsSetupActivity"/>
+        <variable name="clickHandler" type="spider65.ebike.tsdz2_esp32.activities.LevelsSetupActivity"/>
     </data>
 
 <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -548,7 +548,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="@{handler::onOkCancelClick}"
+                android:onClick="@{clickHandler::onOkCancelClick}"
                 android:text="@string/ok" />
 
             <Button
@@ -556,7 +556,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="@{handler::onOkCancelClick}"
+                android:onClick="@{clickHandler::onOkCancelClick}"
                 app:layout_constraintTop_toTopOf="parent"
                 android:text="@string/cancel" />
         </LinearLayout>
