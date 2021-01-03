@@ -32,7 +32,8 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:layout_marginEnd="20dp"
-                    android:drawableStart="@mipmap/bt_disconnected"
+                    app:drawableStartCompat ="@mipmap/bt_disconnected"
+                    app:drawableEndCompat ="@drawable/comm_error"
                     android:drawablePadding="10dp"
                     android:singleLine="true"
                     android:text="@string/status"/>
@@ -77,7 +78,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:drawableStart="@mipmap/off_mode_icon"
+                    app:drawableStartCompat ="@mipmap/off_mode_icon"
                     android:text="@string/dash"
                     android:textSize="28sp" />
             </LinearLayout>
@@ -93,7 +94,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:visibility="invisible"
-                    android:drawableStart="@mipmap/error_icon"
+                    app:drawableStartCompat ="@mipmap/error_icon"
                     android:textSize="28sp"
                     android:gravity="center"
                     android:text="@string/dash" />

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".fragments.FragmentStatus">
     <data>
-        <variable name="status" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Status"/>
+        <variable name="tsdz_status" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Status"/>
     </data>
 
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -157,7 +157,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/speedField(status.speed)}"
+        android:text="@{@string/speedField(tsdz_status.speed)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz2"
         app:layout_constraintEnd_toStartOf="@+id/vert1GL"
         app:layout_constraintStart_toStartOf="@+id/vert1GL"
@@ -181,7 +181,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/cadenceField(status.cadence)}"
+        android:text="@{@string/cadenceField(tsdz_status.cadence)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz2"
         app:layout_constraintEnd_toStartOf="@+id/vert2GL"
         app:layout_constraintStart_toStartOf="@+id/vert2GL"
@@ -205,7 +205,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/temperatureField(status.motorTemperature)}"
+        android:text="@{@string/temperatureField(tsdz_status.motorTemperature)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz5"
         app:layout_constraintEnd_toStartOf="@+id/vert1GL"
         app:layout_constraintStart_toStartOf="@+id/vert1GL"
@@ -229,7 +229,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/powerField(status.pPower)}"
+        android:text="@{@string/powerField(tsdz_status.pPower)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz3"
         app:layout_constraintEnd_toStartOf="@+id/vert2GL"
         app:layout_constraintStart_toStartOf="@+id/vert2GL"
@@ -254,7 +254,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/voltageField(status.volts)}"
+        android:text="@{@string/voltageField(tsdz_status.volts)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz4"
         app:layout_constraintEnd_toStartOf="@+id/vert2GL"
         app:layout_constraintStart_toStartOf="@+id/vert2GL"
@@ -278,7 +278,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/currentField(status.amperes)}"
+        android:text="@{@string/currentField(tsdz_status.amperes)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz4"
         app:layout_constraintEnd_toStartOf="@+id/vert1GL"
         app:layout_constraintStart_toStartOf="@+id/vert1GL"
@@ -302,7 +302,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/whField(status.wattHour)}"
+        android:text="@{@string/whField(tsdz_status.wattHour)}"
         app:layout_constraintBottom_toTopOf="@+id/horiz5"
         app:layout_constraintEnd_toStartOf="@+id/vert2GL"
         app:layout_constraintStart_toStartOf="@+id/vert2GL"
@@ -326,7 +326,7 @@
         android:layout_height="wrap_content"
         android:textSize="32sp"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
-        android:text="@{@string/powerField((int)(status.volts*status.amperes))}"
+        android:text="@{@string/powerField((int)(tsdz_status.volts*tsdz_status.amperes))}"
         app:layout_constraintBottom_toTopOf="@+id/horiz3"
         app:layout_constraintEnd_toStartOf="@+id/vert1GL"
         app:layout_constraintStart_toStartOf="@+id/vert1GL"

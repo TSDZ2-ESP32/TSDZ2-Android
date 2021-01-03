@@ -53,7 +53,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/lock_bike" />
 
-                    <Switch
+                    <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/lockBikeSW"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

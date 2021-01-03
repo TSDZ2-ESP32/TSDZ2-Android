@@ -24,6 +24,8 @@ public class TSDZCfgActivity extends AppCompatActivity {
         b.setOnClickListener((View) -> setupLevels());
         b = findViewById(R.id.temperature_control);
         b.setOnClickListener((View) -> setupTemperature());
+        b = findViewById(R.id.hall_calib_button);
+        b.setOnClickListener((View) -> hallCalibration());
     }
 
     private void setupMotor() {
@@ -42,5 +44,9 @@ public class TSDZCfgActivity extends AppCompatActivity {
 
     private void setupTemperature() {
         Intent intent = new Intent(this, TemperatureSetupActivity.class);
+        startActivity(intent);    }
+
+    private void hallCalibration() {
+        Intent intent = new Intent(this, HallCalibrationActivity.class);
         startActivity(intent);    }
 }

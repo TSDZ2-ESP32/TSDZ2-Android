@@ -1,13 +1,11 @@
 package spider65.ebike.tsdz2_esp32.fragments;
 
-import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
 import spider65.ebike.tsdz2_esp32.R;
-import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.databinding.FragmentDebugBinding;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 
@@ -32,7 +30,7 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
 
     //private IntentFilter mIntentFilter = new IntentFilter();
 
-    private TSDZ_Debug debug;
+    private TSDZ_Debug tsdz_debug;
 
     private FragmentDebugBinding binding;
 
@@ -45,8 +43,8 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
         return new FragmentDebug(debug);
     }
 
-    private FragmentDebug(TSDZ_Debug debug) {
-        this.debug = debug;
+    private FragmentDebug(TSDZ_Debug tsdz_debug) {
+        this.tsdz_debug = tsdz_debug;
     }
 
     @Override
@@ -64,7 +62,7 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(
                 inflater, R.layout.fragment_debug, container, false);
-        binding.setDebug(debug);
+        binding.setTsdzDebug(tsdz_debug);
         return binding.getRoot();
     }
 
