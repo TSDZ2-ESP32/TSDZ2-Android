@@ -5,11 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +20,6 @@ import java.util.Locale;
 
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
-import spider65.ebike.tsdz2_esp32.utils.Utils;
 
 public class HallCalibrationActivity extends AppCompatActivity {
     private static final String TAG = "HallCalibration";
@@ -31,13 +30,14 @@ public class HallCalibrationActivity extends AppCompatActivity {
     private static final byte CALIB_DUTY_CYCLE = 25;
     private static final byte CALIB_ANGLE_ADJ = 0;
 
-    private IntentFilter mIntentFilter = new IntentFilter();
-    TextView erpsTV,hal1TV,hal2TV,hal3TV,hal4TV,hal5TV,hal6TV;
-    TextView hal1rTV,hal2rTV,hal3rTV,hal4rTV,hal5rTV,hal6rTV;
-    Button startBT,stopBT, cancelBT;
-    boolean calibrationRunning = false;
-    TSDZBTService service;
-    RollingAverage[] avg = new RollingAverage[6];
+    private final IntentFilter mIntentFilter = new IntentFilter();
+    private TextView erpsTV,hal1TV,hal2TV,hal3TV,hal4TV,hal5TV,hal6TV;
+    private TextView hal1rTV,hal2rTV,hal3rTV,hal4rTV,hal5rTV,hal6rTV;
+    private Button startBT,stopBT, cancelBT;
+    private boolean calibrationRunning = false;
+    private TSDZBTService service;
+    private final RollingAverage[] avg = new RollingAverage[6];
+    private int msgCounter;
 
 
     @Override
@@ -66,6 +66,10 @@ public class HallCalibrationActivity extends AppCompatActivity {
         cancelBT = findViewById(R.id.cancelButton);
 
         mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.CONNECTION_FAILURE_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
+
         service = TSDZBTService.getBluetoothService();
         if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
             showDialog(getString(R.string.error), getString(R.string.connection_error));
@@ -77,7 +81,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (calibrationRunning) {
-            showDialog(getString(R.string.warning), getString(R.string.exitHallError));
+            showDialog(getString(R.string.warning), getString(R.string.exitMotorRunningError));
         } else {
             finish();
         }
@@ -128,6 +132,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
         for (int i=0; i<avg.length; i++)
             avg[i] = new RollingAverage(256);
 
+        msgCounter = 0;
         service.writeCommand(new byte[] {CMD_MOTOR_TEST, TEST_START, CALIB_DUTY_CYCLE, CALIB_ANGLE_ADJ});
     }
 
@@ -151,20 +156,29 @@ public class HallCalibrationActivity extends AppCompatActivity {
     private void updateResult() {
         double total = 0;
         for (RollingAverage rollingAverage : avg) total += rollingAverage.getAverage();
-        hal1rTV.setText(String.format(Locale.getDefault(),"%.2f", 60D*(double)avg[0].getAverage()/total));
-        hal2rTV.setText(String.format(Locale.getDefault(),"%.2f", 60D*(double)avg[1].getAverage()/total));
-        hal3rTV.setText(String.format(Locale.getDefault(),"%.2f", 60D*(double)avg[2].getAverage()/total));
-        hal4rTV.setText(String.format(Locale.getDefault(),"%.2f", 60D*(double)avg[3].getAverage()/total));
-        hal5rTV.setText(String.format(Locale.getDefault(),"%.2f", 60D*(double)avg[4].getAverage()/total));
-        hal6rTV.setText(String.format(Locale.getDefault(),"%.2f", 60D*(double)avg[5].getAverage()/total));
+        hal1rTV.setText(String.format(Locale.getDefault(),"%.2f", 360D*(double)avg[0].getAverage()/total));
+        hal2rTV.setText(String.format(Locale.getDefault(),"%.2f", 360D*(double)avg[1].getAverage()/total));
+        hal3rTV.setText(String.format(Locale.getDefault(),"%.2f", 360D*(double)avg[2].getAverage()/total));
+        hal4rTV.setText(String.format(Locale.getDefault(),"%.2f", 360D*(double)avg[3].getAverage()/total));
+        hal5rTV.setText(String.format(Locale.getDefault(),"%.2f", 360D*(double)avg[4].getAverage()/total));
+        hal6rTV.setText(String.format(Locale.getDefault(),"%.2f", 360D*(double)avg[5].getAverage()/total));
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (TSDZBTService.TSDZ_COMMAND_BROADCAST.equals(intent.getAction())) {
+            if (TSDZBTService.CONNECTION_LOST_BROADCAST.equals(intent.getAction())
+                    || TSDZBTService.SERVICE_STOPPED_BROADCAST.equals(intent.getAction())
+                    || TSDZBTService.CONNECTION_FAILURE_BROADCAST.equals(intent.getAction())) {
+                service = TSDZBTService.getBluetoothService();
+                calibrationRunning = false;
+                startBT.setEnabled(true);
+                cancelBT.setEnabled(true);
+                stopBT.setEnabled(false);
+                Toast.makeText(getApplicationContext(), "BT Connection Lost.", Toast.LENGTH_LONG).show();
+            } else if (TSDZBTService.TSDZ_COMMAND_BROADCAST.equals(intent.getAction())) {
                 byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                Log.d(TAG,"TSDZ_COMMAND_BROADCAST: " + Utils.bytesToHex(data));
+                //Log.d(TAG,"TSDZ_COMMAND_BROADCAST: " + Utils.bytesToHex(data));
                 if (data[0] == CMD_MOTOR_TEST) {
                     switch(data[1]) {
                         case TEST_START:
@@ -194,6 +208,10 @@ public class HallCalibrationActivity extends AppCompatActivity {
                             break;
                     }
                 } else if (data[0] == CMD_HALL_DATA) {
+                    if (!calibrationRunning || (++msgCounter < 10)) {
+                        return;
+                    }
+
                     // Hall counter for full ERPS revolution (sum of the 6 hall transition counters)
                     int val = ((data[2] & 255) << 8) + (data[1] & 255)
                             + (((data[4] & 255) << 8) + (data[3] & 255))
@@ -202,7 +220,6 @@ public class HallCalibrationActivity extends AppCompatActivity {
                             + (((data[10] & 255) << 8) + (data[9] & 255))
                             + (((data[12] & 255) << 8) + (data[11] & 255));
                     erpsTV.setText(String.format(Locale.getDefault(), "%.2f", 250000D/(double)val));
-
                     avg[0].add(((data[2] & 255) << 8) + (data[1] & 255));
                     hal1TV.setText(String.valueOf(avg[0].getAverage()));
                     avg[1].add(((data[4] & 255) << 8) + (data[3] & 255));
@@ -222,7 +239,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
 
     private static class RollingAverage {
 
-        private int size;
+        private final int size;
         private long total = 0;
         private int index = 0;
         private final int[] samples;
@@ -238,14 +255,18 @@ public class HallCalibrationActivity extends AppCompatActivity {
             total -= samples[index];
             samples[index] = x;
             total += x;
-            if (++index == size) {
+            index++;
+            if (index == size) {
                 index = 0; // cheaper than modulus
                 rollover = true;
             }
         }
 
         public long getAverage() {
-            return rollover ?total/size:total/index;
+            if (rollover)
+                return total/size;
+            else
+                return total/index;
         }
     }
 }
