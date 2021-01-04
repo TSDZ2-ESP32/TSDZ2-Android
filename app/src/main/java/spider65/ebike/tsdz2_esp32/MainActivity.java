@@ -167,13 +167,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mTitle.setOnClickListener(v -> {
             if ((status.status & 0xc0) == 0)
                 return;
-            String title, message;
-            if ((status.status & 0x80) != 0) {
+            String title = null, message = "";
+            if ((status.status & 0xC0) != 0) {
                 title = getString(R.string.error);
-                message = getString(R.string.error_controller_comm);
-            } else {
-                title = getString(R.string.error);
-                message = getString(R.string.error_lcd_comm);
+                if ((status.status & 0x80) != 0)
+                    message = getString(R.string.error_controller_comm);
+                if ((status.status & 0x40) != 0) {
+                    if (!message.isEmpty())
+                        message += "\n";
+                    message += getString(R.string.error_lcd_comm);
+                }
             }
             final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle(title);

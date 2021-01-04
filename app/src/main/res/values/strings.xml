@@ -222,7 +222,7 @@
     <string name="step_time">Step Samples</string>
     <string name="motorTestStartError">Cannot start motor test</string>
     <string name="motorTestStopError">Cannot stop motor test</string>
-    <string name="exitHallError">Calibration is running\nStop calibration then exit</string>
+    <string name="exitMotorRunningError">Motor is running\nStop test then exit</string>
 
 
     <string-array name="ligths_cfg">

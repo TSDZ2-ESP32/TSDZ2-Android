@@ -40,7 +40,7 @@ public class MotorTuningActivity extends AppCompatActivity {
     private static final byte TEST_START = 1;
 
     private static final int MAX_DUTY_CYCLE = 250;
-    private static final int MAX_ANGLE = 5;
+    private static final int MAX_ANGLE = 8;
 
     private static final int CREATE_FILE_REQUEST_CODE = 40;
 
@@ -50,11 +50,11 @@ public class MotorTuningActivity extends AppCompatActivity {
         running
     }
 
-    private IntentFilter mIntentFilter = new IntentFilter();
+    private final IntentFilter mIntentFilter = new IntentFilter();
     TextView erpsTV, angleValTV, resultsTV;
     CheckBox autoTuneCB;
     EditText dcValET, dcStepET, dcMaxET, angleMaxET, stepSamplesET;
-    Button startBT, stopBT, saveBT, dcAddBT, dcSubBT, angleAddBT, angleSubBT;
+    Button startBT, stopBT, saveBT, exitBT, dcAddBT, dcSubBT, angleAddBT, angleSubBT;
     TSDZBTService service;
 
     boolean autoTune = false;
@@ -88,13 +88,27 @@ public class MotorTuningActivity extends AppCompatActivity {
         startBT = findViewById(R.id.startButton);
         stopBT = findViewById(R.id.stopButton);
         saveBT = findViewById(R.id.saveButton);
+        exitBT = findViewById(R.id.exitButton);
         resultsTV = findViewById(R.id.resultsTV);
         resultsTV.setMovementMethod(new ScrollingMovementMethod());
 
         mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
+        mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
+
         service = TSDZBTService.getBluetoothService();
         if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
             showDialog(getString(R.string.error), getString(R.string.connection_error));
+        }
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (status != TestStatus.stopped) {
+            showDialog(getString(R.string.warning), getString(R.string.exitMotorRunningError));
+        } else {
+            finish();
         }
     }
 
@@ -135,8 +149,10 @@ public class MotorTuningActivity extends AppCompatActivity {
                 stopTest();
                 break;
             case R.id.exitButton:
-                if (stopTest())
-                    finish();
+                if (status != TestStatus.stopped && service != null)
+                    service.writeCommand(new byte[] {CMD_MOTOR_TEST,TEST_STOP});
+                status = TestStatus.stopped;
+                finish();
                 break;
             case R.id.saveButton:
                 saveFile();
@@ -325,13 +341,27 @@ public class MotorTuningActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction() == null)
-                return;
-            byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-            if (TSDZBTService.TSDZ_COMMAND_BROADCAST.equals(intent.getAction())) {
+            if (TSDZBTService.CONNECTION_LOST_BROADCAST.equals(intent.getAction())
+                    || TSDZBTService.SERVICE_STOPPED_BROADCAST.equals(intent.getAction())
+                    || TSDZBTService.CONNECTION_FAILURE_BROADCAST.equals(intent.getAction())) {
+                service = TSDZBTService.getBluetoothService();
+                status = TestStatus.stopped;
+                resetTimer();
+                startBT.setEnabled(true);
+                saveBT.setEnabled(true);
+                exitBT.setEnabled(true);
+                autoTuneCB.setEnabled(true);
+                dcAddBT.setEnabled(true);
+                dcSubBT.setEnabled(true);
+                angleAddBT.setEnabled(true);
+                angleSubBT.setEnabled(true);
+                stopBT.setEnabled(false);
+                Toast.makeText(getApplicationContext(), "BT Connection Lost.", Toast.LENGTH_LONG).show();
+            } else if (TSDZBTService.TSDZ_COMMAND_BROADCAST.equals(intent.getAction())) {
+                byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                 if (data[0] == CMD_MOTOR_TEST) {
                     switch(data[1]) {
                         case TEST_START:
@@ -339,12 +369,12 @@ public class MotorTuningActivity extends AppCompatActivity {
                                 showDialog(getString(R.string.error), getString(R.string.motorTestStartError));
                             } else {
                                 // start calibration procedure 5sec after motor startup
-                                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                                 status = TestStatus.starting;
                                 scheduleTimer();
                                 startBT.setEnabled(false);
                                 autoTuneCB.setEnabled(false);
                                 saveBT.setEnabled(false);
+                                exitBT.setEnabled(false);
                                 if (autoTune) {
                                     dcAddBT.setEnabled(false);
                                     dcSubBT.setEnabled(false);
@@ -358,11 +388,11 @@ public class MotorTuningActivity extends AppCompatActivity {
                             if (data[2] != (byte)0x0) {
                                 showDialog(getString(R.string.error), getString(R.string.motorTestStopError));
                             } else {
-                                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                                 status = TestStatus.stopped;
                                 resetTimer();
                                 startBT.setEnabled(true);
                                 saveBT.setEnabled(true);
+                                exitBT.setEnabled(true);
                                 autoTuneCB.setEnabled(true);
                                 dcAddBT.setEnabled(true);
                                 dcSubBT.setEnabled(true);
@@ -396,7 +426,7 @@ public class MotorTuningActivity extends AppCompatActivity {
 
     private static class RollingAverage {
 
-        private int size;
+        private final int size;
         private long total = 0;
         private int index = 0;
         private final int[] samples;
@@ -439,7 +469,7 @@ public class MotorTuningActivity extends AppCompatActivity {
         resetTimer();
         TimerExpired timerExpired = new TimerExpired();
         timer = new Timer();
-        timer.schedule(timerExpired, 3500);
+        timer.schedule(timerExpired, 1500);
     }
 
     private void resetTimer() {

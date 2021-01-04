@@ -353,10 +353,7 @@ public class TSDZBTService extends Service {
             //Log.d(TAG, "onCharacteristicWrite:" + characteristic.getUuid().toString());
             if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_CFG_WRITE_BROADCAST);
-                if (status == BluetoothGatt.GATT_SUCCESS)
-                    bi.putExtra(VALUE_EXTRA, true);
-                else
-                    bi.putExtra(VALUE_EXTRA, false);
+                bi.putExtra(VALUE_EXTRA, status == BluetoothGatt.GATT_SUCCESS);
                 LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
             }
         }
