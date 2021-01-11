@@ -6,7 +6,7 @@ import android.util.Log;
 public class TSDZ_Config {
 
     private static final String TAG = "TSDZ_Config";
-    private static final int CFG_SIZE = 56;
+    private static final int CFG_SIZE = 64;
 
     public enum TempControl {
         none (0),
@@ -72,6 +72,9 @@ public class TSDZ_Config {
     public int[] ui8_walk_assist_level = new int[4];
     public boolean torque_offset_fix;
     public int ui16_torque_offset_ADC;
+    public int[] ui8_hall_ref_angles = new int[6];
+    public int ui8_hall_counter_offset_up;
+    public int ui8_hall_counter_offset_down;
 
     /*
     #pragma pack(1)
@@ -117,7 +120,7 @@ public class TSDZ_Config {
 
     public boolean setData(byte[] data) {
         if (data.length != CFG_SIZE) {
-            Log.e(TAG, "setData: wrong data size");
+            Log.e(TAG, "setData: wrong data size" + data.length);
             return false;
         }
         ui8_motor_inductance_x1048576 = (data[0] & 255);
@@ -167,6 +170,10 @@ public class TSDZ_Config {
             ui8_walk_assist_level[i] = (data[49+i] & 255);
         torque_offset_fix = (data[53] & 255 ) != 0; // ui8_torque_offset_fix
         ui16_torque_offset_ADC = (data[54] & 255) + ((data[55] & 255) << 8);
+        for (int i=0;i<6;i++)
+            ui8_hall_ref_angles[i] = (data[56+i] & 255);
+        ui8_hall_counter_offset_up = (data[62] & 255);
+        ui8_hall_counter_offset_down = (data[63] & 255);
         return true;
     }
 
@@ -186,7 +193,7 @@ public class TSDZ_Config {
         data[10] = (byte)ui8_lights_configuration;
         data[11] = (byte)ui16_wheel_perimeter;
         data[12] = (byte)(ui16_wheel_perimeter >>> 8);
-        data[13] = (byte) (ui8_cruise_enabled? 1:0);
+        data[13] = (byte)(ui8_cruise_enabled? 1:0);
         data[14] = (byte)ui16_battery_voltage_reset_wh_counter_x10;
         data[15] = (byte)(ui16_battery_voltage_reset_wh_counter_x10 >>> 8);
         data[16] = (byte)ui8_battery_max_current;
@@ -213,13 +220,16 @@ public class TSDZ_Config {
         for (int i=0;i<4;i++)
             data[41+i] = (byte)ui8_torque_assist_level[i];
         for (int i=0;i<4;i++)
-            data[45+i] = (byte) ui8_eMTB_assist_level[i];
+            data[45+i] = (byte)ui8_eMTB_assist_level[i];
         for (int i=0;i<4;i++)
             data[49+i] = (byte)ui8_walk_assist_level[i];
-        data[53] = (byte)(torque_offset_fix? 1:0); // ui8_torque_offset_fix
+        data[53] = (byte)(torque_offset_fix? 1:0);
         data[54] = (byte)ui16_torque_offset_ADC;
         data[55] = (byte)(ui16_torque_offset_ADC >>> 8);
-
+        for (int i=0;i<6;i++)
+            data[56+i] = (byte)(ui8_hall_ref_angles[i] & 0xff);
+        data[62] = (byte)(ui8_hall_counter_offset_up & 0xff);
+        data[63] = (byte)(ui8_hall_counter_offset_down & 0xff);
         return data;
     }
 }

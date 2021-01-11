@@ -77,11 +77,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     IntentFilter mIntentFilter = new IntentFilter();
 
     private ViewPager viewPager;
-    private byte[] lastStatusData = new byte[STATUS_ADV_SIZE];
-    private byte[] lastDebugData = new byte[DEBUG_ADV_SIZE];
+    private final byte[] lastStatusData = new byte[STATUS_ADV_SIZE];
+    private final byte[] lastDebugData = new byte[DEBUG_ADV_SIZE];
 
-    private TSDZ_Status status = new TSDZ_Status();
-    private TSDZ_Debug debug = new TSDZ_Debug();
+    private final TSDZ_Status status = new TSDZ_Status();
+    private final TSDZ_Debug debug = new TSDZ_Debug();
 
     private TextView modeLevelTV;
     private TextView statusTV;
