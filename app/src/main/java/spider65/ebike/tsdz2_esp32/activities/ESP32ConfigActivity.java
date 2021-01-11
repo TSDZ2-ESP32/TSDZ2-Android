@@ -10,7 +10,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.Switch;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -48,7 +47,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
         ds18b20PinET = findViewById(R.id.ds18b20ET);
         dbgLevelSpinner = findViewById(R.id.logLevelSP);
         okButton = findViewById(R.id.okButton);
-        Button cancelButton = findViewById(R.id.cancelButton);
+        Button cancelButton = findViewById(R.id.exitButton);
         cancelButton.setOnClickListener(this);
         okButton.setOnClickListener(this);
         mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
@@ -78,7 +77,7 @@ public class ESP32ConfigActivity extends AppCompatActivity implements View.OnCli
             case R.id.okButton:
                 saveCfg();
                 break;
-            case R.id.cancelButton:
+            case R.id.exitButton:
                 finish();
                 break;
         }

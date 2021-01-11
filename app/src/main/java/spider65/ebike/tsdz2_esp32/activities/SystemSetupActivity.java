@@ -14,6 +14,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
+import java.util.Locale;
+
 import androidx.databinding.DataBindingUtil;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -65,7 +67,7 @@ public class SystemSetupActivity extends AppCompatActivity {
             case R.id.okButton:
                 saveCfg();
                 break;
-            case R.id.cancelButton:
+            case R.id.exitButton:
                 finish();
                 break;
         }
@@ -81,6 +83,16 @@ public class SystemSetupActivity extends AppCompatActivity {
                 break;
         }
     }
+
+    public void onClickResetHall(View view) {
+        binding.hallCalibDataTV.setText("(0,0,0,0,0,0) - (0,0)");
+        for (int i=0; i<6; i++) {
+            cfg.ui8_hall_ref_angles[i] = 0;
+        }
+        cfg.ui8_hall_counter_offset_up = 0;
+        cfg.ui8_hall_counter_offset_down = 0;
+    }
+
     //  invalidate all to hide/show the checkbox dependant fields
     public void onCheckedChanged(View view, boolean checked) {
         switch (view.getId()) {
@@ -223,6 +235,17 @@ public class SystemSetupActivity extends AppCompatActivity {
                 if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
                     binding.setCfg(cfg);
                     binding.lightConfigSP.setSelection(cfg.ui8_lights_configuration);
+                    String s = String.format(Locale.getDefault(), "(%d,%d,%d,%d,%d,%d) - (%d,%d)",
+                            cfg.ui8_hall_ref_angles[0] & 0xff,
+                            cfg.ui8_hall_ref_angles[1] & 0xff,
+                            cfg.ui8_hall_ref_angles[2] & 0xff,
+                            cfg.ui8_hall_ref_angles[3] & 0xff,
+                            cfg.ui8_hall_ref_angles[4] & 0xff,
+                            cfg.ui8_hall_ref_angles[5] & 0xff,
+                            cfg.ui8_hall_counter_offset_up & 0xff,
+                            cfg.ui8_hall_counter_offset_down & 0xff
+                            );
+                    binding.hallCalibDataTV.setText(s);
                 }
                 break;
             case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:

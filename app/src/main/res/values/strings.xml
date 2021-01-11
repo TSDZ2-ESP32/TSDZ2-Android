@@ -36,6 +36,7 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="save">Save</string>
+    <string name="reset">Reset</string>
     <string name="fw_versions">FW Versions</string>
     <string name="esp32_fw_version">ESP32 FW version: %s</string>
     <string name="tsdz_fw_version">TSDZ2 FW version: %s</string>
@@ -107,7 +108,7 @@
     <string name="battery">Battery</string>
     <string name="assist_levels">Assist Levels</string>
     <string name="temp_control">Temperature and Throttle</string>
-    <string name="hall_calib">Hall sensors calibration</string>
+    <string name="hall_calib">Hall calib.</string>
     <string name="title_activity_system_setup">System Setup</string>
     <string name="motor">Motor</string>
     <string name="motor_inductance">Motor Inductance</string>
@@ -207,12 +208,16 @@
 
     <string name="assist_mode">Assist Mode</string>
 
-    <string name="hal_1">HAL 1</string>
-    <string name="hal_2">HAL 2</string>
-    <string name="hal_3">HAL 3</string>
-    <string name="hal_4">HAL 4</string>
-    <string name="hal_5">HAL 5</string>
-    <string name="hal_6">HAL 6</string>
+    <string name="hal_n">HALL #</string>
+    <string name="hal_1">HALL 1</string>
+    <string name="hal_2">HALL 2</string>
+    <string name="hal_3">HALL 3</string>
+    <string name="hal_4">HALL 4</string>
+    <string name="hal_5">HALL 5</string>
+    <string name="hal_6">HALL 6</string>
+    <string name="angle">Angle</string>
+    <string name="offset">Offset</string>
+    <string name="r_2">R2</string>
 
     <string name="rotor_angle">Angle adj.</string>
     <string name="auto_tune">Auto Tune</string>
@@ -223,6 +228,10 @@
     <string name="motorTestStartError">Cannot start motor test</string>
     <string name="motorTestStopError">Cannot stop motor test</string>
     <string name="exitMotorRunningError">Motor is running\nStop test then exit</string>
+    <string name="calibrationSaveError">Calibration data NOT saved</string>
+    <string name="calibrationApplied">Calibration data applied</string>
+    <string name="calibrationDataValid">Calibration ended.\nPress \'SAVE\' to apply the calibration data</string>
+    <string name="calibrationDataNotValid">Calibration data NOT valid.\nRetry the calibration procedure</string>
 
 
     <string-array name="ligths_cfg">

@@ -159,7 +159,7 @@ public class MotorTuningActivity extends AppCompatActivity {
                 break;
             case R.id.dcAddBT:
                 val = Integer.parseInt(dcValET.getText().toString());
-                if (val <= (MAX_DUTY_CYCLE-5)) {
+                if (val < MAX_DUTY_CYCLE) {
                     val += 1;
                     dcValET.setText(String.valueOf(val));
                     if (status != TestStatus.stopped)
@@ -168,7 +168,7 @@ public class MotorTuningActivity extends AppCompatActivity {
                 break;
             case R.id.dcSubBT:
                 val = Integer.parseInt(dcValET.getText().toString());
-                if (val >= 10) {
+                if (val > 5) {
                     val -= 1;
                     dcValET.setText(String.valueOf(val));
                     if (status != TestStatus.stopped)

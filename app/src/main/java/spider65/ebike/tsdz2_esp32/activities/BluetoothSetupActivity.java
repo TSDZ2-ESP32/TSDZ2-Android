@@ -97,7 +97,7 @@ public class BluetoothSetupActivity extends AppCompatActivity {
             }
         });
 
-        Button cancelButton = findViewById(R.id.cancelButton);
+        Button cancelButton = findViewById(R.id.exitButton);
         cancelButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 stopScanning();

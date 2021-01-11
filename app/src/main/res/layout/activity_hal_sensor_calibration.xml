@@ -24,10 +24,12 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:stretchColumns="0,1,2,3"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ScrollView
-            android:id="@+id/scrollView"
+        <LinearLayout
+            android:id="@+id/topLineatLayout"
+            android:orientation="vertical"
             android:layout_weight="0"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -35,291 +37,418 @@
             app:layout_constraintBottom_toTopOf="@id/buttonLayout">
 
             <LinearLayout
-                android:id="@+id/mainLinearLayout"
-                app:layout_constraintTop_toTopOf="parent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_margin="5dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
+                android:gravity="center"
+                android:layout_margin="5dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/motor_erps" />
-                    <TextView
-                        android:id="@+id/erpsTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:minEms="6"
-                        android:maxEms="6"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="2dp"
-                    android:background="?android:attr/listDivider" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:layout_margin="5dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/hal_1" />
-                    <TextView
-                        android:id="@+id/hal1TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="5"
-                        android:maxEms="5"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="match_parent"
-                        android:background="?android:attr/listDivider" />
-
-                    <TextView
-                        android:id="@+id/hal1rTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
+                    android:textSize="18sp"
+                    android:text="@string/motor_erps" />
+                <TextView
+                    android:id="@+id/erpsTV"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:layout_margin="5dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/hal_2" />
-                    <TextView
-                        android:id="@+id/hal2TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="5"
-                        android:maxEms="5"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="match_parent"
-                        android:background="?android:attr/listDivider" />
-
-                    <TextView
-                        android:id="@+id/hal2rTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/hal_3" />
-                    <TextView
-                        android:id="@+id/hal3TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="5"
-                        android:maxEms="5"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="match_parent"
-                        android:background="?android:attr/listDivider" />
-
-                    <TextView
-                        android:id="@+id/hal3rTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/hal_4" />
-                    <TextView
-                        android:id="@+id/hal4TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="5"
-                        android:maxEms="5"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="match_parent"
-                        android:background="?android:attr/listDivider" />
-
-                    <TextView
-                        android:id="@+id/hal4rTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/hal_5" />
-                    <TextView
-                        android:id="@+id/hal5TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="5"
-                        android:maxEms="5"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="match_parent"
-                        android:background="?android:attr/listDivider" />
-
-                    <TextView
-                        android:id="@+id/hal5rTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/hal_6" />
-                    <TextView
-                        android:id="@+id/hal6TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="5"
-                        android:maxEms="5"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="match_parent"
-                        android:background="?android:attr/listDivider" />
-
-                    <TextView
-                        android:id="@+id/hal6rTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:textSize="20sp"
-                        android:text="@string/dash" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:orientation="horizontal">
-
-                    <Button
-                        android:id="@+id/startButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:layout_weight="1"
-                        android:onClick="onButtonClick"
-                        android:text="@string/start" />
-
-                    <Button
-                        android:id="@+id/stopButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="10dp"
-                        android:layout_weight="1"
-                        android:onClick="onButtonClick"
-                        android:enabled="false"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:text="@string/stop" />
-                </LinearLayout>
-
+                    android:textSize="18sp"
+                    android:text="@string/dash" />
             </LinearLayout>
 
-        </ScrollView>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="?android:attr/listDivider" />
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stretchColumns="1,2,3">
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_margin="5dp"
+                        android:text="@string/hal_n"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_margin="5dp"
+                        android:maxEms="4"
+                        android:minEms="4"
+                        android:text="@string/angle"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_margin="5dp"
+                        android:text="@string/offset"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_margin="5dp"
+                        android:text="@string/r_2"
+                        android:textSize="18sp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:text="@string/hal_1"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/angle1TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:maxEms="4"
+                        android:minEms="4"
+                        android:text="@string/dash"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/offset1TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:maxEms="4"
+                        android:minEms="4"
+                        android:text="@string/dash"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/err1TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:maxEms="4"
+                        android:minEms="4"
+                        android:text="@string/dash"
+                        android:textSize="16sp" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/hal_2" />
+                    <TextView
+                        android:id="@+id/angle2TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+
+                    <TextView
+                        android:id="@+id/offset2TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/err2TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/hal_3" />
+                    <TextView
+                        android:id="@+id/angle3TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+
+                    <TextView
+                        android:id="@+id/offset3TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/err3TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/hal_4" />
+                    <TextView
+                        android:id="@+id/angle4TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/offset4TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/err4TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/hal_5" />
+                    <TextView
+                        android:id="@+id/angle5TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/offset5TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/err5TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/hal_6" />
+                    <TextView
+                        android:id="@+id/angle6TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:layout_margin="5dp"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/offset7TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+
+                    <TextView
+                        android:id="@+id/err6TV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:minEms="4"
+                        android:maxEms="4"
+                        android:textSize="16sp"
+                        android:text="@string/dash" />
+                </TableRow>
+
+            </TableLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="?android:attr/listDivider" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/startButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:onClick="onButtonClick"
+                    android:text="@string/start" />
+
+                <Button
+                    android:id="@+id/stopButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:onClick="onButtonClick"
+                    android:enabled="false"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:text="@string/stop" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_weight="1">
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyle"
+                    android:visibility="invisible"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp" />
+                <TextView
+                    android:id="@+id/progressTV"
+                    android:visibility="invisible"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="10dp"
+                    android:textSize="16sp"/>
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/buttonLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:layout_marginTop="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/scrollView">
+            app:layout_constraintTop_toBottomOf="@id/topLineatLayout">
 
             <Button
-                android:id="@+id/cancelButton"
-                android:layout_width="match_parent"
+                android:id="@+id/saveButton"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:onClick="onButtonClick"
+                android:enabled="false"
+                app:layout_constraintTop_toTopOf="parent"
+                android:text="@string/save" />
+            <Button
+                android:id="@+id/exitButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
                 android:onClick="onButtonClick"
                 app:layout_constraintTop_toTopOf="parent"
                 android:text="@string/exit" />
         </LinearLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

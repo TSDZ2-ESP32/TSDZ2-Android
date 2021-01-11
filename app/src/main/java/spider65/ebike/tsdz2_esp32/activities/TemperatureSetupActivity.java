@@ -82,7 +82,7 @@ public class TemperatureSetupActivity extends AppCompatActivity {
             case R.id.okButton:
                 saveCfg();
                 break;
-            case R.id.cancelButton:
+            case R.id.exitButton:
                 finish();
                 break;
         }

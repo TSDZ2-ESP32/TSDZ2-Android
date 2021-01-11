@@ -110,7 +110,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         newVerTV.setText(getString(R.string.new_version, ""));
         fileNameTV.setText(getString(R.string.file_name, ""));
 
-        Button cancelButton = findViewById(R.id.cancelButton);
+        Button cancelButton = findViewById(R.id.exitButton);
         cancelButton.setOnClickListener((View view) -> cancel());
         messageTV = findViewById(R.id.progerssTV);
         progressBar = findViewById(R.id.progressBar);
