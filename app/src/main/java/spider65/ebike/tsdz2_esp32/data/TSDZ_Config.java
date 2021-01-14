@@ -60,7 +60,7 @@ public class TSDZ_Config {
     public int ui8_li_io_cell_full_bars_x100;
     public int ui8_li_io_cell_one_bar_x100;
     public int ui8_li_io_cell_empty_x100;
-    public boolean ui8_dummy2;
+    public int ui8_phase_angle_adj;
     public boolean ui8_street_mode_power_limit_enabled;
     public boolean ui8_street_mode_throttle_enabled;
     public int ui8_street_mode_power_limit_div25;
@@ -147,7 +147,7 @@ public class TSDZ_Config {
         ui8_li_io_cell_full_bars_x100 = (data[24] & 255) + 200;
         ui8_li_io_cell_one_bar_x100 = (data[25] & 255) + 200;
         ui8_li_io_cell_empty_x100 = (data[26] & 255) + 200;
-        ui8_dummy2 = (data[27] & 255) != 0;
+        ui8_phase_angle_adj = (data[27] & 255);
         ui8_street_mode_power_limit_enabled = (data[28] & 255) != 0;
         ui8_street_mode_throttle_enabled = (data[29] & 255) != 0;
         ui8_street_mode_power_limit_div25 = (data[30] & 255) * 25;
@@ -207,7 +207,7 @@ public class TSDZ_Config {
         data[24] = (byte)(ui8_li_io_cell_full_bars_x100 - 200);
         data[25] = (byte)(ui8_li_io_cell_one_bar_x100 - 200);
         data[26] = (byte)(ui8_li_io_cell_empty_x100 - 200);
-        data[27] = (byte)(ui8_dummy2 ? 1:0);
+        data[27] = (byte)ui8_phase_angle_adj;
         data[28] = (byte)(ui8_street_mode_power_limit_enabled? 1:0);
         data[29] = (byte)(ui8_street_mode_throttle_enabled? 1:0);
         data[30] = (byte)(ui8_street_mode_power_limit_div25/25);

@@ -14,8 +14,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
-import java.util.Locale;
-
 import androidx.databinding.DataBindingUtil;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -27,6 +25,10 @@ import spider65.ebike.tsdz2_esp32.databinding.ActivitySystemSetupBinding;
 public class SystemSetupActivity extends AppCompatActivity {
 
     private static final String TAG = "MotorSetupActivity";
+
+    private static final int DEFAULT_36V_INDUCTANCE = 80;
+    private static final int DEFAULT_48V_INDUCTANCE = 142;
+
     private TSDZ_Config cfg = new TSDZ_Config();
     private IntentFilter mIntentFilter = new IntentFilter();
     private ActivitySystemSetupBinding binding;
@@ -76,21 +78,12 @@ public class SystemSetupActivity extends AppCompatActivity {
     public void onClickInductance(View view) {
         switch (view.getId()) {
             case R.id.inductance36BT:
-                binding.inductanceET.setText("80");
+                binding.inductanceET.setText(String.valueOf(DEFAULT_36V_INDUCTANCE));
                 break;
             case R.id.inductance48BT:
-                binding.inductanceET.setText("142");
+                binding.inductanceET.setText(String.valueOf(DEFAULT_48V_INDUCTANCE));
                 break;
         }
-    }
-
-    public void onClickResetHall(View view) {
-        binding.hallCalibDataTV.setText("(0,0,0,0,0,0) - (0,0)");
-        for (int i=0; i<6; i++) {
-            cfg.ui8_hall_ref_angles[i] = 0;
-        }
-        cfg.ui8_hall_counter_offset_up = 0;
-        cfg.ui8_hall_counter_offset_down = 0;
     }
 
     //  invalidate all to hide/show the checkbox dependant fields
@@ -235,17 +228,6 @@ public class SystemSetupActivity extends AppCompatActivity {
                 if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
                     binding.setCfg(cfg);
                     binding.lightConfigSP.setSelection(cfg.ui8_lights_configuration);
-                    String s = String.format(Locale.getDefault(), "(%d,%d,%d,%d,%d,%d) - (%d,%d)",
-                            cfg.ui8_hall_ref_angles[0] & 0xff,
-                            cfg.ui8_hall_ref_angles[1] & 0xff,
-                            cfg.ui8_hall_ref_angles[2] & 0xff,
-                            cfg.ui8_hall_ref_angles[3] & 0xff,
-                            cfg.ui8_hall_ref_angles[4] & 0xff,
-                            cfg.ui8_hall_ref_angles[5] & 0xff,
-                            cfg.ui8_hall_counter_offset_up & 0xff,
-                            cfg.ui8_hall_counter_offset_down & 0xff
-                            );
-                    binding.hallCalibDataTV.setText(s);
                 }
                 break;
             case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:

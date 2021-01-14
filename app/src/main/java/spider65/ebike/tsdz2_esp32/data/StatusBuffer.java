@@ -4,13 +4,27 @@ import androidx.annotation.NonNull;
 
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 
+/*
+Circular buffer containing TSDZ_STATUS_BROADCAST records. One buffer instance contains up to 300 records (5 minutes)
+The record structure is the timestamp (8 bytes System.currentTimeMillis()) and the TSDZ_STATUS_BROADCAST byte[] data
+ */
 public class StatusBuffer {
 
     private static final int NUM_RECORDS = 300;
 
     private final static Object mLock = new Object();
-    private static StatusBuffer mPool;
 
+    private static StatusBuffer mPool;
+    private StatusBuffer next;
+
+    // First and last timestamps of the records contained in the StatusBuffer
+    long startTime,endTime;
+
+    public int position = 0;
+    public byte[] data = new byte[(8+STATUS_ADV_SIZE)*NUM_RECORDS];
+
+    // Return the next free StatusBuffer from the Pool or a new one if all are used
+    // The pool is growing with the use
     static StatusBuffer obtain() {
         synchronized (mLock) {
             if (mPool != null) {
@@ -31,11 +45,6 @@ public class StatusBuffer {
             mPool = buffer;
         }
     }
-
-    private StatusBuffer next;
-    long startTime,endTime;
-    public int position = 0;
-    public byte[] data = new byte[(8+STATUS_ADV_SIZE)*NUM_RECORDS];
 
     boolean addRecord(byte[] rec, long time) {
         if (position >= data.length)

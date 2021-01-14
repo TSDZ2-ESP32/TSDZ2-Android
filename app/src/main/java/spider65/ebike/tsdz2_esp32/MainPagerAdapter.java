@@ -41,9 +41,9 @@ public class MainPagerAdapter extends FragmentPagerAdapter {
     public CharSequence getPageTitle(int position) {
         switch (position) {
             case 0:
-                return mContext.getResources().getString(R.string.status);
+                return mContext.getResources().getString(R.string.status_data);
             case 1:
-                return mContext.getResources().getString(R.string.debug);
+                return mContext.getResources().getString(R.string.debug_data);
         }
         return null;
     }

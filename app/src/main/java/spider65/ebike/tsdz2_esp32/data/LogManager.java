@@ -178,7 +178,7 @@ public class LogManager {
                             Log.w(TAG, "TSDZ_STATUS_BROADCAST: Wrong data size!");
                             return;
                         }
-                        // statusBuffer could be overwritten if a new notification arrives before statusBuffer
+                        // StatusBuffer could be overwritten if a new notification arrives before statusBuffer
                         // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
                         if (statusBuffer == null)
                             statusBuffer = StatusBuffer.obtain();
