@@ -14,20 +14,33 @@
     <string name="check_stop_temperature">Turn off the motor and wait for it to cool down</string>
     <string name="error_lcd_comm">LCD communication Error</string>
     <string name="error_controller_comm">Controller communication Error</string>
+    <string name="comm_error">Communication CRC errors</string>
+    <string name="lcd">LCD:</string>
+    <string name="controller">Controller:</string>
+    <string name="main_time">Main Loop time</string>
+    <string name="ebike_loop">ebike Loop</string>
+    <string name="motor_loop">motor Loop</string>
+    <string name="irq_time">PWM IRQ time</string>
+    <string name="up_irq">Up IRQ</string>
+    <string name="down_irq">Down IRQ</string>
 
     <string name="dash">-</string>
     <string name="app_name">TSDZ2_ESP32</string>
-    <string name="status">STATUS DATA</string>
-    <string name="debug">DEBUG DATA</string>
+    <string name="status_data">STATUS DATA</string>
+    <string name="debug_data">DEBUG DATA</string>
     <string name="btSetup">Setup Bluetooth</string>
     <string name="motorTest">Motor Test</string>
     <string name="alwaysOn">Screen Always ON</string>
     <string name="espOTA">ESP32 FW update</string>
     <string name="bikeOTA">Bike FW update</string>
     <string name="config">Bike Configuration</string>
+    <string name="firmware">Firmware</string>
     <string name="show_version">Show FW versions</string>
     <string name="esp32_config">ESP32 Configuration</string>
     <string name="title_activity_bluetooth_setup">Bluetooth Setup</string>
+    <string name="debug">Debug</string>
+    <string name="show_debug">View debug info</string>
+    <string name="debug_info">Debug info</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="exit">Exit</string>
@@ -68,10 +81,10 @@
     <string name="foc_angle">FOC Angle</string>
     <string name="torque_adc">Torque ADC</string>
     <string name="pedal_torque">Pedal Torque</string>
-    <string name="not_used">Not Used</string>
+    <string name="fw_offset">FW offset</string>
     <string name="adc_value">ADC value</string>
     <string name="controller_temp">Controller Temp.</string>
-    <string name="fw_angle">FW Angle</string>
+    <string name="fw_hall_offset">FW Hall Offset</string>
 
     <string name="tsdz_cfg">Bike Configuration</string>
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
@@ -108,7 +121,7 @@
     <string name="battery">Battery</string>
     <string name="assist_levels">Assist Levels</string>
     <string name="temp_control">Temperature and Throttle</string>
-    <string name="hall_calib">Hall calib.</string>
+    <string name="hall_calib">Hall calibration</string>
     <string name="title_activity_system_setup">System Setup</string>
     <string name="motor">Motor</string>
     <string name="motor_inductance">Motor Inductance</string>
@@ -216,10 +229,12 @@
     <string name="hal_5">HALL 5</string>
     <string name="hal_6">HALL 6</string>
     <string name="angle">Angle</string>
-    <string name="offset">Offset</string>
+    <string name="offset">T Offset</string>
     <string name="r_2">R2</string>
 
-    <string name="rotor_angle">Angle adj.</string>
+    <string name="phase_angle">Phase Angle shift</string>
+    <string name="hall_dn_offset">Hall Tfall Delay</string>
+    <string name="hall_up_dn_diff">Hall Trise-Tfall</string>
     <string name="auto_tune">Auto Tune</string>
     <string name="dc_step">D.C. step</string>
     <string name="dc_max">D.C. Max</string>
@@ -232,6 +247,19 @@
     <string name="calibrationApplied">Calibration data applied</string>
     <string name="calibrationDataValid">Calibration ended.\nPress \'SAVE\' to apply the calibration data</string>
     <string name="calibrationDataNotValid">Calibration data NOT valid.\nRetry the calibration procedure</string>
+    <string name="warningMotorStart">Rise te rear wheel or remove the chain.\nThe motor will start spinning!</string>
+    <string name="cfgReadError">Error reading configuration data</string>
+    <string name="cfgSaved">Configuration data Saved</string>
+    <string name="cfgSaveError">Error saving configuration data</string>
+    <string name="motorTuning">Motor Tuning</string>
+    <string name="valuesNotChanged">Values not changed</string>
+    <string name="setDefaultValues">Set Default Values</string>
+    <string name="hallAngles">Angles (full circle=256):</string>
+    <string name="hallDiff">Trise-Tfall (4us/step) :</string>
+    <string name="start_stop">Start/Stop</string>
+    <string name="loadDefault">Load Default</string>
+    <string name="motorTuningHelp">Phase Angle: full circle=256\nHall: 4us/step</string>
+    <string name="defaultLoaded">Default value loaded.\nPress \'SAVE\' to apply the default data</string>
 
 
     <string-array name="ligths_cfg">

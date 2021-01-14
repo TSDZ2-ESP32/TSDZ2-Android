@@ -29,7 +29,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
 import spider65.ebike.tsdz2_esp32.activities.ChartActivity;
 import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
-import spider65.ebike.tsdz2_esp32.activities.MotorTuningActivity;
+import spider65.ebike.tsdz2_esp32.activities.MotorTestActivity;
+import spider65.ebike.tsdz2_esp32.activities.ShowDebugInfo;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
@@ -126,10 +127,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             public void onPageSelected(int position) {
                 switch (position) {
                     case 0:
-                        mTitle.setText(R.string.status);
+                        mTitle.setText(R.string.status_data);
                         break;
                     case 1:
-                        mTitle.setText(R.string.debug);
+                        mTitle.setText(R.string.debug_data);
                         break;
                 }
             }
@@ -163,26 +164,24 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         if (actionBar != null)
             actionBar.setDisplayShowTitleEnabled(false);
         mTitle = toolbar.findViewById(R.id.toolbar_title);
-        mTitle.setText(R.string.status);
+        mTitle.setText(R.string.status_data);
         mTitle.setOnClickListener(v -> {
-            if ((status.status & 0xc0) == 0)
-                return;
-            String title = null, message = "";
-            if ((status.status & 0xC0) != 0) {
-                title = getString(R.string.error);
-                if ((status.status & 0x80) != 0)
+            if (status.controllerCommError || status.lcdCommError) {
+                String title = getString(R.string.error);
+                String message = "";
+                if (status.controllerCommError)
                     message = getString(R.string.error_controller_comm);
-                if ((status.status & 0x40) != 0) {
+                if (status.lcdCommError) {
                     if (!message.isEmpty())
                         message += "\n";
                     message += getString(R.string.error_lcd_comm);
                 }
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle(title);
+                builder.setMessage(message);
+                builder.setPositiveButton(getString(R.string.ok), null);
+                builder.show();
             }
-            final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setTitle(title);
-            builder.setMessage(message);
-            builder.setPositiveButton(getString(R.string.ok), null);
-            builder.show();
         });
 
         statusTV = findViewById(R.id.statusTV);
@@ -302,6 +301,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             menu.findItem(R.id.config).setEnabled(true);
             menu.findItem(R.id.esp32Config).setEnabled(true);
             menu.findItem(R.id.motorTest).setEnabled(true);
+            menu.findItem(R.id.showDebug).setEnabled(true);
         } else {
             menu.findItem(R.id.bikeOTA).setEnabled(false);
             menu.findItem(R.id.espOTA).setEnabled(false);
@@ -309,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             menu.findItem(R.id.config).setEnabled(false);
             menu.findItem(R.id.esp32Config).setEnabled(false);
             menu.findItem(R.id.motorTest).setEnabled(false);
+            menu.findItem(R.id.showDebug).setEnabled(false);
         }
         return true;
     }
@@ -341,8 +342,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 intent = new Intent(this, ESP32ConfigActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.showDebug:
+                intent = new Intent(this, ShowDebugInfo.class);
+                startActivity(intent);
+                return true;
             case R.id.motorTest:
-                intent = new Intent(this, MotorTuningActivity.class);
+                intent = new Intent(this, MotorTestActivity.class);
                 startActivity(intent);
                 return true;
             case R.id.screenONCB:
@@ -470,17 +475,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             brakeIV.setVisibility(View.INVISIBLE);
 
         // Motor Status are in the bits 0-5
-        if ((status.status & 0x3f) != 0) {
+        if (status.status != 0) {
             statusTV.setVisibility(View.VISIBLE);
-            statusTV.setText(String.valueOf(status.status & 0x3f));
+            statusTV.setText(String.valueOf(status.status));
         } else
             statusTV.setVisibility(View.INVISIBLE);
 
         // Communication Status are in the bits 6-7
-        if (((status.status & 0xc0) != 0) && !commError) {
+        if ((status.controllerCommError || status.lcdCommError) && !commError) {
             commError = true;
             updateStatusIcons();
-        } else if (((status.status & 0xc0) == 0) && commError) {
+        } else if ((!status.controllerCommError && !status.lcdCommError) && commError) {
             commError = false;
             updateStatusIcons();
         }

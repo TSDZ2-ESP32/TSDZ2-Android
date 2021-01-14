@@ -36,18 +36,18 @@ public class HallCalibrationActivity extends AppCompatActivity {
     private static final int SETUP_STEPS = 15;
     private static final int AVG_SIZE = 150;
 
-    private static final int PHASE_OFFSET = 10;
-    private static final int PHASE_ANGLE = 64;
+    private static final int DEFAULT_PHASE_OFFSET = 10;
+    private static final int DEFAULT_PHASE_ANGLE = 64;
+    private static final int DEFAULT_UP_DN_HALL_DIFF = 20;
 
     private final TSDZ_Config cfg = new TSDZ_Config();
-    private boolean saveData = false;
     private final IntentFilter mIntentFilter = new IntentFilter();
 
-    private TextView erpsTV;
+    private TextView erpsTV, hallValuesTV, hallUpDnDiffTV;
     private final TextView[] angleTV = new TextView[6];
     private final TextView[] offsetTV = new TextView[6];
     private final TextView[] errorTV = new TextView[6];
-    private Button startBT,stopBT, cancelBT, saveBT;
+    private Button resetBT, cancelBT, saveBT;
     private ProgressBar progressBar;
     private TextView progressTV;
 
@@ -67,6 +67,9 @@ public class HallCalibrationActivity extends AppCompatActivity {
     private final double[][] px = new double[6][4];
     private final double[][] py = new double[6][4];
     private final LinearRegression[] linearRegression = new LinearRegression[6];
+
+    private final int[] phaseAngles = new int[6];
+    private int hallUpDnDiff;
 
 
     @Override
@@ -97,8 +100,9 @@ public class HallCalibrationActivity extends AppCompatActivity {
         errorTV[3] = findViewById(R.id.err4TV);
         errorTV[4] = findViewById(R.id.err5TV);
         errorTV[5] = findViewById(R.id.err6TV);
-        startBT = findViewById(R.id.startButton);
-        stopBT = findViewById(R.id.stopButton);
+        hallValuesTV = findViewById(R.id.hallValuesTV);
+        hallUpDnDiffTV = findViewById(R.id.hallUpDnDiffTV);
+        resetBT = findViewById(R.id.resetButton);
         cancelBT = findViewById(R.id.exitButton);
         saveBT = findViewById(R.id.saveButton);
         progressBar = findViewById(R.id.progressBar);
@@ -112,18 +116,17 @@ public class HallCalibrationActivity extends AppCompatActivity {
         mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
 
         if (TSDZBTService.getBluetoothService() == null
-                || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
-            startBT.setEnabled(false);
-            showDialog(getString(R.string.error), getString(R.string.connection_error));
-        }
+                || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
+            showDialog(getString(R.string.error), getString(R.string.connection_error), true);
+        else
+            TSDZBTService.getBluetoothService().readCfg();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        // getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
     public void onBackPressed() {
         if (calibrationRunning) {
-            showDialog(getString(R.string.warning), getString(R.string.exitMotorRunningError));
+            showDialog(getString(R.string.warning), getString(R.string.exitMotorRunningError), false);
         } else {
             finish();
         }
@@ -151,17 +154,26 @@ public class HallCalibrationActivity extends AppCompatActivity {
     }
 
     public void onButtonClick(View view) {
-        if (view.getId() == R.id.startButton) {
-            step = 0;
-            for (TextView tv:angleTV)
-                tv.setText(getString(R.string.dash));
-            for (TextView tv:offsetTV)
-                tv.setText(getString(R.string.dash));
-            for (TextView tv:errorTV)
-                tv.setText(getString(R.string.dash));
-            startCalib();
-        } else if (view.getId() == R.id.stopButton) {
-            stopCalib();
+        if (view.getId() == R.id.startStopBT) {
+            if (calibrationRunning) {
+                stopCalib();
+                return;
+            }
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.warning);
+            builder.setMessage(R.string.warningMotorStart);
+            builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+                step = 0;
+                for (TextView tv:angleTV)
+                    tv.setText(getString(R.string.dash));
+                for (TextView tv:offsetTV)
+                    tv.setText(getString(R.string.dash));
+                for (TextView tv:errorTV)
+                    tv.setText(getString(R.string.dash));
+                startCalib();
+            });
+            builder.setNegativeButton(R.string.cancel, null);
+            builder.show();
         } else if (view.getId() == R.id.exitButton) {
             if (calibrationRunning && TSDZBTService.getBluetoothService() != null)
                 TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_MOTOR_TEST,TEST_STOP});
@@ -169,36 +181,63 @@ public class HallCalibrationActivity extends AppCompatActivity {
             finish();
         } else if (view.getId() == R.id.saveButton) {
             if (TSDZBTService.getBluetoothService() != null) {
-                TSDZBTService.getBluetoothService().readCfg();
-                saveData = true;
+                System.arraycopy(phaseAngles, 0, cfg.ui8_hall_ref_angles, 0, 6);
+                cfg.ui8_hall_counter_offset_up = cfg.ui8_hall_counter_offset_down + hallUpDnDiff;
+                TSDZBTService.getBluetoothService().writeCfg(cfg);
+            } else
+                showDialog(getString(R.string.error), getString(R.string.connection_error), false);
+        } else if (view.getId() == R.id.resetButton) {
+            for (int i=0; i<6; i++) {
+                angleTV[i].setText(R.string.dash);
+                offsetTV[i].setText(R.string.dash);
+                errorTV[i].setText(R.string.dash);
             }
+            for (int i=0; i<6; i++) {
+                double v = Math.round(((30D + 60D * (double) i) * (256D / 360D) + DEFAULT_PHASE_OFFSET - DEFAULT_PHASE_ANGLE));
+                if (v < 0) v += 256;
+                phaseAngles[i] = (int)v;
+            }
+            hallUpDnDiff = DEFAULT_UP_DN_HALL_DIFF;
+            refresValues();
+            saveBT.setEnabled(true);
+            showDialog("", getString(R.string.defaultLoaded), false);
+
         }
+    }
+
+    private void refresValues() {
+        StringBuilder s = new StringBuilder();
+        for (int i=0; i<6; i++) {
+            if (i > 0)
+                s.append(" ");
+            s.append(String.format(Locale.getDefault(), "%d", phaseAngles[i]));
+        }
+        hallValuesTV.setText(s.toString());
+        hallUpDnDiffTV.setText(String.format(Locale.getDefault(), "%d", hallUpDnDiff));
     }
 
     private void updateUI() {
         if (calibrationRunning) {
-            startBT.setEnabled(false);
             cancelBT.setEnabled(false);
+            resetBT.setEnabled(false);
             saveBT.setEnabled(false);
-            stopBT.setEnabled(true);
             progressBar.setVisibility(View.VISIBLE);
             progressTV.setVisibility(View.VISIBLE);
             if (step == 0)
                 progressTV.setText("0%");
         } else {
-            startBT.setEnabled(true);
             cancelBT.setEnabled(true);
+            resetBT.setEnabled(true);
             progressBar.setVisibility(View.INVISIBLE);
             progressTV.setVisibility(View.INVISIBLE);
-            progressBar.setVisibility(View.INVISIBLE);
-            progressTV.setVisibility(View.INVISIBLE);
+
         }
     }
 
     private void startCalib() {
         if (TSDZBTService.getBluetoothService() == null
                 || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
-            showDialog(getString(R.string.error), getString(R.string.connection_error));
+            showDialog(getString(R.string.error), getString(R.string.connection_error), false);
             return;
         }
         msgCounter = 0;
@@ -212,17 +251,21 @@ public class HallCalibrationActivity extends AppCompatActivity {
         updateUI();
         if (TSDZBTService.getBluetoothService() == null
                 || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
-            showDialog(getString(R.string.error), getString(R.string.connection_error));
+            showDialog(getString(R.string.error), getString(R.string.connection_error), false);
         else
             TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_MOTOR_TEST,TEST_STOP});
     }
 
-    private void showDialog (String title, String message) {
+    private void showDialog (String title, String message, boolean exit) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         if (title != null)
             builder.setTitle(title);
         builder.setMessage(message);
-        builder.setPositiveButton(R.string.ok, null);
+        if (exit) {
+            builder.setOnCancelListener((dialog) -> finish());
+            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> finish());
+        } else
+            builder.setPositiveButton(android.R.string.ok, null);
         builder.show();
     }
 
@@ -235,12 +278,41 @@ public class HallCalibrationActivity extends AppCompatActivity {
         }
 
         if (valuesOK()) {
-            showDialog("", getString(R.string.calibrationDataValid));
+            showDialog("", getString(R.string.calibrationDataValid), false);
             saveBT.setEnabled(true);
         } else {
-            showDialog(getString(R.string.error), getString(R.string.calibrationDataNotValid));
+            showDialog(getString(R.string.error), getString(R.string.calibrationDataNotValid), false);
             saveBT.setEnabled(false);
         }
+
+        double[] calcRefAngles = {0d,0d,0d,0d,0d,0d};
+        double value = 0;
+        double error = 0;
+        for (int i=1; i<6; i++) {
+            value += linearRegression[i].slope()*256D;
+            error += value - ((double)i*256D/6D);
+            calcRefAngles[i] = value;
+        }
+        error /= 6D;
+        double offset = 0;
+        for (int i=0; i<6; i++) {
+            calcRefAngles[i] = calcRefAngles[i] - error + 256D/12D;
+            int v = (int)Math.round(calcRefAngles[i]) +DEFAULT_PHASE_OFFSET -DEFAULT_PHASE_ANGLE;
+            if (v<0) v += 256;
+            phaseAngles[i] = v;
+            offset += Math.abs(linearRegression[i].intercept());
+        }
+        hallUpDnDiff = (byte)Math.round(offset/6D);
+
+        Log.d(TAG,"ui8_hall_ref_angles:" + (phaseAngles[0] & 0xff)
+                + "," + (phaseAngles[1] & 0xff)
+                + "," + (phaseAngles[2] & 0xff)
+                + "," + (phaseAngles[3] & 0xff)
+                + "," + (phaseAngles[4] & 0xff)
+                + "," + (phaseAngles[5] & 0xff)
+        );
+        Log.d(TAG, "Hall Up-Down diff:" + hallUpDnDiff);
+        refresValues();
     }
 
     private boolean valuesOK() {
@@ -277,51 +349,21 @@ public class HallCalibrationActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "BT Connection Lost.", Toast.LENGTH_LONG).show();
                     break;
                 case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                    if (saveData) {
-                        saveData = false;
-                        if (!cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
-                            showDialog(getString(R.string.error), getString(R.string.calibrationSaveError));
-                            break;
-                        }
-                        // TODO
-
-                        double[] calcRefAngles = {0d,0d,0d,0d,0d,0d};
-                        double value = 0;
-                        double error = 0;
-                        for (int i=1; i<6; i++) {
-                            value += linearRegression[i].slope()*256D;
-                            error += value - ((double)i*256D/6D);
-                            calcRefAngles[i] = value;
-                        }
-                        error /= 6D;
-                        double offset = 0;
-                        for (int i=0; i<6; i++) {
-                            calcRefAngles[i] = calcRefAngles[i] - error + 256D/12D;
-                            cfg.ui8_hall_ref_angles[i] = (byte)((Math.round(calcRefAngles[i]) + PHASE_OFFSET - PHASE_ANGLE) & 0xff);
-                            offset += Math.abs(linearRegression[i].intercept());
-                        }
-                        cfg.ui8_hall_counter_offset_up = (byte)(Math.round(offset/6D) + 8);
-                        cfg.ui8_hall_counter_offset_down = 8;
-
-                        Log.d(TAG,"ui8_hall_ref_angles:" + (cfg.ui8_hall_ref_angles[0] & 0xff)
-                                + "," + (cfg.ui8_hall_ref_angles[1] & 0xff)
-                                + "," + (cfg.ui8_hall_ref_angles[2] & 0xff)
-                                + "," + (cfg.ui8_hall_ref_angles[3] & 0xff)
-                                + "," + (cfg.ui8_hall_ref_angles[4] & 0xff)
-                                + "," + (cfg.ui8_hall_ref_angles[5] & 0xff)
-                        );
-                        Log.d(TAG, "ui8_hall_counter_offset_up:" + cfg.ui8_hall_counter_offset_up);
-                        Log.d(TAG, "ui8_hall_counter_offset_down:" + cfg.ui8_hall_counter_offset_down);
-
-                        if (TSDZBTService.getBluetoothService() != null)
-                            TSDZBTService.getBluetoothService().writeCfg(cfg);
+                    if (!cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
+                        showDialog(getString(R.string.error), getString(R.string.calibrationSaveError), false);
+                        break;
                     }
+
+                    System.arraycopy(cfg.ui8_hall_ref_angles, 0, phaseAngles, 0, 6);
+                    hallUpDnDiff = cfg.ui8_hall_counter_offset_up - cfg.ui8_hall_counter_offset_down;
+                    refresValues();
+
                     break;
                 case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
                     if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
-                        showDialog("", getString(R.string.calibrationApplied));
+                        showDialog("", getString(R.string.calibrationApplied), true);
                     else
-                        showDialog(getString(R.string.error), getString(R.string.calibrationSaveError));
+                        showDialog(getString(R.string.error), getString(R.string.calibrationSaveError), false);
                     break;
                 case TSDZBTService.TSDZ_COMMAND_BROADCAST:
                     byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
@@ -330,20 +372,18 @@ public class HallCalibrationActivity extends AppCompatActivity {
                         switch(data[1]) {
                             case TEST_START:
                                 if (data[2] != (byte)0x0)
-                                    showDialog(getString(R.string.error), getString(R.string.motorTestStartError));
+                                    showDialog(getString(R.string.error), getString(R.string.motorTestStartError), false);
                                 else
                                     calibrationRunning = true;
                                 updateUI();
                                 break;
                             case TEST_STOP:
                                 if (data[2] != (byte)0x0) {
-                                    showDialog(getString(R.string.error), getString(R.string.motorTestStopError));
-                                } else {
-                                    stopBT.setEnabled(false);
+                                    showDialog(getString(R.string.error), getString(R.string.motorTestStopError), false);
                                 }
                                 break;
                             case (byte)0xff:
-                                showDialog(getString(R.string.error), getString(R.string.commandError));
+                                showDialog(getString(R.string.error), getString(R.string.commandError), false);
                                 break;
                         }
                     } else if (data[0] == CMD_HALL_DATA) {

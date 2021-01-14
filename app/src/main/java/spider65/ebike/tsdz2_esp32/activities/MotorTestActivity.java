@@ -33,7 +33,7 @@ import spider65.ebike.tsdz2_esp32.TSDZBTService;
 
 // Run motor (without load) with a fixed duty cycle and move rotor offset angle in order to find the best one (max ERPS)
 // The result should be a table with ERPS and corresponding best offset angle
-public class MotorTuningActivity extends AppCompatActivity {
+public class MotorTestActivity extends AppCompatActivity {
     private static final byte CMD_HALL_DATA = 0x07;
     private static final byte CMD_MOTOR_TEST = 0x0B;
     private static final byte TEST_STOP = 0;
@@ -98,7 +98,11 @@ public class MotorTuningActivity extends AppCompatActivity {
 
         service = TSDZBTService.getBluetoothService();
         if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
-            showDialog(getString(R.string.error), getString(R.string.connection_error));
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.connection_error);
+            builder.setOnCancelListener((dialog) -> finish());
+            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> finish());
+            builder.show();
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -138,7 +142,14 @@ public class MotorTuningActivity extends AppCompatActivity {
         int val;
         switch (view.getId()) {
             case R.id.startButton:
-                startTest();
+                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.warning);
+                builder.setMessage(R.string.warningMotorStart);
+                builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+                    startTest();
+                });
+                builder.setNegativeButton(R.string.cancel, null);
+                builder.show();
                 break;
             case R.id.stopButton:
                 String s = "DutyCycle: " + currentDC

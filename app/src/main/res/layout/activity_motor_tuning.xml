@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".activities.HallCalibrationActivity"
+    tools:context=".activities.MotorTestActivity"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -55,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
-                    android:text="erps Val"
+                    android:text="@string/dash"
                     android:textSize="20sp" />
 
             </LinearLayout>
@@ -122,7 +122,7 @@
                     android:layout_gravity="center"
                     android:layout_margin="10dp"
                     android:layout_weight="3"
-                    android:text="@string/rotor_angle"
+                    android:text="@string/phase_angle"
                     android:textSize="20sp" />
 
                 <Button
