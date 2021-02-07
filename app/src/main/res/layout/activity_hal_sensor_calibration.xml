@@ -427,7 +427,7 @@
                     android:text="@string/start_stop" />
 
                 <Button
-                    android:id="@+id/resetButton"
+                    android:id="@+id/defaultBT"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="2dp"

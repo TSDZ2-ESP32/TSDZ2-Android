@@ -41,6 +41,15 @@
                 android:layout_height="2dp"
                 android:background="?android:attr/listDivider" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_margin="5dp"
+                android:layout_weight="3"
+                android:text="@string/phase_angle"
+                android:textSize="20sp" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,7 +62,7 @@
                     android:layout_gravity="center"
                     android:layout_margin="10dp"
                     android:layout_weight="3"
-                    android:text="@string/phase_angle"
+                    android:text="@string/phase_angle_unit"
                     android:textSize="20sp" />
 
                 <Button
@@ -85,6 +94,21 @@
                     android:text="-" />
             </LinearLayout>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_margin="5dp"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_margin="5dp"
+                android:layout_weight="3"
+                android:text="@string/hall_offset"
+                android:textSize="20sp" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -96,12 +120,12 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_margin="10dp"
-                    android:layout_weight="3"
-                    android:text="@string/hall_dn_offset"
+                    android:layout_weight="4"
+                    android:text="@string/hall_124_offset"
                     android:textSize="20sp" />
 
                 <Button
-                    android:id="@+id/offsetAddBT"
+                    android:id="@+id/hall124AddBT"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -110,17 +134,17 @@
                     android:text="+" />
 
                 <TextView
-                    android:id="@+id/offsetValTV"
+                    android:id="@+id/hall124ValTV"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="2"
-                    android:text="10"
+                    android:text="23"
                     android:textAlignment="center"
                     android:textSize="20sp" />
 
                 <Button
-                    android:id="@+id/offsetSubBT"
+                    android:id="@+id/hall124SubBT"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -140,12 +164,12 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_margin="10dp"
-                    android:layout_weight="3"
-                    android:text="@string/hall_up_dn_diff"
+                    android:layout_weight="4"
+                    android:text="@string/hall_356_offset"
                     android:textSize="20sp" />
 
                 <Button
-                    android:id="@+id/diffAddBT"
+                    android:id="@+id/hall356AddBT"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -154,17 +178,17 @@
                     android:text="+" />
 
                 <TextView
-                    android:id="@+id/diffValTV"
+                    android:id="@+id/hall356ValTV"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="2"
-                    android:text="10"
+                    android:text="43"
                     android:textAlignment="center"
                     android:textSize="20sp" />
 
                 <Button
-                    android:id="@+id/diffSubBT"
+                    android:id="@+id/hall356SubBT"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -172,9 +196,15 @@
                     android:onClick="onButtonClick"
                     android:text="-" />
             </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_margin="5dp"
+                android:background="?android:attr/listDivider" />
 
             <Button
-                android:id="@+id/resetButton"
+                android:id="@+id/defaultBT"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -184,15 +214,8 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="2dp"
+                android:layout_margin="5dp"
                 android:background="?android:attr/listDivider" />
-
-            <TextView
-                android:id="@+id/textView3"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_margin="10dp"
-                android:layout_weight="1"
-                android:text="@string/motorTuningHelp" />
 
         </LinearLayout>
 
