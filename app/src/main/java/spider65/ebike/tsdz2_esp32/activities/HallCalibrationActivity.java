@@ -22,23 +22,21 @@ import java.util.Locale;
 
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
+import spider65.ebike.tsdz2_esp32.TSDZConst;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 import spider65.ebike.tsdz2_esp32.utils.LinearRegression;
 import spider65.ebike.tsdz2_esp32.utils.RollingAverage;
 
+import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_HALL_DATA;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_MOTOR_TEST;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.TEST_START;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.TEST_STOP;
+
 public class HallCalibrationActivity extends AppCompatActivity {
     private static final String TAG = "HallCalibration";
-    private static final byte CMD_HALL_DATA = 0x07;
-    private static final byte CMD_MOTOR_TEST = 0x0B;
-    private static final byte TEST_STOP = 0;
-    private static final byte TEST_START = 1;
-    private static final byte CALIB_ANGLE_ADJ = 0;
+
     private static final int SETUP_STEPS = 15;
     private static final int AVG_SIZE = 150;
-
-    private static final int DEFAULT_PHASE_OFFSET = 10;
-    private static final int DEFAULT_PHASE_ANGLE = 64;
-    private static final int DEFAULT_UP_DN_HALL_DIFF = 20;
 
     private final TSDZ_Config cfg = new TSDZ_Config();
     private final IntentFilter mIntentFilter = new IntentFilter();
@@ -102,7 +100,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
         errorTV[5] = findViewById(R.id.err6TV);
         hallValuesTV = findViewById(R.id.hallValuesTV);
         hallUpDnDiffTV = findViewById(R.id.hallUpDnDiffTV);
-        resetBT = findViewById(R.id.resetButton);
+        resetBT = findViewById(R.id.defaultBT);
         cancelBT = findViewById(R.id.exitButton);
         saveBT = findViewById(R.id.saveButton);
         progressBar = findViewById(R.id.progressBar);
@@ -186,18 +184,20 @@ public class HallCalibrationActivity extends AppCompatActivity {
                 TSDZBTService.getBluetoothService().writeCfg(cfg);
             } else
                 showDialog(getString(R.string.error), getString(R.string.connection_error), false);
-        } else if (view.getId() == R.id.resetButton) {
+        } else if (view.getId() == R.id.defaultBT) {
             for (int i=0; i<6; i++) {
                 angleTV[i].setText(R.string.dash);
                 offsetTV[i].setText(R.string.dash);
                 errorTV[i].setText(R.string.dash);
             }
             for (int i=0; i<6; i++) {
-                double v = Math.round(((30D + 60D * (double) i) * (256D / 360D) + DEFAULT_PHASE_OFFSET - DEFAULT_PHASE_ANGLE));
+                double v = Math.round(((30D + 60D * (double) i) * (256D / 360D)
+                        + TSDZConst.DEFAULT_PHASE_OFFSET
+                        - TSDZConst.DEFAULT_PHASE_ANGLE));
                 if (v < 0) v += 256;
                 phaseAngles[i] = (int)v;
             }
-            hallUpDnDiff = DEFAULT_UP_DN_HALL_DIFF;
+            hallUpDnDiff = TSDZConst.DEFAULT_HALL_UP_OFFSET - TSDZConst.DEFAULT_HALL_DOWN_OFFSET;
             refresValues();
             saveBT.setEnabled(true);
             showDialog("", getString(R.string.defaultLoaded), false);
@@ -243,7 +243,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
         msgCounter = 0;
         for (RollingAverage ra: avg)
             ra.reset();
-        TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_MOTOR_TEST, TEST_START, dutyCycles[step], CALIB_ANGLE_ADJ});
+        TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_MOTOR_TEST, TEST_START, dutyCycles[step], (byte)cfg.ui8_phase_angle_adj});
     }
 
     private void stopCalib() {
@@ -297,7 +297,9 @@ public class HallCalibrationActivity extends AppCompatActivity {
         double offset = 0;
         for (int i=0; i<6; i++) {
             calcRefAngles[i] = calcRefAngles[i] - error + 256D/12D;
-            int v = (int)Math.round(calcRefAngles[i]) +DEFAULT_PHASE_OFFSET -DEFAULT_PHASE_ANGLE;
+            int v = (int)Math.round(calcRefAngles[i])
+                    + TSDZConst.DEFAULT_PHASE_OFFSET
+                    - TSDZConst.DEFAULT_PHASE_ANGLE;
             if (v<0) v += 256;
             phaseAngles[i] = v;
             offset += Math.abs(linearRegression[i].intercept());

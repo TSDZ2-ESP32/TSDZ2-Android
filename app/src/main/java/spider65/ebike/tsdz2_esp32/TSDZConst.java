@@ -22,9 +22,14 @@ public interface TSDZConst {
     byte CMD_STM8S_OTA_START = 0x03;
     byte CMD_ESP_OTA_STATUS = 0x05;
     byte CMD_STM8_OTA_STATUS = 0x06;
+    byte CMD_HALL_DATA = 0x07; // Notification sent during Motor Test
     byte CMD_ESP32_CONFIG = 0x08;
     byte CMD_STREET_MODE = 0x09;
     byte CMD_ASSIST_MODE = 0x0A;
+    byte CMD_MOTOR_TEST = 0x0B; // following 3 bytes: START/STOP, Duty Cycle, Phase Angle adj
+    byte TEST_STOP = 0; // second byte of CMD_MOTOR_TEST command
+    byte TEST_START = 1; // second byte of CMD_MOTOR_TEST command
+
 
     byte STREET_MODE_LCD_MASTER = 0;
     byte STREET_MODE_FORCE_OFF = 1;
@@ -51,4 +56,12 @@ public interface TSDZConst {
     // limit values used in the LevelSetupActivity
     int PWM_DUTY_CYCLE_MAX = 254;
     int WALK_ASSIST_DUTY_CYCLE_MAX = 80;
+
+    // Default Hall Counter Offset values
+    int DEFAULT_HALL_DOWN_OFFSET = 23; // Hall counter Offset for counter starting from Hall falling edge
+    int DEFAULT_HALL_UP_OFFSET = 43; // Hall counter Offset for counter starting from Hall rising edge
+
+    // Default motor Phase
+    int DEFAULT_PHASE_OFFSET = 4; // Phase angle adjust regarding the rotor reference Hall angle
+    int DEFAULT_PHASE_ANGLE = 64; // Phase has 90 deg difference from rotor position
 }

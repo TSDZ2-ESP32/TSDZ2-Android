@@ -232,14 +232,12 @@
     <string name="offset">T Offset</string>
     <string name="r_2">R2</string>
 
+    <string name="warning_cfg">Dont\'change these values unless you know well what are you doing!</string>
     <string name="phase_angle">Phase Angle shift</string>
-    <string name="hall_dn_offset">Hall Tfall Delay</string>
-    <string name="hall_up_dn_diff">Hall Trise-Tfall</string>
-    <string name="auto_tune">Auto Tune</string>
-    <string name="dc_step">D.C. step</string>
-    <string name="dc_max">D.C. Max</string>
-    <string name="max_angle">Angle (+/-)</string>
-    <string name="step_time">Step Samples</string>
+    <string name="phase_angle_unit">Circle/256</string>
+    <string name="hall_offset">Hall Counter Offset</string>
+    <string name="hall_124_offset">States 1 2 4 (falling edge)</string>
+    <string name="hall_356_offset">States 3 5 6 (rising edge)</string>
     <string name="motorTestStartError">Cannot start motor test</string>
     <string name="motorTestStopError">Cannot stop motor test</string>
     <string name="exitMotorRunningError">Motor is running\nStop test then exit</string>

@@ -12,7 +12,6 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,18 +28,20 @@ import java.util.TimerTask;
 
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
+import spider65.ebike.tsdz2_esp32.utils.RollingAverage;
+
+import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_HALL_DATA;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_MOTOR_TEST;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.TEST_START;
+import static spider65.ebike.tsdz2_esp32.TSDZConst.TEST_STOP;
 
 
 // Run motor (without load) with a fixed duty cycle and move rotor offset angle in order to find the best one (max ERPS)
 // The result should be a table with ERPS and corresponding best offset angle
 public class MotorTestActivity extends AppCompatActivity {
-    private static final byte CMD_HALL_DATA = 0x07;
-    private static final byte CMD_MOTOR_TEST = 0x0B;
-    private static final byte TEST_STOP = 0;
-    private static final byte TEST_START = 1;
 
-    private static final int MAX_DUTY_CYCLE = 250;
-    private static final int MAX_ANGLE = 8;
+    private static final int MAX_DUTY_CYCLE = 254;
+    private static final int MAX_ANGLE = 10;
 
     private static final int CREATE_FILE_REQUEST_CODE = 40;
 
@@ -52,15 +53,12 @@ public class MotorTestActivity extends AppCompatActivity {
 
     private final IntentFilter mIntentFilter = new IntentFilter();
     TextView erpsTV, angleValTV, resultsTV;
-    CheckBox autoTuneCB;
-    EditText dcValET, dcStepET, dcMaxET, angleMaxET, stepSamplesET;
-    Button startBT, stopBT, saveBT, exitBT, dcAddBT, dcSubBT, angleAddBT, angleSubBT;
+    EditText dcValET;
+    Button startBT, stopBT, exitBT, dcAddBT, dcSubBT, angleAddBT, angleSubBT;
     TSDZBTService service;
 
-    boolean autoTune = false;
     int currentDC;
     byte currentAngle;
-    int maxDC, stepDC, maxAngle, stepSamples;
     TestStatus status = TestStatus.stopped;
     RollingAverage avg = new RollingAverage(256);
 
@@ -68,7 +66,7 @@ public class MotorTestActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_motor_tuning);
+        setContentView(R.layout.activity_motor_test);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -76,18 +74,12 @@ public class MotorTestActivity extends AppCompatActivity {
         erpsTV = findViewById(R.id.erpsTV);
         dcValET = findViewById(R.id.dcValET);
         angleValTV = findViewById(R.id.angleValTV);
-        autoTuneCB = findViewById(R.id.autoTuneCB);
-        dcStepET = findViewById(R.id.dcStepET);
-        dcMaxET = findViewById(R.id.dcMaxET);
-        angleMaxET = findViewById(R.id.angleMaxET);
-        stepSamplesET = findViewById(R.id.stepSamplesET);
         dcAddBT = findViewById(R.id.dcAddBT);
         dcSubBT = findViewById(R.id.dcSubBT);
         angleAddBT = findViewById(R.id.angleAddBT);
         angleSubBT = findViewById(R.id.angleSubBT);
         startBT = findViewById(R.id.startButton);
         stopBT = findViewById(R.id.stopButton);
-        saveBT = findViewById(R.id.saveButton);
         exitBT = findViewById(R.id.exitButton);
         resultsTV = findViewById(R.id.resultsTV);
         resultsTV.setMovementMethod(new ScrollingMovementMethod());
@@ -140,82 +132,57 @@ public class MotorTestActivity extends AppCompatActivity {
 
     public void onButtonClick(View view) {
         int val;
-        switch (view.getId()) {
-            case R.id.startButton:
-                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle(R.string.warning);
-                builder.setMessage(R.string.warningMotorStart);
-                builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+        if (view.getId() == R.id.startButton) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.warning);
+            builder.setMessage(R.string.warningMotorStart);
+            builder.setPositiveButton(R.string.ok, (dialog, which) -> startTest());
+            builder.setNegativeButton(R.string.cancel, null);
+            builder.show();
+        } else if (view.getId() == R.id.stopButton) {
+            String s = "DutyCycle: " + currentDC
+                    + " Angle: " + currentAngle
+                    + " ERPS: " + String.format(Locale.getDefault(), "%.2f", 250000D/avg.getAverage())
+                    + "\n";
+            resultsTV.append(s);
+            stopTest();
+        } else if (view.getId() == R.id.exitButton) {
+            if (status != TestStatus.stopped && service != null)
+                service.writeCommand(new byte[] {CMD_MOTOR_TEST,TEST_STOP});
+            status = TestStatus.stopped;
+            finish();
+        } else if (view.getId() == R.id.saveButton) {
+            saveFile();
+        } else if (view.getId() == R.id.dcAddBT) {
+            val = Integer.parseInt(dcValET.getText().toString());
+            if (val < MAX_DUTY_CYCLE) {
+                val += 1;
+                dcValET.setText(String.valueOf(val));
+                if (status != TestStatus.stopped)
                     startTest();
-                });
-                builder.setNegativeButton(R.string.cancel, null);
-                builder.show();
-                break;
-            case R.id.stopButton:
-                String s = "DutyCycle: " + currentDC
-                        + " Angle: " + currentAngle
-                        + " ERPS: " + String.format(Locale.getDefault(), "%.2f", 250000D/avg.getAverage())
-                        + "\n";
-                resultsTV.append(s);
-                stopTest();
-                break;
-            case R.id.exitButton:
-                if (status != TestStatus.stopped && service != null)
-                    service.writeCommand(new byte[] {CMD_MOTOR_TEST,TEST_STOP});
-                status = TestStatus.stopped;
-                finish();
-                break;
-            case R.id.saveButton:
-                saveFile();
-                break;
-            case R.id.dcAddBT:
-                val = Integer.parseInt(dcValET.getText().toString());
-                if (val < MAX_DUTY_CYCLE) {
-                    val += 1;
-                    dcValET.setText(String.valueOf(val));
-                    if (status != TestStatus.stopped)
-                        startTest();
-                }
-                break;
-            case R.id.dcSubBT:
-                val = Integer.parseInt(dcValET.getText().toString());
-                if (val > 5) {
-                    val -= 1;
-                    dcValET.setText(String.valueOf(val));
-                    if (status != TestStatus.stopped)
-                        startTest();
-                }
-                break;
-            case R.id.angleAddBT:
-                val = Integer.parseInt(angleValTV.getText().toString());
-                if (val < MAX_ANGLE) {
-                    angleValTV.setText(String.valueOf(++val));
-                    if (status != TestStatus.stopped)
-                        startTest();
-                }
-                break;
-            case R.id.angleSubBT:
-                val = Integer.parseInt(angleValTV.getText().toString());
-                if (val > -MAX_ANGLE) {
-                    angleValTV.setText(String.valueOf(--val));
-                    if (status != TestStatus.stopped)
-                        startTest();
-                }
-                break;
-            case R.id.autoTuneCB:
-                autoTune = ((CheckBox) view).isChecked();
-                if (autoTune) {
-                    dcStepET.setEnabled(true);
-                    dcMaxET.setEnabled(true);
-                    angleMaxET.setEnabled(true);
-                    stepSamplesET.setEnabled(true);
-                } else {
-                    dcStepET.setEnabled(false);
-                    dcMaxET.setEnabled(false);
-                    angleMaxET.setEnabled(false);
-                    stepSamplesET.setEnabled(false);
-                }
-                break;
+            }
+        } else if (view.getId() == R.id.dcSubBT) {
+            val = Integer.parseInt(dcValET.getText().toString());
+            if (val > 5) {
+                val -= 1;
+                dcValET.setText(String.valueOf(val));
+                if (status != TestStatus.stopped)
+                    startTest();
+            }
+        } else if (view.getId() == R.id.angleAddBT) {
+            val = Integer.parseInt(angleValTV.getText().toString());
+            if (val < MAX_ANGLE) {
+                angleValTV.setText(String.valueOf(++val));
+                if (status != TestStatus.stopped)
+                    startTest();
+            }
+        } else if (view.getId() == R.id.angleSubBT) {
+            val = Integer.parseInt(angleValTV.getText().toString());
+            if (val > -MAX_ANGLE) {
+                angleValTV.setText(String.valueOf(--val));
+                if (status != TestStatus.stopped)
+                    startTest();
+            }
         }
     }
 
@@ -225,71 +192,21 @@ public class MotorTestActivity extends AppCompatActivity {
             return;
         }
         currentDC  = Integer.parseInt(dcValET.getText().toString());
-        if (autoTune) {
-            stepDC = Integer.parseInt(dcStepET.getText().toString());
-            if (stepDC > 128) {
-                showDialog(getString(R.string.warning), "D.C. Step should be less than 129");
-                return;
-            }
-            maxDC = Integer.parseInt(dcMaxET.getText().toString());
-            if (maxDC > MAX_DUTY_CYCLE) {
-                showDialog(getString(R.string.warning), "D.C. Max should be less than " + MAX_DUTY_CYCLE+1);
-                return;
-            }
-            maxAngle = Integer.parseInt(angleMaxET.getText().toString());
-            if (maxAngle > MAX_ANGLE) {
-                showDialog(getString(R.string.warning), "Angle (+/-) should be less than " + MAX_ANGLE+1);
-                return;
-            }
-            stepSamples = Integer.parseInt(stepSamplesET.getText().toString());
-            if (stepSamples > 1024){
-                showDialog(getString(R.string.warning), "Step Samples should be less than 1025");
-                return;
-            }
-            currentAngle = (byte)(-maxAngle & 0xff);
-            avg = new RollingAverage(stepSamples);
-        } else {
-            currentAngle = (byte)(Integer.parseInt(angleValTV.getText().toString()) & 0xff);
-            avg = new RollingAverage(20);
-        }
+        currentAngle = (byte)(Integer.parseInt(angleValTV.getText().toString()) & 0xff);
+        avg = new RollingAverage(20);
         service.writeCommand(new byte[] {CMD_MOTOR_TEST,
                 TEST_START,
                 (byte)(currentDC & 0xff),
                 currentAngle});
     }
 
-    private boolean stopTest() {
+    private void stopTest() {
         resetTimer();
         if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
             showDialog(getString(R.string.error), getString(R.string.connection_error));
-            return false;
+            return;
         }
         service.writeCommand(new byte[] {CMD_MOTOR_TEST, TEST_STOP});
-        return true;
-    }
-
-    private void stepDone() {
-        status = TestStatus.starting;
-        String s = "DutyCycle: " + currentDC
-                + " Angle: " + currentAngle
-                + " ERPS: " + String.format(Locale.getDefault(), "%.2f", 250000D/avg.getAverage())
-                + "\n";
-        resultsTV.append(s);
-
-        currentAngle++;
-        if (currentAngle > maxAngle) {
-            currentDC += stepDC;
-            if (currentDC > maxDC) {
-                stopTest();
-                return;
-            }
-            currentAngle = (byte)(-maxAngle & 0xff);
-        }
-        avg = new RollingAverage(stepSamples);
-        service.writeCommand(new byte[] {CMD_MOTOR_TEST,
-                TEST_START,
-                (byte)(currentDC & 0xff),
-                currentAngle});
     }
 
     private void saveFile()
@@ -362,9 +279,7 @@ public class MotorTestActivity extends AppCompatActivity {
                 status = TestStatus.stopped;
                 resetTimer();
                 startBT.setEnabled(true);
-                saveBT.setEnabled(true);
                 exitBT.setEnabled(true);
-                autoTuneCB.setEnabled(true);
                 dcAddBT.setEnabled(true);
                 dcSubBT.setEnabled(true);
                 angleAddBT.setEnabled(true);
@@ -383,15 +298,7 @@ public class MotorTestActivity extends AppCompatActivity {
                                 status = TestStatus.starting;
                                 scheduleTimer();
                                 startBT.setEnabled(false);
-                                autoTuneCB.setEnabled(false);
-                                saveBT.setEnabled(false);
                                 exitBT.setEnabled(false);
-                                if (autoTune) {
-                                    dcAddBT.setEnabled(false);
-                                    dcSubBT.setEnabled(false);
-                                    angleAddBT.setEnabled(false);
-                                    angleSubBT.setEnabled(false);
-                                }
                                 stopBT.setEnabled(true);
                             }
                             break;
@@ -402,9 +309,7 @@ public class MotorTestActivity extends AppCompatActivity {
                                 status = TestStatus.stopped;
                                 resetTimer();
                                 startBT.setEnabled(true);
-                                saveBT.setEnabled(true);
                                 exitBT.setEnabled(true);
-                                autoTuneCB.setEnabled(true);
                                 dcAddBT.setEnabled(true);
                                 dcSubBT.setEnabled(true);
                                 angleAddBT.setEnabled(true);
@@ -427,46 +332,11 @@ public class MotorTestActivity extends AppCompatActivity {
                                 + (((data[12] & 255) << 8) + (data[11] & 255));
                         avg.add(value);
                         erpsTV.setText(String.format(Locale.getDefault(), "%.2f", 250000D/avg.getAverage()));
-                        if (autoTune && (avg.getIndex() == 0))
-                            stepDone();
                     }
                 }
             }
         }
     };
-
-    private static class RollingAverage {
-
-        private final int size;
-        private long total = 0;
-        private int index = 0;
-        private final int[] samples;
-        private boolean rollover = false;
-
-        public RollingAverage(int size) {
-            this.size = size;
-            samples = new int[size];
-            for (int i = 0; i < size; i++) samples[i] = 0;
-        }
-
-        public void add(int x) {
-            total -= samples[index];
-            samples[index] = x;
-            total += x;
-            if (++index == size) {
-                index = 0; // cheaper than modulus
-                rollover = true;
-            }
-        }
-
-        public double getAverage() {
-            return rollover ?(double)total/(double)size:(double)total/(double)index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-    }
 
     private Timer timer;
     private class TimerExpired extends TimerTask {
@@ -480,7 +350,7 @@ public class MotorTestActivity extends AppCompatActivity {
         resetTimer();
         TimerExpired timerExpired = new TimerExpired();
         timer = new Timer();
-        timer.schedule(timerExpired, 1500);
+        timer.schedule(timerExpired, 1000);
     }
 
     private void resetTimer() {
