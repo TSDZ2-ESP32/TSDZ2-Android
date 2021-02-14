@@ -53,10 +53,6 @@ public interface TSDZConst {
     int DEBUG_ADV_SIZE = 20;
     int STATUS_ADV_SIZE = 20;
 
-    // limit values used in the LevelSetupActivity
-    int PWM_DUTY_CYCLE_MAX = 254;
-    int WALK_ASSIST_DUTY_CYCLE_MAX = 80;
-
     // Default Hall Counter Offset values
     int DEFAULT_HALL_DOWN_OFFSET = 23; // Hall counter Offset for counter starting from Hall falling edge
     int DEFAULT_HALL_UP_OFFSET = 43; // Hall counter Offset for counter starting from Hall rising edge
