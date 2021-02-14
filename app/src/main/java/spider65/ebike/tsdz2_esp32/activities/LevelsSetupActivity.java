@@ -19,14 +19,27 @@ import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 import spider65.ebike.tsdz2_esp32.databinding.ActivityLevelsSetupBinding;
 
-import static spider65.ebike.tsdz2_esp32.TSDZConst.PWM_DUTY_CYCLE_MAX;
-import static spider65.ebike.tsdz2_esp32.TSDZConst.WALK_ASSIST_DUTY_CYCLE_MAX;
-
 public class LevelsSetupActivity extends AppCompatActivity {
 
+    // EMTB assist min max level values: level 1 - 20
+    private static final int EMTB_MIN_LEVEL = 1;
+    private static final int EMTB_MAX_LEVEL = 20;
+    // Power assist min max level values: % of human Power
+    private static final int POWER_MIN_LEVEL = 10;
+    private static final int POWER_MAX_LEVEL = 500;
+    // Cadence assist min max level values: Power in Watts
+    private static final int CADENCE_MIN_LEVEL = 20;
+    private static final int CADENCE_MAX_LEVEL = 400;
+    // Torque assist min max level values: torque factor 1 - 200
+    private static final int TORQUE_MIN_LEVEL = 1;
+    private static final int TORQUE_MAX_LEVEL = 200;
+    // Walk assist min max level values: Duty Cycle
+    private static final int WALK_MIN_LEVEL = 10;
+    private static final int WALK_MAX_LEVEL = 90;
+
     private static final String TAG = "LevelsSetupActivity";
-    private TSDZ_Config cfg = new TSDZ_Config();
-    private IntentFilter mIntentFilter = new IntentFilter();
+    private final TSDZ_Config cfg = new TSDZ_Config();
+    private final IntentFilter mIntentFilter = new IntentFilter();
     private ActivityLevelsSetupBinding binding;
 
 
@@ -61,33 +74,29 @@ public class LevelsSetupActivity extends AppCompatActivity {
     }
 
     public void onOkCancelClick(View view) {
-        switch (view.getId()) {
-            case R.id.okButton:
-                saveCfg();
-                break;
-            case R.id.exitButton:
-                finish();
-                break;
-        }
+        if (view.getId() == R.id.okButton)
+            saveCfg();
+        else if (view.getId() == R.id.exitButton)
+            finish();
     }
 
     private void saveCfg() {
         Integer val1,val2,val3,val4;
 
-        if ((val1 = checkRange(binding.eMTBAssist1ET, 1, 20)) == null) {
-            showDialog(getString(R.string.emtb_assit_level_1), getString(R.string.range_error, 1, 20));
+        if ((val1 = checkRange(binding.eMTBAssist1ET, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_1), getString(R.string.range_error, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL));
             return;
         }
-        if ((val2 = checkRange(binding.eMTBAssist2ET, 1, 20)) == null) {
-            showDialog(getString(R.string.emtb_assit_level_2), getString(R.string.range_error, 1, 20));
+        if ((val2 = checkRange(binding.eMTBAssist2ET, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_2), getString(R.string.range_error, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL));
             return;
         }
-        if ((val3 = checkRange(binding.eMTBAssist3ET, 1, 20)) == null) {
-            showDialog(getString(R.string.emtb_assit_level_3), getString(R.string.range_error, 1, 20));
+        if ((val3 = checkRange(binding.eMTBAssist3ET, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_3), getString(R.string.range_error, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL));
             return;
         }
-        if ((val4 = checkRange(binding.eMTBAssist4ET, 1, 20)) == null) {
-            showDialog(getString(R.string.emtb_assit_level_4), getString(R.string.range_error, 1, 20));
+        if ((val4 = checkRange(binding.eMTBAssist4ET, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.emtb_assit_level_4), getString(R.string.range_error, EMTB_MIN_LEVEL, EMTB_MAX_LEVEL));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
@@ -100,20 +109,20 @@ public class LevelsSetupActivity extends AppCompatActivity {
             return;
         }
 
-        if ((val1 = checkRange(binding.powerAssist1ET, 10, 500)) == null) {
-            showDialog(getString(R.string.power_assist_level_1), getString(R.string.range_error, 10, 500));
+        if ((val1 = checkRange(binding.powerAssist1ET, POWER_MIN_LEVEL, POWER_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.power_assist_level_1), getString(R.string.range_error, POWER_MIN_LEVEL, POWER_MAX_LEVEL));
             return;
         }
-        if ((val2 = checkRange(binding.powerAssist2ET, 10, 500)) == null) {
-            showDialog(getString(R.string.power_assist_level_2), getString(R.string.range_error, 10, 500));
+        if ((val2 = checkRange(binding.powerAssist2ET, POWER_MIN_LEVEL, POWER_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.power_assist_level_2), getString(R.string.range_error, POWER_MIN_LEVEL, POWER_MAX_LEVEL));
             return;
         }
-        if ((val3 = checkRange(binding.powerAssist3ET, 10, 500)) == null) {
-            showDialog(getString(R.string.power_assist_level_3), getString(R.string.range_error, 10, 500));
+        if ((val3 = checkRange(binding.powerAssist3ET, POWER_MIN_LEVEL, POWER_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.power_assist_level_3), getString(R.string.range_error, POWER_MIN_LEVEL, POWER_MAX_LEVEL));
             return;
         }
-        if ((val4 = checkRange(binding.powerAssist4ET, 10, 500)) == null) {
-            showDialog(getString(R.string.power_assist_level_4), getString(R.string.range_error, 10, 500));
+        if ((val4 = checkRange(binding.powerAssist4ET, POWER_MIN_LEVEL, POWER_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.power_assist_level_4), getString(R.string.range_error, POWER_MIN_LEVEL, POWER_MAX_LEVEL));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
@@ -126,20 +135,20 @@ public class LevelsSetupActivity extends AppCompatActivity {
             return;
         }
 
-        if ((val1 = checkRange(binding.torqueAssist1ET, 1, 200)) == null) {
-            showDialog(getString(R.string.torque_assist_level_1), getString(R.string.range_error, 1, 200));
+        if ((val1 = checkRange(binding.torqueAssist1ET, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.torque_assist_level_1), getString(R.string.range_error, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL));
             return;
         }
-        if ((val2 = checkRange(binding.torqueAssist2ET, 1, 200)) == null) {
-            showDialog(getString(R.string.torque_assist_level_2), getString(R.string.range_error, 1, 200));
+        if ((val2 = checkRange(binding.torqueAssist2ET, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.torque_assist_level_2), getString(R.string.range_error, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL));
             return;
         }
-        if ((val3 = checkRange(binding.torqueAssist3ET, 1, 200)) == null) {
-            showDialog(getString(R.string.torque_assist_level_3), getString(R.string.range_error, 1, 200));
+        if ((val3 = checkRange(binding.torqueAssist3ET, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.torque_assist_level_3), getString(R.string.range_error, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL));
             return;
         }
-        if ((val4 = checkRange(binding.torqueAssist4ET, 1, 200)) == null) {
-            showDialog(getString(R.string.torque_assist_level_4), getString(R.string.range_error, 1, 200));
+        if ((val4 = checkRange(binding.torqueAssist4ET, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.torque_assist_level_4), getString(R.string.range_error, TORQUE_MIN_LEVEL, TORQUE_MAX_LEVEL));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
@@ -152,46 +161,46 @@ public class LevelsSetupActivity extends AppCompatActivity {
             return;
         }
 
-        if ((val1 = checkRange(binding.cadenceAssist1ET, 1, PWM_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.cadence_assist_level_1), getString(R.string.range_error, 1, PWM_DUTY_CYCLE_MAX));
+        if ((val1 = checkRange(binding.cadenceAssist1ET, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_1), getString(R.string.range_error, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL));
             return;
         }
-        if ((val2 = checkRange(binding.cadenceAssist2ET, 1, PWM_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.cadence_assist_level_2), getString(R.string.range_error, 1, PWM_DUTY_CYCLE_MAX));
+        if ((val2 = checkRange(binding.cadenceAssist2ET, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_2), getString(R.string.range_error, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL));
             return;
         }
-        if ((val3 = checkRange(binding.cadenceAssist3ET, 1, PWM_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.cadence_assist_level_3), getString(R.string.range_error, 1, PWM_DUTY_CYCLE_MAX));
+        if ((val3 = checkRange(binding.cadenceAssist3ET, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_3), getString(R.string.range_error, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL));
             return;
         }
-        if ((val4 = checkRange(binding.cadenceAssist4ET, 1, PWM_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.cadence_assist_level_4), getString(R.string.range_error, 1, PWM_DUTY_CYCLE_MAX));
+        if ((val4 = checkRange(binding.cadenceAssist4ET, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.cadence_assist_level_4), getString(R.string.range_error, CADENCE_MIN_LEVEL, CADENCE_MAX_LEVEL));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
-            cfg.ui8_cadence_assist_level[0] = val1;
-            cfg.ui8_cadence_assist_level[1] = val2;
-            cfg.ui8_cadence_assist_level[2] = val3;
-            cfg.ui8_cadence_assist_level[3] = val4;
+            cfg.ui8_cadence_assist_level[0] = val1/2;
+            cfg.ui8_cadence_assist_level[1] = val2/2;
+            cfg.ui8_cadence_assist_level[2] = val3/2;
+            cfg.ui8_cadence_assist_level[3] = val4/2;
         } else {
             showDialog(getString(R.string.cadence_mode), getString(R.string.level_error));
             return;
         }
 
-        if ((val1 = checkRange(binding.walkAssist1ET, 1, WALK_ASSIST_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.walk_assist_level_1), getString(R.string.range_error, 1, WALK_ASSIST_DUTY_CYCLE_MAX));
+        if ((val1 = checkRange(binding.walkAssist1ET, WALK_MIN_LEVEL, WALK_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.walk_assist_level_1), getString(R.string.range_error, WALK_MIN_LEVEL, WALK_MAX_LEVEL));
             return;
         }
-        if ((val2 = checkRange(binding.walkAssist2ET, 1, WALK_ASSIST_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.walk_assist_level_2), getString(R.string.range_error, 1, WALK_ASSIST_DUTY_CYCLE_MAX));
+        if ((val2 = checkRange(binding.walkAssist2ET, WALK_MIN_LEVEL, WALK_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.walk_assist_level_2), getString(R.string.range_error, WALK_MIN_LEVEL, WALK_MAX_LEVEL));
             return;
         }
-        if ((val3 = checkRange(binding.walkAssist3ET, 1, WALK_ASSIST_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.walk_assist_level_3), getString(R.string.range_error, 1, WALK_ASSIST_DUTY_CYCLE_MAX));
+        if ((val3 = checkRange(binding.walkAssist3ET, WALK_MIN_LEVEL, WALK_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.walk_assist_level_3), getString(R.string.range_error, WALK_MIN_LEVEL, WALK_MAX_LEVEL));
             return;
         }
-        if ((val4 = checkRange(binding.walkAssist4ET, 1, WALK_ASSIST_DUTY_CYCLE_MAX)) == null) {
-            showDialog(getString(R.string.walk_assist_level_4), getString(R.string.range_error, 1, WALK_ASSIST_DUTY_CYCLE_MAX));
+        if ((val4 = checkRange(binding.walkAssist4ET, WALK_MIN_LEVEL, WALK_MAX_LEVEL)) == null) {
+            showDialog(getString(R.string.walk_assist_level_4), getString(R.string.range_error, WALK_MIN_LEVEL, WALK_MAX_LEVEL));
             return;
         }
         if (val2>val1 && val3>val2 && val4>val3) {
@@ -230,7 +239,7 @@ public class LevelsSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive " + intent.getAction());
