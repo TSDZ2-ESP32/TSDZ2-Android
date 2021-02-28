@@ -9,29 +9,23 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
-import java.util.Locale;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
-import spider65.ebike.tsdz2_esp32.TSDZConst;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 
 
 public class MotorSetupActivity extends AppCompatActivity {
 
     private static final int MAX_ANGLE = 10;
-    private static final int MIN_OFFSET = 7;
-    private static final int MAX_OFFSET = 40;
-    private static final int MAX_DIFF = 30;
+    private static final int MAX_OFFSET = 10;
 
     private final IntentFilter mIntentFilter = new IntentFilter();
-    private TextView angleValTV, hall124ValTV, hall356ValTV;
+    private TextView angleValTV, offsetValTV;
     private final TSDZ_Config cfg = new TSDZ_Config();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +36,7 @@ public class MotorSetupActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         angleValTV = findViewById(R.id.angleValTV);
-        hall124ValTV = findViewById(R.id.hall124ValTV);
-        hall356ValTV = findViewById(R.id.hall356ValTV);
+        offsetValTV = findViewById(R.id.offsetValTV);
 
         mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_READ_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_WRITE_BROADCAST);
@@ -55,6 +48,7 @@ public class MotorSetupActivity extends AppCompatActivity {
             TSDZBTService.getBluetoothService().readCfg();
         showDialog(getString(R.string.warning), getString(R.string.warning_cfg), false);
     }
+
 
     @Override
     protected void onResume() {
@@ -82,15 +76,10 @@ public class MotorSetupActivity extends AppCompatActivity {
                 updated = true;
             }
 
-            int hall124Offset = Integer.parseInt(hall124ValTV.getText().toString());
-            if (hall124Offset != cfg.ui8_hall_counter_offset_down) {
-                cfg.ui8_hall_counter_offset_down = hall124Offset;
-                updated = true;
-            }
-
-            int hall356Offset = Integer.parseInt(hall356ValTV.getText().toString());
-            if (hall356Offset != cfg.ui8_hall_counter_offset_up) {
-                cfg.ui8_hall_counter_offset_up = hall356Offset;
+            int offsetAdj = Integer.parseInt(offsetValTV.getText().toString());
+            if (offsetAdj < 0) offsetAdj = (256 + offsetAdj);
+            if (offsetAdj != cfg.ui8_hall_offset_adj) {
+                cfg.ui8_hall_offset_adj = offsetAdj;
                 updated = true;
             }
 
@@ -101,32 +90,22 @@ public class MotorSetupActivity extends AppCompatActivity {
         } else if (view.getId() == R.id.angleAddBT) {
             val = Integer.parseInt(angleValTV.getText().toString());
             if (val < MAX_ANGLE)
-                angleValTV.setText(String.valueOf(++val));
+                angleValTV.setText(String.valueOf(val + 1));
         } else if (view.getId() == R.id.angleSubBT) {
             val = Integer.parseInt(angleValTV.getText().toString());
             if (val > -MAX_ANGLE)
-                angleValTV.setText(String.valueOf(--val));
-        } else if (view.getId() == R.id.hall124AddBT) {
-            val = Integer.parseInt(hall124ValTV.getText().toString());
-            if ((val < MAX_OFFSET) && (val < Integer.parseInt(hall356ValTV.getText().toString())))
-                hall124ValTV.setText(String.valueOf(++val));
-        }  else if (view.getId() == R.id.hall124SubBT) {
-            val = Integer.parseInt(hall124ValTV.getText().toString());
-            if (val > MIN_OFFSET)
-                hall124ValTV.setText(String.valueOf(--val));
-        } else if (view.getId() == R.id.hall356AddBT) {
-            val = Integer.parseInt(hall356ValTV.getText().toString());
-            if (val < MAX_OFFSET+MAX_DIFF)
-                hall356ValTV.setText(String.valueOf(++val));
-        }  else if (view.getId() == R.id.hall356SubBT) {
-            val = Integer.parseInt(hall356ValTV.getText().toString());
-            if (val > Integer.parseInt(hall124ValTV.getText().toString()))
-                hall356ValTV.setText(String.valueOf(--val));
-        } else if (view.getId() == R.id.defaultBT) {
+                angleValTV.setText(String.valueOf(val - 1));
+        } else if (view.getId() == R.id.offsetAddBT) {
+            val = Integer.parseInt(offsetValTV.getText().toString());
+            if (val < MAX_OFFSET)
+                offsetValTV.setText(String.valueOf(val + 1));
+        }  else if (view.getId() == R.id.offsetSubBT) {
+            val = Integer.parseInt(offsetValTV.getText().toString());
+            if (val > -MAX_OFFSET)
+                offsetValTV.setText(String.valueOf(val - 1));
+        } else if (view.getId() == R.id.resetBT) {
             angleValTV.setText("0");
-            hall124ValTV.setText(String.format(Locale.getDefault(), "%d", TSDZConst.DEFAULT_HALL_DOWN_OFFSET));
-            hall356ValTV.setText(String.format(Locale.getDefault(), "%d", TSDZConst.DEFAULT_HALL_UP_OFFSET));
-            showDialog("", getString(R.string.defaultLoaded), false);
+            offsetValTV.setText("0");
         }
     }
 
@@ -156,9 +135,10 @@ public class MotorSetupActivity extends AppCompatActivity {
                     }
                     int v = cfg.ui8_phase_angle_adj;
                     if (v >= 128) v-=256;
-                    angleValTV.setText(String.format(Locale.getDefault(),"%d", v));
-                    hall124ValTV.setText(String.format(Locale.getDefault(), "%d", cfg.ui8_hall_counter_offset_down));
-                    hall356ValTV.setText(String.format(Locale.getDefault(), "%d", cfg.ui8_hall_counter_offset_up));
+                    angleValTV.setText(String.valueOf(v));
+                    v = cfg.ui8_hall_offset_adj;
+                    if (v >= 128) v-=256;
+                    offsetValTV.setText(String.valueOf(v));
                     findViewById(R.id.saveButton).setEnabled(true);
                     break;
                 case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:

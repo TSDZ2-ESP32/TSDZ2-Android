@@ -66,41 +66,29 @@
             <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:stretchColumns="1,2,3">
+                android:shrinkColumns="*"
+                android:stretchColumns="*">
 
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="2dp">
+                <TableRow>
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:gravity="center"
                         android:layout_margin="2dp"
                         android:text="@string/hal_n"
                         android:textSize="18sp" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:gravity="center"
                         android:layout_margin="2dp"
-                        android:maxEms="4"
-                        android:minEms="4"
                         android:text="@string/angle"
                         android:textSize="18sp" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:gravity="center"
                         android:layout_margin="2dp"
                         android:text="@string/offset"
                         android:textSize="18sp" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:gravity="center"
                         android:layout_margin="2dp"
                         android:text="@string/r_2"
@@ -108,65 +96,47 @@
                 </TableRow>
 
                 <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:padding="2dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:text="@string/hal_1"
                         android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/angle1TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:maxEms="4"
-                        android:minEms="4"
                         android:text="@string/dash"
                         android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/offset1TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:maxEms="4"
-                        android:minEms="4"
                         android:text="@string/dash"
                         android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/err1TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:maxEms="4"
-                        android:minEms="4"
                         android:text="@string/dash"
                         android:textSize="16sp" />
 
                 </TableRow>
 
                 <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:padding="2dp">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/hal_2" />
                     <TextView
                         android:id="@+id/angle2TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="4"
-                        android:maxEms="4"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/dash" />
@@ -174,188 +144,133 @@
 
                     <TextView
                         android:id="@+id/offset2TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/err2TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
                 </TableRow>
 
                 <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:padding="2dp">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/hal_3" />
                     <TextView
                         android:id="@+id/angle3TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="4"
-                        android:maxEms="4"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
-
                     <TextView
                         android:id="@+id/offset3TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/err3TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                 </TableRow>
 
                 <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:padding="2dp">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/hal_4" />
                     <TextView
                         android:id="@+id/angle4TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="4"
-                        android:maxEms="4"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/offset4TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/err4TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
                 </TableRow>
 
                 <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:padding="2dp">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:layout_margin="2dp"
+                        android:gravity="center"
                         android:textSize="16sp"
                         android:text="@string/hal_5" />
                     <TextView
                         android:id="@+id/angle5TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="4"
-                        android:maxEms="4"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/offset5TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/err5TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                 </TableRow>
 
                 <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:padding="2dp">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/hal_6" />
                     <TextView
                         android:id="@+id/angle6TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minEms="4"
-                        android:maxEms="4"
+                        android:gravity="center"
                         android:layout_margin="2dp"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/offset7TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
 
                     <TextView
                         android:id="@+id/err6TV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:layout_margin="2dp"
-                        android:minEms="4"
-                        android:maxEms="4"
                         android:textSize="16sp"
                         android:text="@string/dash" />
                 </TableRow>
@@ -401,7 +316,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:text="@string/hallDiff" />
+                    android:text="@string/hallOffset" />
 
                 <TextView
                     android:id="@+id/hallUpDnDiffTV"
@@ -427,7 +342,7 @@
                     android:text="@string/start_stop" />
 
                 <Button
-                    android:id="@+id/defaultBT"
+                    android:id="@+id/resetBT"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="2dp"

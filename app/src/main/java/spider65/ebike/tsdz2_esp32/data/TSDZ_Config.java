@@ -6,7 +6,7 @@ import android.util.Log;
 public class TSDZ_Config {
 
     private static final String TAG = "TSDZ_Config";
-    private static final int CFG_SIZE = 64;
+    private static final int CFG_SIZE = 68;
 
     public enum TempControl {
         none (0),
@@ -39,7 +39,7 @@ public class TSDZ_Config {
     public int ui8_motor_temperature_min_value_to_limit;
     public int ui8_motor_temperature_max_value_to_limit;
     public int ui8_motor_acceleration;
-    public int ui8_dummy;
+    public int ui8_hall_offset_adj;
     public int ui8_max_speed;
     public int ui8_street_max_speed;
     public int ui8_pedal_torque_per_10_bit_ADC_step_x100;
@@ -73,8 +73,7 @@ public class TSDZ_Config {
     public boolean torque_offset_fix;
     public int ui16_torque_offset_ADC;
     public int[] ui8_hall_ref_angles = new int[6];
-    public int ui8_hall_counter_offset_up;
-    public int ui8_hall_counter_offset_down;
+    public int[] ui8_hall_counter_offset = new int[6];
 
     /*
     #pragma pack(1)
@@ -83,7 +82,7 @@ public class TSDZ_Config {
         volatile uint8_t ui8_motor_temperature_min_value_to_limit;
         volatile uint8_t ui8_motor_temperature_max_value_to_limit;
         volatile uint8_t ui8_motor_acceleration;
-        volatile uint8_t ui8_dummy;
+        volatile uint8_t ui8_hall_offset_adj;
         volatile uint8_t ui8_max_speed;
         volatile uint8_t ui8_street_max_speed;
         volatile uint8_t ui8_pedal_torque_per_10_bit_ADC_step_x100;
@@ -102,7 +101,7 @@ public class TSDZ_Config {
         volatile uint8_t ui8_li_io_cell_full_bars_x100;
         volatile uint8_t ui8_li_io_cell_one_bar_x100;
         volatile uint8_t ui8_li_io_cell_empty_x100;
-        volatile uint8_t ui8_dummy2;
+        volatile uint8_t ui8_phase_angle_adj;
         volatile uint8_t ui8_street_mode_power_limit_enabled;
         volatile uint8_t ui8_street_mode_throttle_enabled;
         volatile uint8_t ui8_street_mode_power_limit_div25;
@@ -115,6 +114,8 @@ public class TSDZ_Config {
         volatile uint8_t ui8_walk_assist_level[4];
         volatile uint8_t ui8_torque_offset_fix;
         volatile uint16_t ui16_torque_offset_value;
+        volatile uint8_t ui8_hall_ref_angles[6];
+        volatile uint8_t ui8_hall_offsets[6];
     } struct_tsdz_cfg;
     */
 
@@ -127,7 +128,7 @@ public class TSDZ_Config {
         ui8_motor_temperature_min_value_to_limit = (data[1] & 255);
         ui8_motor_temperature_max_value_to_limit = (data[2] & 255);
         ui8_motor_acceleration = (data[3] & 255);
-        ui8_dummy = (data[4] & 255 ); // ui8_cadence_sensor_mode
+        ui8_hall_offset_adj = (data[4] & 255 ); // ui8_cadence_sensor_mode
         ui8_max_speed = (data[5] & 255);
         ui8_street_max_speed = (data[6] & 255);
         ui8_pedal_torque_per_10_bit_ADC_step_x100 = (data[7] & 255);
@@ -172,8 +173,8 @@ public class TSDZ_Config {
         ui16_torque_offset_ADC = (data[54] & 255) + ((data[55] & 255) << 8);
         for (int i=0;i<6;i++)
             ui8_hall_ref_angles[i] = (data[56+i] & 255);
-        ui8_hall_counter_offset_up = (data[62] & 255);
-        ui8_hall_counter_offset_down = (data[63] & 255);
+        for (int i=0;i<6;i++)
+            ui8_hall_counter_offset[i] = (data[62+i] & 255);
         return true;
     }
 
@@ -183,7 +184,7 @@ public class TSDZ_Config {
         data[1] = (byte)ui8_motor_temperature_min_value_to_limit;
         data[2] = (byte)ui8_motor_temperature_max_value_to_limit;
         data[3] = (byte)ui8_motor_acceleration;
-        data[4] = (byte)ui8_dummy;
+        data[4] = (byte)ui8_hall_offset_adj;
         data[5] = (byte)ui8_max_speed;
         data[6] = (byte)(ui8_street_max_speed);
         data[7] = (byte)ui8_pedal_torque_per_10_bit_ADC_step_x100;
@@ -228,8 +229,8 @@ public class TSDZ_Config {
         data[55] = (byte)(ui16_torque_offset_ADC >>> 8);
         for (int i=0;i<6;i++)
             data[56+i] = (byte)(ui8_hall_ref_angles[i] & 0xff);
-        data[62] = (byte)(ui8_hall_counter_offset_up & 0xff);
-        data[63] = (byte)(ui8_hall_counter_offset_down & 0xff);
+        for (int i=0;i<6;i++)
+            data[62+i] = (byte)(ui8_hall_counter_offset[i] & 0xff);
         return data;
     }
 }

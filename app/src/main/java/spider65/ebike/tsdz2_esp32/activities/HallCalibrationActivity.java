@@ -24,6 +24,7 @@ import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.TSDZConst;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
+import spider65.ebike.tsdz2_esp32.utils.Cramer;
 import spider65.ebike.tsdz2_esp32.utils.LinearRegression;
 import spider65.ebike.tsdz2_esp32.utils.RollingAverage;
 
@@ -35,8 +36,8 @@ import static spider65.ebike.tsdz2_esp32.TSDZConst.TEST_STOP;
 public class HallCalibrationActivity extends AppCompatActivity {
     private static final String TAG = "HallCalibration";
 
-    private static final int SETUP_STEPS = 15;
-    private static final int AVG_SIZE = 150;
+    private static final int SETUP_STEPS = 30;
+    private static final int AVG_SIZE = 100;
 
     private final TSDZ_Config cfg = new TSDZ_Config();
     private final IntentFilter mIntentFilter = new IntentFilter();
@@ -67,7 +68,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
     private final LinearRegression[] linearRegression = new LinearRegression[6];
 
     private final int[] phaseAngles = new int[6];
-    private int hallUpDnDiff;
+    private final int[] hallTOffset = new int[6];
 
 
     @Override
@@ -100,7 +101,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
         errorTV[5] = findViewById(R.id.err6TV);
         hallValuesTV = findViewById(R.id.hallValuesTV);
         hallUpDnDiffTV = findViewById(R.id.hallUpDnDiffTV);
-        resetBT = findViewById(R.id.defaultBT);
+        resetBT = findViewById(R.id.resetBT);
         cancelBT = findViewById(R.id.exitButton);
         saveBT = findViewById(R.id.saveButton);
         progressBar = findViewById(R.id.progressBar);
@@ -180,11 +181,11 @@ public class HallCalibrationActivity extends AppCompatActivity {
         } else if (view.getId() == R.id.saveButton) {
             if (TSDZBTService.getBluetoothService() != null) {
                 System.arraycopy(phaseAngles, 0, cfg.ui8_hall_ref_angles, 0, 6);
-                cfg.ui8_hall_counter_offset_up = cfg.ui8_hall_counter_offset_down + hallUpDnDiff;
+                System.arraycopy(hallTOffset, 0, cfg.ui8_hall_counter_offset, 0, 6);
                 TSDZBTService.getBluetoothService().writeCfg(cfg);
             } else
                 showDialog(getString(R.string.error), getString(R.string.connection_error), false);
-        } else if (view.getId() == R.id.defaultBT) {
+        } else if (view.getId() == R.id.resetBT) {
             for (int i=0; i<6; i++) {
                 angleTV[i].setText(R.string.dash);
                 offsetTV[i].setText(R.string.dash);
@@ -192,12 +193,12 @@ public class HallCalibrationActivity extends AppCompatActivity {
             }
             for (int i=0; i<6; i++) {
                 double v = Math.round(((30D + 60D * (double) i) * (256D / 360D)
-                        + TSDZConst.DEFAULT_PHASE_OFFSET
+                        + TSDZConst.DEFAULT_ROTOR_OFFSET
                         - TSDZConst.DEFAULT_PHASE_ANGLE));
                 if (v < 0) v += 256;
                 phaseAngles[i] = (int)v;
             }
-            hallUpDnDiff = TSDZConst.DEFAULT_HALL_UP_OFFSET - TSDZConst.DEFAULT_HALL_DOWN_OFFSET;
+            System.arraycopy(TSDZConst.DEFAULT_HALL_OFFSET,0,hallTOffset,0,hallTOffset.length);
             refresValues();
             saveBT.setEnabled(true);
             showDialog("", getString(R.string.defaultLoaded), false);
@@ -213,7 +214,14 @@ public class HallCalibrationActivity extends AppCompatActivity {
             s.append(String.format(Locale.getDefault(), "%d", phaseAngles[i]));
         }
         hallValuesTV.setText(s.toString());
-        hallUpDnDiffTV.setText(String.format(Locale.getDefault(), "%d", hallUpDnDiff));
+
+        s = new StringBuilder();
+        for (int i=0; i<6; i++) {
+            if (i > 0)
+                s.append(" ");
+            s.append(String.format(Locale.getDefault(), "%d", hallTOffset[i]));
+        }
+        hallUpDnDiffTV.setText(s.toString());
     }
 
     private void updateUI() {
@@ -269,6 +277,95 @@ public class HallCalibrationActivity extends AppCompatActivity {
         builder.show();
     }
 
+
+    /*
+    * F1=Hall1 Tfall, R1=Hall1 TRise, F2=Hall2 TFall etc..
+    * The 6 linear equations calculated with the linear regression are dependant and have
+    * infinite solutions.
+    * Lets set F1=0 and then calculate all the other values 6 times for each equation
+    * combination and then calculate the average for each value.
+    * At the end add an offset to all values so that the total average value is TSDZConst.DEFAULT_AVG_OFFSET.
+    */
+    private void calculateOffsets() {
+        final double[][] A1 = {
+                { 0, 0,-1, 0, 1, 0}, // -F3 + R2 = linearRegression[0].intercept();
+                { 1, 0, 0, 0,-1, 0}, //  F1 - R2 = linearRegression[1].intercept();
+                {-1, 0, 0, 0, 0, 1}, // -F1 + R3 = linearRegression[2].intercept();
+                { 0, 1, 0, 0, 0,-1}, //  F2 - R3 = linearRegression[3].intercept();
+                { 0,-1, 0, 1, 0, 0}, // -F2 + R1 = linearRegression[4].intercept();
+                { 0, 0, 1,-1, 0, 0}  //  F3 - R1 = linearRegression[5].intercept();
+        };
+        final double[] Ak = {1,0,0,0,0,0}; // F1 = 0
+
+        double[][] A = new double[6][];
+        double[] b = new double[6];
+
+        double[] result = {0,0,0,0,0,0};
+
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 6; j++) {
+                if (j == i) {
+                    A[j] = Ak;
+                    b[j] = 0;
+                } else {
+                    A[j] = A1[j];
+                    b[j] = linearRegression[j].intercept();
+                }
+            }
+            Cramer cramer = new Cramer(A, b);
+            double[] solution = cramer.solve();
+            for (int k = 0; k < solution.length; k++) {
+                result[k] += solution[k];
+            }
+        }
+
+        for (int i=0; i<6; i++)
+            result[i] = result[i] / 6;
+
+        double avgOffset = 0;
+        for (int i=0; i<6; i++)
+            avgOffset += result[i];
+        avgOffset /= 6;
+        double diffOffset = TSDZConst.DEFAULT_AVG_OFFSET - avgOffset;
+        for (int i=0; i<6; i++) {
+            result[i] += diffOffset;
+        }
+
+        hallTOffset[0] = (int)Math.round(result[4]); // R2 - delay for Hall state 6
+        hallTOffset[1] = (int)Math.round(result[0]); // F1 - delay for Hall state 2
+        hallTOffset[2] = (int)Math.round(result[5]); // R3 - delay for Hall state 3
+        hallTOffset[3] = (int)Math.round(result[1]); // F2 - delay for Hall state 1
+        hallTOffset[4] = (int)Math.round(result[3]); // R1 - delay for Hall state 5
+        hallTOffset[5] = (int)Math.round(result[2]); // F3 - delay for Hall state 4
+    }
+
+    private void calculateAngles() {
+        double[] calcRefAngles = {0d,0d,0d,0d,0d,0d};
+        double value = 0;
+        double error = 0;
+        // Calculate the Hall incremental angles setting Hall state 6 = 0 degrees.
+        // Calculate the average offset error in regard to the reference positions.
+        for (int i=1; i<6; i++) {
+            value += linearRegression[i].slope()*256D;
+            error += value - ((double)i*256D/6D);
+            calcRefAngles[i] = value;
+        }
+        error /= 6D;
+
+        // Calculate the Phase reference angles applying the error correction and the absolute
+        // reference position correction.
+        for (int i=0; i<6; i++) {
+            // add 30 degree and subtract the calculated error
+            calcRefAngles[i] = calcRefAngles[i] - error + 256D/12D;
+            // Add rotor offset and subtract phase angle (90 degree)
+            int v = (int)Math.round(calcRefAngles[i])
+                    + TSDZConst.DEFAULT_ROTOR_OFFSET
+                    - TSDZConst.DEFAULT_PHASE_ANGLE;
+            if (v<0) v += 256;
+            phaseAngles[i] = v;
+        }
+    }
+
     private void updateResult() {
         for (int i=0; i<6; i++) {
             linearRegression[i] = new LinearRegression(px[i], py[i]);
@@ -285,26 +382,8 @@ public class HallCalibrationActivity extends AppCompatActivity {
             saveBT.setEnabled(false);
         }
 
-        double[] calcRefAngles = {0d,0d,0d,0d,0d,0d};
-        double value = 0;
-        double error = 0;
-        for (int i=1; i<6; i++) {
-            value += linearRegression[i].slope()*256D;
-            error += value - ((double)i*256D/6D);
-            calcRefAngles[i] = value;
-        }
-        error /= 6D;
-        double offset = 0;
-        for (int i=0; i<6; i++) {
-            calcRefAngles[i] = calcRefAngles[i] - error + 256D/12D;
-            int v = (int)Math.round(calcRefAngles[i])
-                    + TSDZConst.DEFAULT_PHASE_OFFSET
-                    - TSDZConst.DEFAULT_PHASE_ANGLE;
-            if (v<0) v += 256;
-            phaseAngles[i] = v;
-            offset += Math.abs(linearRegression[i].intercept());
-        }
-        hallUpDnDiff = (byte)Math.round(offset/6D);
+        calculateAngles();
+        calculateOffsets();
 
         Log.d(TAG,"ui8_hall_ref_angles:" + (phaseAngles[0] & 0xff)
                 + "," + (phaseAngles[1] & 0xff)
@@ -313,7 +392,13 @@ public class HallCalibrationActivity extends AppCompatActivity {
                 + "," + (phaseAngles[4] & 0xff)
                 + "," + (phaseAngles[5] & 0xff)
         );
-        Log.d(TAG, "Hall Up-Down diff:" + hallUpDnDiff);
+        Log.d(TAG, "hallTOffset:" + (hallTOffset[0] & 0xff)
+                + "," + (hallTOffset[1] & 0xff)
+                + "," + (hallTOffset[2] & 0xff)
+                + "," + (hallTOffset[3] & 0xff)
+                + "," + (hallTOffset[4] & 0xff)
+                + "," + (hallTOffset[5] & 0xff)
+        );
         refresValues();
     }
 
@@ -357,9 +442,8 @@ public class HallCalibrationActivity extends AppCompatActivity {
                     }
 
                     System.arraycopy(cfg.ui8_hall_ref_angles, 0, phaseAngles, 0, 6);
-                    hallUpDnDiff = cfg.ui8_hall_counter_offset_up - cfg.ui8_hall_counter_offset_down;
+                    System.arraycopy(cfg.ui8_hall_counter_offset, 0, hallTOffset, 0, 6);
                     refresValues();
-
                     break;
                 case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
                     if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
@@ -389,7 +473,13 @@ public class HallCalibrationActivity extends AppCompatActivity {
                                 break;
                         }
                     } else if (data[0] == CMD_HALL_DATA) {
-                        if (!calibrationRunning || (msgCounter++ < SETUP_STEPS)) {
+                        if (!calibrationRunning) {
+                            return;
+                        }
+                        msgCounter++;
+                        long progress = (100 * (step * (AVG_SIZE + SETUP_STEPS) + msgCounter)) / (4 * (AVG_SIZE + SETUP_STEPS));
+                        progressTV.setText(String.format(Locale.getDefault(), "%d%%", progress));
+                        if (msgCounter <= SETUP_STEPS) {
                             return;
                         }
                         long sum = 0;
@@ -400,10 +490,6 @@ public class HallCalibrationActivity extends AppCompatActivity {
                         erpsTV.setText(String.format(Locale.getDefault(), "%.2f", 250000D/sum));
                         if (avg[0].getIndex() == 0)
                             nextStep(sum);
-                        else {
-                            long progress = (100 * (step * AVG_SIZE + avg[0].getIndex())) / (4 * AVG_SIZE);
-                            progressTV.setText(String.format(Locale.getDefault(), "%d%%", progress));
-                        }
                     }
                     break;
             }

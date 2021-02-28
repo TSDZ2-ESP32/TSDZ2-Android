@@ -221,23 +221,23 @@
 
     <string name="assist_mode">Assist Mode</string>
 
-    <string name="hal_n">HALL #</string>
-    <string name="hal_1">HALL 1</string>
-    <string name="hal_2">HALL 2</string>
-    <string name="hal_3">HALL 3</string>
-    <string name="hal_4">HALL 4</string>
-    <string name="hal_5">HALL 5</string>
-    <string name="hal_6">HALL 6</string>
-    <string name="angle">Angle</string>
-    <string name="offset">T Offset</string>
+    <string name="hal_n">Hall state</string>
+    <string name="hal_1">4</string>
+    <string name="hal_2">6</string>
+    <string name="hal_3">2</string>
+    <string name="hal_4">3</string>
+    <string name="hal_5">1</string>
+    <string name="hal_6">5</string>
+    <string name="angle">ΔΦ (deg)</string>
+    <string name="offset">ΔT (4us)</string>
     <string name="r_2">R2</string>
 
     <string name="warning_cfg">Dont\'change these values unless you know well what are you doing!</string>
-    <string name="phase_angle">Phase Angle shift</string>
+    <string name="phase_angle">Phase Angle adjust</string>
     <string name="phase_angle_unit">Circle/256</string>
-    <string name="hall_offset">Hall Counter Offset</string>
-    <string name="hall_124_offset">States 1 2 4 (falling edge)</string>
-    <string name="hall_356_offset">States 3 5 6 (rising edge)</string>
+    <string name="hall_offset_unit">4us/unit</string>
+    <string name="hall_offset">Hall Offset adjust</string>
+
     <string name="motorTestStartError">Cannot start motor test</string>
     <string name="motorTestStopError">Cannot stop motor test</string>
     <string name="exitMotorRunningError">Motor is running\nStop test then exit</string>
@@ -252,8 +252,8 @@
     <string name="motorTuning">Motor Tuning</string>
     <string name="valuesNotChanged">Values not changed</string>
     <string name="setDefaultValues">Set Default Values</string>
-    <string name="hallAngles">Angles (full circle=256):</string>
-    <string name="hallDiff">Trise-Tfall (4us/step) :</string>
+    <string name="hallAngles">Angles (circle/256):</string>
+    <string name="hallOffset">Offsets (4us/unit):</string>
     <string name="start_stop">Start/Stop</string>
     <string name="loadDefault">Load Default</string>
     <string name="motorTuningHelp">Phase Angle: full circle=256\nHall: 4us/step</string>
