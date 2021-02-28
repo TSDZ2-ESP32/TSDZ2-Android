@@ -79,7 +79,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_weight="2"
+                    android:layout_weight="3"
                     android:text="0"
                     android:textAlignment="center"
                     android:textSize="20sp" />
@@ -120,12 +120,12 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_margin="10dp"
-                    android:layout_weight="4"
-                    android:text="@string/hall_124_offset"
+                    android:layout_weight="3"
+                    android:text="@string/hall_offset_unit"
                     android:textSize="20sp" />
 
                 <Button
-                    android:id="@+id/hall124AddBT"
+                    android:id="@+id/offsetAddBT"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -134,61 +134,17 @@
                     android:text="+" />
 
                 <TextView
-                    android:id="@+id/hall124ValTV"
+                    android:id="@+id/offsetValTV"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_weight="2"
-                    android:text="23"
+                    android:layout_weight="3"
+                    android:text="0"
                     android:textAlignment="center"
                     android:textSize="20sp" />
 
                 <Button
-                    android:id="@+id/hall124SubBT"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="2"
-                    android:onClick="onButtonClick"
-                    android:text="-" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_margin="10dp"
-                    android:layout_weight="4"
-                    android:text="@string/hall_356_offset"
-                    android:textSize="20sp" />
-
-                <Button
-                    android:id="@+id/hall356AddBT"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="2"
-                    android:onClick="onButtonClick"
-                    android:text="+" />
-
-                <TextView
-                    android:id="@+id/hall356ValTV"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="2"
-                    android:text="43"
-                    android:textAlignment="center"
-                    android:textSize="20sp" />
-
-                <Button
-                    android:id="@+id/hall356SubBT"
+                    android:id="@+id/offsetSubBT"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -204,12 +160,12 @@
                 android:background="?android:attr/listDivider" />
 
             <Button
-                android:id="@+id/defaultBT"
+                android:id="@+id/resetBT"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 android:onClick="onButtonClick"
-                android:text="@string/loadDefault"/>
+                android:text="@string/reset"/>
 
             <View
                 android:layout_width="match_parent"

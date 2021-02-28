@@ -54,10 +54,10 @@ public interface TSDZConst {
     int STATUS_ADV_SIZE = 20;
 
     // Default Hall Counter Offset values
-    int DEFAULT_HALL_DOWN_OFFSET = 23; // Hall counter Offset for counter starting from Hall falling edge
-    int DEFAULT_HALL_UP_OFFSET = 43; // Hall counter Offset for counter starting from Hall rising edge
+    int[] DEFAULT_HALL_OFFSET = {44,23,44,23,44,23};
+    double DEFAULT_AVG_OFFSET = (double)Math.round(((44*3) + (23*3))/6D * 2) / 2.0; // average rounded to 0.5
 
     // Default motor Phase
-    int DEFAULT_PHASE_OFFSET = 4; // Phase angle adjust regarding the rotor reference Hall angle
+    int DEFAULT_ROTOR_OFFSET = 4; // Rotor angle adjust regarding the Hall angle reference
     int DEFAULT_PHASE_ANGLE = 64; // Phase has 90 deg difference from rotor position
 }
