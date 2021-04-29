@@ -69,6 +69,7 @@ public class LogManager {
     // max time interval between two log entries in a single log file. If more, a new log file is started.
     private static final long MAX_LOG_PAUSE = 1000 * 60 * 20;
     // log file retention is 7 days (in msec)
+    private static final int MAX_LOG_FILES = 20;
     private static final long MAX_LOG_HISTORY = 1000 * 60 * 60 * 24 * 7;
     // max single log file time is 6 hours (in msec)
     private static final long MAX_FILE_HISTORY = 1000 * 60 * 60 * 6;
@@ -313,11 +314,12 @@ public class LogManager {
         final File folder = MyApp.getInstance().getFilesDir();
         final File[] files = folder.listFiles( (dir, name) ->
                 name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
-        if (files != null) {
+        if ((files != null) && (files.length > MAX_LOG_FILES)) {
             Arrays.sort(files, (object1, object2) ->
                     object1.getName().compareTo(object2.getName()));
             long now = System.currentTimeMillis();
-            for (File f:files) {
+            for (int i = MAX_LOG_FILES; i < files.length; i++) {
+                File f = files[i];
                 String s1 = f.getName();
                 String[] s = s1.split("\\.");
                 long endTime = Long.parseLong(s[3]);
@@ -352,11 +354,12 @@ public class LogManager {
                 name.matches( DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
 
         // remove old log files
-        if (files != null) {
+        if ((files != null) && (files.length > MAX_LOG_FILES)) {
             Arrays.sort(files, (object1, object2) ->
                     object1.getName().compareTo(object2.getName()));
             long now = System.currentTimeMillis();
-            for (File f:files) {
+            for (int i = MAX_LOG_FILES; i < files.length; i++) {
+                File f = files[i];
                 String s1 = f.getName();
                 String[] s = s1.split("\\.");
                 long endTime = Long.parseLong(s[3]);

@@ -23,6 +23,9 @@
     <string name="irq_time">PWM IRQ time</string>
     <string name="up_irq">Up IRQ</string>
     <string name="down_irq">Down IRQ</string>
+    <string name="hall_err">Hall Errors</string>
+    <string name="state_err">State Err.</string>
+    <string name="seq_err">Seq. Err.</string>
 
     <string name="dash">-</string>
     <string name="app_name">TSDZ2_ESP32</string>

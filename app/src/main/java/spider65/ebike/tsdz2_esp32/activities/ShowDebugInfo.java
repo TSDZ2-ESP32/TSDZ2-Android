@@ -27,15 +27,16 @@ public class ShowDebugInfo extends AppCompatActivity {
 
     private IntentFilter mIntentFilter = new IntentFilter();
 
-    private LinearLayout mainTimeLL, pwmTimeLL;
-    private TextView mainLoopTV, pwmTV;
-    private TextView rxcTV, rxlTV, ebikeTimeTV, motorTimeTV, pwmDownTV, pwmUpTV;
-    private View div1, div2;
+    private LinearLayout mainTimeLL, pwmTimeLL, hallErrLL;
+    private TextView mainLoopTV, pwmTV, hallErrTV;
+    private TextView rxcTV, rxlTV, ebikeTimeTV, motorTimeTV, pwmDownTV, pwmUpTV, hallStateErrTV, hallSeqErrTV;
+    private View div1, div2, div3;
     private final TSDZ_Status status = new TSDZ_Status();
     private final TSDZ_Debug debug = new TSDZ_Debug();
 
     private boolean pwmDebug = false;
     private boolean mainDebug = false;
+    private boolean hallDebug = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +65,15 @@ public class ShowDebugInfo extends AppCompatActivity {
         pwmTimeLL.setVisibility(View.GONE);
         pwmTV.setVisibility(View.GONE);
         div2.setVisibility(View.GONE);
+
+        hallErrLL = findViewById(R.id.hallErrLinearLayout);
+        hallErrTV = findViewById(R.id.hallErrTV);
+        hallStateErrTV = findViewById(R.id.hallStateErrTV);
+        hallSeqErrTV = findViewById(R.id.hallSeqErrTV);
+        div3 = findViewById(R.id.dbg_infoDV3);
+        hallErrLL.setVisibility(View.GONE);
+        hallErrTV.setVisibility(View.GONE);
+        div3.setVisibility(View.GONE);
 
         mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
@@ -106,6 +116,12 @@ public class ShowDebugInfo extends AppCompatActivity {
             pwmTV.setVisibility(View.VISIBLE);
             div2.setVisibility(View.VISIBLE);
         }
+        if (!hallDebug && (debug.debugFlags & 0x20) != 0) {
+            hallDebug = true;
+            hallErrLL.setVisibility(View.VISIBLE);
+            hallErrTV.setVisibility(View.VISIBLE);
+            div3.setVisibility(View.VISIBLE);
+        }
 
         if (pwmDebug) {
             int upIRQ = ((debug.debug4 & 255) << 8) + (debug.debug3 & 255);
@@ -117,6 +133,11 @@ public class ShowDebugInfo extends AppCompatActivity {
         if (mainDebug) {
             ebikeTimeTV.setText(String.format(Locale.getDefault(),"%d", debug.debug2));
             motorTimeTV.setText(String.format(Locale.getDefault(),"%d", debug.debug1));
+        }
+
+        if (hallDebug) {
+            hallStateErrTV.setText(String.format(Locale.getDefault(),"%d", debug.debug5));
+            hallSeqErrTV.setText(String.format(Locale.getDefault(),"%d", debug.debug6));
         }
     }
 

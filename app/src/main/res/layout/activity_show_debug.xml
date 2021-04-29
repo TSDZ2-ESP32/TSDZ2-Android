@@ -210,6 +210,66 @@
                 android:layout_margin="10sp"
                 android:background="?android:attr/listDivider" />
 
+            <TextView
+                android:id="@+id/hallErrTV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2sp"
+                android:layout_margin="4sp"
+                android:gravity="center"
+                android:text="@string/hall_err" />
+
+            <LinearLayout
+                android:id="@+id/hallErrLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2sp"
+                android:layout_margin="5sp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="5sp"
+                    android:text="@string/state_err" />
+
+                <TextView
+                    android:id="@+id/hallStateErrTV"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAlignment="textStart"
+                    android:layout_marginStart="5sp"
+                    android:text="@string/dash" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="5sp"
+                    android:text="@string/seq_err" />
+
+                <TextView
+                    android:id="@+id/hallSeqErrTV"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAlignment="textStart"
+                    android:layout_marginStart="5sp"
+                    android:text="@string/dash" />
+            </LinearLayout>
+
+
+            <View
+                android:id="@+id/dbg_infoDV3"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_margin="10sp"
+                android:background="?android:attr/listDivider" />
+
         </LinearLayout>
 
         <LinearLayout

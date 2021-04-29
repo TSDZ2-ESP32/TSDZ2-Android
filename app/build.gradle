@@ -7,8 +7,8 @@ android {
         applicationId "spider65.ebike.tsdz2_esp32"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 15
-        versionName "2.1.8"
+        versionCode 16
+        versionName "2.1.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
