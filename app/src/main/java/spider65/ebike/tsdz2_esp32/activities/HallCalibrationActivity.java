@@ -54,7 +54,7 @@ public class HallCalibrationActivity extends AppCompatActivity {
 
     private int msgCounter;
     private int step = 0;
-    private final byte[] dutyCycles = {25, 50, 100, (byte)(150 & 0xff)};
+    private final byte[] dutyCycles = {30, 70, 110, (byte)(160 & 0xff)};
     private final RollingAverage[] avg = {
             new RollingAverage(AVG_SIZE),
             new RollingAverage(AVG_SIZE),

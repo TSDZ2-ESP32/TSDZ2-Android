@@ -32,17 +32,22 @@ public class TSDZ_Debug {
     /*
     #pragma pack(1)
     typedef struct _tsdz_debug {
-        volatile uint8_t ui8_adc_throttle;
-        volatile uint8_t ui8_throttle;
-        volatile uint16_t ui16_adc_pedal_torque_sensor;
-        volatile uint8_t ui8_duty_cycle;
-        volatile uint16_t ui16_motor_speed_erps;
-        volatile uint8_t ui8_foc_angle;
-        volatile uint16_t ui16_pedal_torque_x100;
-        volatile uint16_t ui16_dummy;
-        volatile int16_t i16_pcb_temperaturex10;
-        volatile uint8_t ui8_rxc_errors;
-        volatile uint8_t ui8_rxl_errors;
+    volatile uint8_t ui8_adc_throttle;
+    volatile uint8_t ui8_throttle;
+    volatile uint16_t ui16_adc_pedal_torque_sensor;
+    volatile uint8_t ui8_duty_cycle;
+    volatile uint16_t ui16_motor_speed_erps;
+    volatile uint8_t ui8_foc_angle;
+    volatile uint16_t ui16_pedal_torque_x100;
+    volatile uint8_t ui8_fw_hall_cnt_offset;
+    volatile int16_t i16_pcb_temperaturex10;
+    volatile uint8_t ui8_debugFlags;
+    volatile uint8_t ui8_debug1;
+    volatile uint8_t ui8_debug2;
+    volatile uint8_t ui8_debug3;
+    volatile uint8_t ui8_debug4;
+    volatile uint8_t ui8_debug5;
+    volatile uint8_t ui8_debug6;
     } struct_tsdz_debug;
     */
 
