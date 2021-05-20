@@ -25,11 +25,11 @@ import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 
 public class ShowDebugInfo extends AppCompatActivity {
 
-    private IntentFilter mIntentFilter = new IntentFilter();
+    private final IntentFilter mIntentFilter = new IntentFilter();
 
     private LinearLayout mainTimeLL, pwmTimeLL, hallErrLL;
     private TextView mainLoopTV, pwmTV, hallErrTV;
-    private TextView rxcTV, rxlTV, ebikeTimeTV, motorTimeTV, pwmDownTV, pwmUpTV, hallStateErrTV, hallSeqErrTV;
+    private TextView rxcTV, rxlTV, ebikeTimeTV, pwmDownTV, pwmUpTV, hallStateErrTV, hallSeqErrTV;
     private View div1, div2, div3;
     private final TSDZ_Status status = new TSDZ_Status();
     private final TSDZ_Debug debug = new TSDZ_Debug();
@@ -51,7 +51,6 @@ public class ShowDebugInfo extends AppCompatActivity {
         mainTimeLL = findViewById(R.id.mainTimeLinearLayout);
         mainLoopTV = findViewById(R.id.mainTimeTV);
         ebikeTimeTV = findViewById(R.id.mainLoopTimeTV);
-        motorTimeTV = findViewById(R.id.motorLoopTimeTV);
         div1 = findViewById(R.id.dbg_infoDV1);
         mainTimeLL.setVisibility(View.GONE);
         mainLoopTV.setVisibility(View.GONE);
@@ -132,7 +131,6 @@ public class ShowDebugInfo extends AppCompatActivity {
 
         if (mainDebug) {
             ebikeTimeTV.setText(String.format(Locale.getDefault(),"%d", debug.debug2));
-            motorTimeTV.setText(String.format(Locale.getDefault(),"%d", debug.debug1));
         }
 
         if (hallDebug) {
@@ -148,7 +146,7 @@ public class ShowDebugInfo extends AppCompatActivity {
 
 
     private byte[] lastStatusData, lastDebugData;
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() == null) return;

@@ -127,7 +127,8 @@
     <string name="hall_calib">Hall calibration</string>
     <string name="title_activity_system_setup">System Setup</string>
     <string name="motor">Motor</string>
-    <string name="motor_inductance">Motor Inductance</string>
+    <string name="foc_multiplicator">FOC angle multipl.</string>
+    <string name="field_weakening">Field Weakening</string>
     <string name="acceleration">Acceleration</string>
     <string name="max_current">Max current (A)</string>
     <string name="max_power">Max Power (W)</string>
@@ -135,10 +136,10 @@
     <string name="wheel_cruise">Wheel / Cruise</string>
     <string name="light">Light</string>
     <string name="ligth_config">Lights Configuration</string>
-    <string name="assit_wpr">Assist without\npedal rotation</string>
+    <string name="assit_wpr">Assist without\npedal rot.</string>
     <string name="torque_adc_step">Torque sensor ADC step</string>
     <string name="torque_offset_fix">Torque Offset Fix</string>
-    <string name="torque_adc_offset">Torque ADC offset</string>
+    <string name="torque_adc_offset">Torque offset</string>
     <string name="threshold">Threshold</string>
     <string name="street_mode">Street Mode</string>
     <string name="cruise_mode_enabled">Cruise mode enabled</string>
