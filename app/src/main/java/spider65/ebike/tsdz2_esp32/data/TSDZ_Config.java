@@ -35,7 +35,7 @@ public class TSDZ_Config {
         }
     }
 
-    public int ui8_motor_inductance_x1048576;
+    public int ui8_foc_angle_multiplicator;
     public int ui8_motor_temperature_min_value_to_limit;
     public int ui8_motor_temperature_max_value_to_limit;
     public int ui8_motor_acceleration;
@@ -74,6 +74,8 @@ public class TSDZ_Config {
     public int ui16_torque_offset_ADC;
     public int[] ui8_hall_ref_angles = new int[6];
     public int[] ui8_hall_counter_offset = new int[6];
+    public boolean fieldWeakeningEnabled;
+
 
     /*
     #pragma pack(1)
@@ -112,7 +114,7 @@ public class TSDZ_Config {
         volatile uint8_t ui8_torque_assist_level[4];
         volatile uint8_t ui8_eMTB_assist_sensitivity[4];
         volatile uint8_t ui8_walk_assist_level[4];
-        volatile uint8_t ui8_torque_offset_fix;
+        volatile uint8_t ui8_flags;
         volatile uint16_t ui16_torque_offset_value;
         volatile uint8_t ui8_hall_ref_angles[6];
         volatile uint8_t ui8_hall_offsets[6];
@@ -124,7 +126,7 @@ public class TSDZ_Config {
             Log.e(TAG, "setData: wrong data size" + data.length);
             return false;
         }
-        ui8_motor_inductance_x1048576 = (data[0] & 255);
+        ui8_foc_angle_multiplicator = (data[0] & 255);
         ui8_motor_temperature_min_value_to_limit = (data[1] & 255);
         ui8_motor_temperature_max_value_to_limit = (data[2] & 255);
         ui8_motor_acceleration = (data[3] & 255);
@@ -169,7 +171,8 @@ public class TSDZ_Config {
             ui8_eMTB_assist_level[i] = (data[45+i] & 255);
         for (int i=0;i<4;i++)
             ui8_walk_assist_level[i] = (data[49+i] & 255);
-        torque_offset_fix = (data[53] & 255 ) != 0; // ui8_torque_offset_fix
+        torque_offset_fix = (data[53] & 0x01 ) != 0;
+        fieldWeakeningEnabled = (data[53] & 0x02) != 0;
         ui16_torque_offset_ADC = (data[54] & 255) + ((data[55] & 255) << 8);
         for (int i=0;i<6;i++)
             ui8_hall_ref_angles[i] = (data[56+i] & 255);
@@ -180,7 +183,7 @@ public class TSDZ_Config {
 
     public byte[] toByteArray() {
         byte[] data = new byte[CFG_SIZE];
-        data[0] = (byte)(ui8_motor_inductance_x1048576 & 0xff);
+        data[0] = (byte)(ui8_foc_angle_multiplicator & 0xff);
         data[1] = (byte)ui8_motor_temperature_min_value_to_limit;
         data[2] = (byte)ui8_motor_temperature_max_value_to_limit;
         data[3] = (byte)ui8_motor_acceleration;
@@ -224,7 +227,9 @@ public class TSDZ_Config {
             data[45+i] = (byte)ui8_eMTB_assist_level[i];
         for (int i=0;i<4;i++)
             data[49+i] = (byte)ui8_walk_assist_level[i];
-        data[53] = (byte)(torque_offset_fix? 1:0);
+        data[53] = 0;
+        data[53] |= (byte)(torque_offset_fix? 1:0);
+        data[53] |= (byte)(fieldWeakeningEnabled? 2:0);
         data[54] = (byte)ui16_torque_offset_ADC;
         data[55] = (byte)(ui16_torque_offset_ADC >>> 8);
         for (int i=0;i<6;i++)

@@ -26,8 +26,8 @@ public class SystemSetupActivity extends AppCompatActivity {
 
     private static final String TAG = "MotorSetupActivity";
 
-    private static final int DEFAULT_36V_INDUCTANCE = 80;
-    private static final int DEFAULT_48V_INDUCTANCE = 142;
+    private static final int DEFAULT_36V_FOC_MULTI = 24;
+    private static final int DEFAULT_48V_FOC_MULTI = 32;
 
     private TSDZ_Config cfg = new TSDZ_Config();
     private IntentFilter mIntentFilter = new IntentFilter();
@@ -77,11 +77,11 @@ public class SystemSetupActivity extends AppCompatActivity {
 
     public void onClickInductance(View view) {
         switch (view.getId()) {
-            case R.id.inductance36BT:
-                binding.inductanceET.setText(String.valueOf(DEFAULT_36V_INDUCTANCE));
+            case R.id.focMultip36BT:
+                binding.focMultipET.setText(String.valueOf(DEFAULT_36V_FOC_MULTI));
                 break;
-            case R.id.inductance48BT:
-                binding.inductanceET.setText(String.valueOf(DEFAULT_48V_INDUCTANCE));
+            case R.id.focMultip48BT:
+                binding.focMultipET.setText(String.valueOf(DEFAULT_48V_FOC_MULTI));
                 break;
         }
     }
@@ -104,11 +104,14 @@ public class SystemSetupActivity extends AppCompatActivity {
     private void saveCfg() {
         Integer val;
         boolean checked;
-        if ((val = checkRange(binding.inductanceET, 0, 150)) == null) {
-            showDialog(getString(R.string.motor_inductance), getString(R.string.range_error, 0, 150));
+        if ((val = checkRange(binding.focMultipET, 0, 50)) == null) {
+            showDialog(getString(R.string.foc_multiplicator), getString(R.string.range_error, 0, 50));
             return;
         }
-        cfg.ui8_motor_inductance_x1048576 = val;
+        cfg.ui8_foc_angle_multiplicator = val;
+
+        checked = binding.fieldWeakeningCB.isChecked();
+        cfg.fieldWeakeningEnabled = checked;
 
         if ((val = checkRange(binding.accelerationET, 0, 100)) == null) {
             showDialog(getString(R.string.acceleration), getString(R.string.range_error, 0, 100));
