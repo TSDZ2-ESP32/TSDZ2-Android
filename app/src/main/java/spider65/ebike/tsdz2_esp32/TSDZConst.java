@@ -9,8 +9,9 @@ public interface TSDZConst {
     int ERROR_BRAKE_APPLIED_DURING_POWER_ON       = 3;  // currently not used
     int ERROR_THROTTLE_APPLIED_DURING_POWER_ON    = 4;  // currently not used
     int ERROR_NO_SPEED_SENSOR_DETECTED            = 5;  // currently not used
-    */
     int ERROR_LOW_CONTROLLER_VOLTAGE              = 6;  // controller works with no less than 15 V so give error code if voltage is too low
+    */
+    int ERROR_BATTERY_OVERCURRENT                 = 7;
     int ERROR_OVERVOLTAGE                         = 8;
     int ERROR_TEMPERATURE_LIMIT                   = 9;
     int ERROR_TEMPERATURE_MAX                     = 10;

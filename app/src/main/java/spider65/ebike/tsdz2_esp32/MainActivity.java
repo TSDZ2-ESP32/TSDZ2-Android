@@ -202,9 +202,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     title = getString(R.string.error_torque_sensor);
                     message = getString(R.string.check_torque_sensor);
                     break;
-                case TSDZConst.ERROR_LOW_CONTROLLER_VOLTAGE:
-                    title = getString(R.string.error_low_voltage);
-                    message = getString(R.string.check_low_voltage);
+                case TSDZConst.ERROR_BATTERY_OVERCURRENT:
+                    title = getString(R.string.error_battery_overcurrent);
+                    message = getString(R.string.check_battery_overcurrent);
                     break;
                 case TSDZConst.ERROR_OVERVOLTAGE:
                     title = getString(R.string.error_high_voltage);

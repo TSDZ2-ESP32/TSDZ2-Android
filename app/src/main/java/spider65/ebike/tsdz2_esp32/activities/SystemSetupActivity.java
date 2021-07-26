@@ -26,8 +26,8 @@ public class SystemSetupActivity extends AppCompatActivity {
 
     private static final String TAG = "MotorSetupActivity";
 
-    private static final int DEFAULT_36V_FOC_MULTI = 24;
-    private static final int DEFAULT_48V_FOC_MULTI = 32;
+    private static final int DEFAULT_36V_FOC_MULTI = 27;
+    private static final int DEFAULT_48V_FOC_MULTI = 35;
 
     private TSDZ_Config cfg = new TSDZ_Config();
     private IntentFilter mIntentFilter = new IntentFilter();

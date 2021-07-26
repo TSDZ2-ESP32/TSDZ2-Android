@@ -6,6 +6,8 @@
     <string name="check_torque_sensor">Take your feet off the pedals and restart the bike</string>
     <string name="error_low_voltage">Battery low voltage!</string>
     <string name="check_low_voltage">Check battery voltage or battery configuration parameters</string>
+    <string name="error_battery_overcurrent">Battery current too High!</string>
+    <string name="check_battery_overcurrent">Switch Off the bike and check motor connections</string>
     <string name="error_high_voltage">Battery overvoltage!</string>
     <string name="check_high_voltage">Check battery voltage or battery configuration parameters</string>
     <string name="error_limit_temperature">Warning temperature</string>
@@ -110,6 +112,8 @@
     <string name="uploadDone">Upload completed</string>
     <string name="write_init">write initialization …</string>
     <string name="start_programming">Start of programming …</string>
+    <string name="stm8_ota_started">OTA Started</string>
+    <string name="sync_done">Bootloader Sync done</string>
     <string name="writing">Writing: %1$d%%</string>
     <string name="upgrade_ok">Firmware upgraded</string>
     <string name="stm8_upgrade_message">Bike firmware successfully updated!</string>

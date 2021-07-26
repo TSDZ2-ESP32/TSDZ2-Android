@@ -455,7 +455,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         }
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive " + intent.getAction());
@@ -473,8 +473,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                             if (data[1] != (byte)0x0) {
                                 stopUpdate();
                                 showDialog(getString(R.string.error), getString(R.string.updateError), false);
-                            } else
-                                showDialog(getString(R.string.update_start_procedure), getString(R.string.update_start_description), false);
+                            }
                             break;
                         // Get Version response
                         case CMD_GET_APP_VERSION:

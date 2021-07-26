@@ -68,8 +68,9 @@ public class LogManager {
 
     // max time interval between two log entries in a single log file. If more, a new log file is started.
     private static final long MAX_LOG_PAUSE = 1000 * 60 * 20;
-    // log file retention is 7 days (in msec)
+    // Max nr of Log entries
     private static final int MAX_LOG_FILES = 20;
+    // if there are more than MAX_LOG_FILES log entries, delete the entries older than 7 days (in msec)
     private static final long MAX_LOG_HISTORY = 1000 * 60 * 60 * 24 * 7;
     // max single log file time is 6 hours (in msec)
     private static final long MAX_FILE_HISTORY = 1000 * 60 * 60 * 6;
@@ -254,6 +255,26 @@ public class LogManager {
         mHandler.sendMessage(msg);
     }
 
+    // Return a sorted array of status or debug files according to the prefix parameter
+    // first is the older, last is the newer
+    private File[] getFiles(String prefix) {
+        final File folder = MyApp.getInstance().getFilesDir();
+        final File[] files = folder.listFiles( (dir, name) ->
+                name.matches( prefix + ".log\\.\\d+\\.\\d+$" ));
+        if (files != null)
+            Arrays.sort(files, (f1, f2) -> {
+                final long t1 = Long.parseLong(f1.getName().substring(f1.getName().lastIndexOf('.') + 1));
+                final long t2 = Long.parseLong(f2.getName().substring(f2.getName().lastIndexOf('.') + 1));
+                if (t1 > t2)
+                    return 1;
+                else if (t1 < t2)
+                    return -1;
+                return 0;
+            });
+
+        return files;
+    }
+
     private void saveStatusLog(long startTime, long endTime, byte[] data, int length) {
         Log.d(TAG, "saveStatusLog");
 
@@ -310,19 +331,14 @@ public class LogManager {
 
     private void swapStatusFile() {
         Log.d(TAG, "swapStatusFile");
-        // remove log file with all data older than MAX_LOG_HISTORY
-        final File folder = MyApp.getInstance().getFilesDir();
-        final File[] files = folder.listFiles( (dir, name) ->
-                name.matches( STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
+        final File[] files = getFiles(STATUS_LOG_FILENAME);
+
+        // If there are more than MAX_LOG_FILES, remove log file with all data older than MAX_LOG_HISTORY
         if ((files != null) && (files.length > MAX_LOG_FILES)) {
-            Arrays.sort(files, (object1, object2) ->
-                    object1.getName().compareTo(object2.getName()));
             long now = System.currentTimeMillis();
-            for (int i = MAX_LOG_FILES; i < files.length; i++) {
+            for (int i = 0; i < (files.length - MAX_LOG_FILES); i++) {
                 File f = files[i];
-                String s1 = f.getName();
-                String[] s = s1.split("\\.");
-                long endTime = Long.parseLong(s[3]);
+                long endTime = Long.parseLong(f.getName().substring(f.getName().lastIndexOf('.') + 1));
                 if ((now - endTime) > MAX_LOG_HISTORY) {
                     Log.d(TAG,"Removing file: "+f.getName()+" File end Time:"+endTime+" now="+now);
                     if (!f.delete()) {
@@ -348,21 +364,14 @@ public class LogManager {
 
     private void swapDebugFile() {
         Log.d(TAG, "swapDebugFile");
-        // remove log file with all data older than MAX_LOG_HISTORY
-        final File folder = MyApp.getInstance().getFilesDir();
-        final File[] files = folder.listFiles( (dir, name ) ->
-                name.matches( DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$" ));
+        final File[] files = getFiles(DEBUG_LOG_FILENAME);
 
-        // remove old log files
+        // If there are more than MAX_LOG_FILES, remove log file with all data older than MAX_LOG_HISTORY
         if ((files != null) && (files.length > MAX_LOG_FILES)) {
-            Arrays.sort(files, (object1, object2) ->
-                    object1.getName().compareTo(object2.getName()));
             long now = System.currentTimeMillis();
-            for (int i = MAX_LOG_FILES; i < files.length; i++) {
+            for (int i = 0; i < (files.length - MAX_LOG_FILES); i++) {
                 File f = files[i];
-                String s1 = f.getName();
-                String[] s = s1.split("\\.");
-                long endTime = Long.parseLong(s[3]);
+                long endTime = Long.parseLong(f.getName().substring(f.getName().lastIndexOf('.') + 1));
                 if ((now - endTime) > MAX_LOG_HISTORY) {
                     Log.d(TAG,"Removing file: "+f.getName()+" File end Time:"+endTime+" now="+now);
                     if (!f.delete()) {
@@ -478,13 +487,9 @@ public class LogManager {
         ArrayList<TimeInterval> ret = new ArrayList<>();
         TimeInterval ti;
         try {
-            final File folder = MyApp.getInstance().getFilesDir();
-            final File[] files = folder.listFiles((dir, name) ->
-                    name.matches(STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+            final File[] files = getFiles(STATUS_LOG_FILENAME);
             long startTime, endTime;
             if (files != null) {
-                Arrays.sort(files, (object1, object2) ->
-                        object1.getName().compareTo(object2.getName()));
                 for (File file : files) {
                     String[] s = file.getName().split("\\.");
                     startTime = Long.parseLong(s[2]);
@@ -543,13 +548,10 @@ public class LogManager {
             }
             return ret;
         }
-        
-        final File folder = MyApp.getInstance().getFilesDir();
-        final File[] files = folder.listFiles((dir, name) ->
-                name.matches(STATUS_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+
+        final File[] files = getFiles(STATUS_LOG_FILENAME);
         long startTime, endTime;
         if (files != null) {
-            Arrays.sort(files, (object1, object2) -> object1.getName().compareTo(object2.getName()));
             for (File file : files) {
                 String[] s = file.getName().split("\\.");
                 startTime = Long.parseLong(s[2]);
@@ -621,12 +623,9 @@ public class LogManager {
             return ret;
         }
 
-        final File folder = MyApp.getInstance().getFilesDir();
-        final File[] files = folder.listFiles((dir, name) ->
-                name.matches(DEBUG_LOG_FILENAME + ".log\\.\\d+\\.\\d+$"));
+        final File[] files = getFiles(DEBUG_LOG_FILENAME);
         long startTime, endTime;
         if (files != null) {
-            Arrays.sort(files, (object1, object2) -> object1.getName().compareTo(object2.getName()));
             for (File file : files) {
                 String[] s = file.getName().split("\\.");
                 startTime = Long.parseLong(s[2]);
