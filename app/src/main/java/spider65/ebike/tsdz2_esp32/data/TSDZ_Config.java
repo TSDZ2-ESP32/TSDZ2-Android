@@ -6,7 +6,7 @@ import android.util.Log;
 public class TSDZ_Config {
 
     private static final String TAG = "TSDZ_Config";
-    private static final int CFG_SIZE = 68;
+    private static final int CFG_SIZE = 70;
 
     public enum TempControl {
         none (0),
@@ -75,6 +75,9 @@ public class TSDZ_Config {
     public int[] ui8_hall_ref_angles = new int[6];
     public int[] ui8_hall_counter_offset = new int[6];
     public boolean fieldWeakeningEnabled;
+    public boolean torqueSmoothEnable;
+    public int ui8_torque_smooth_min;
+    public int ui8_torque_smooth_max;
 
 
     /*
@@ -118,6 +121,8 @@ public class TSDZ_Config {
         volatile uint16_t ui16_torque_offset_value;
         volatile uint8_t ui8_hall_ref_angles[6];
         volatile uint8_t ui8_hall_offsets[6];
+        volatile uint8_t ui8_torque_smooth_min;
+        volatile uint8_t ui8_torque_smooth_max;
     } struct_tsdz_cfg;
     */
 
@@ -173,11 +178,14 @@ public class TSDZ_Config {
             ui8_walk_assist_level[i] = (data[49+i] & 255);
         torque_offset_fix = (data[53] & 0x01 ) != 0;
         fieldWeakeningEnabled = (data[53] & 0x02) != 0;
+        torqueSmoothEnable = (data[53] & 0x04) != 0;
         ui16_torque_offset_ADC = (data[54] & 255) + ((data[55] & 255) << 8);
         for (int i=0;i<6;i++)
             ui8_hall_ref_angles[i] = (data[56+i] & 255);
         for (int i=0;i<6;i++)
             ui8_hall_counter_offset[i] = (data[62+i] & 255);
+        ui8_torque_smooth_min = (data[68] & 255);
+        ui8_torque_smooth_max = (data[69] & 255);
         return true;
     }
 
@@ -230,12 +238,15 @@ public class TSDZ_Config {
         data[53] = 0;
         data[53] |= (byte)(torque_offset_fix? 1:0);
         data[53] |= (byte)(fieldWeakeningEnabled? 2:0);
+        data[53] |= (byte)(torqueSmoothEnable? 4:0);
         data[54] = (byte)ui16_torque_offset_ADC;
         data[55] = (byte)(ui16_torque_offset_ADC >>> 8);
         for (int i=0;i<6;i++)
             data[56+i] = (byte)(ui8_hall_ref_angles[i] & 0xff);
         for (int i=0;i<6;i++)
             data[62+i] = (byte)(ui8_hall_counter_offset[i] & 0xff);
+        data[68] = (byte)ui8_torque_smooth_min;
+        data[69] = (byte)ui8_torque_smooth_max;
         return data;
     }
 }

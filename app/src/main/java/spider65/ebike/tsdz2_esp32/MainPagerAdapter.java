@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.fragments.FragmentDebug;
 import spider65.ebike.tsdz2_esp32.fragments.FragmentStatus;
@@ -22,10 +21,10 @@ public class MainPagerAdapter extends FragmentPagerAdapter {
     private static final Fragment[] TAB_FRAGMENTS = new Fragment[2];
     private final Context mContext;
 
-    MainPagerAdapter(Context context, FragmentManager fm, TSDZ_Status status, TSDZ_Debug debug) {
+    MainPagerAdapter(Context context, FragmentManager fm, TSDZ_Status status) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         TAB_FRAGMENTS[0] = FragmentStatus.newInstance(status);
-        TAB_FRAGMENTS[1] = FragmentDebug.newInstance(debug);
+        TAB_FRAGMENTS[1] = FragmentDebug.newInstance(status);
         mContext = context;
     }
 

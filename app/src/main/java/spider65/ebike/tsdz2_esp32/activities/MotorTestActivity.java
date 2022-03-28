@@ -26,6 +26,8 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import spider65.ebike.tsdz2_esp32.MainActivity;
+import spider65.ebike.tsdz2_esp32.MyApp;
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.utils.RollingAverage;
@@ -71,6 +73,12 @@ public class MotorTestActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        boolean screenOn = MyApp.getPreferences().getBoolean(MainActivity.KEY_SCREEN_ON, false);
+        if (screenOn)
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        
         erpsTV = findViewById(R.id.erpsTV);
         dcValET = findViewById(R.id.dcValET);
         angleValTV = findViewById(R.id.angleValTV);

@@ -16,12 +16,14 @@ public class TSDZCfgActivity extends AppCompatActivity {
         setContentView(R.layout.activity_tsdzcfg);
 
         Button b;
-        b = findViewById(R.id.motor_button);
-        b.setOnClickListener((View) -> setupMotor());
+        b = findViewById(R.id.system_setup_button);
+        b.setOnClickListener((View) -> systemSetup());
         b = findViewById(R.id.battery_button);
         b.setOnClickListener((View) -> setupBattery());
         b = findViewById(R.id.levels_button);
         b.setOnClickListener((View) -> setupLevels());
+        b = findViewById(R.id.torque_button);
+        b.setOnClickListener((View) -> setupTorque());
         b = findViewById(R.id.temperature_control);
         b.setOnClickListener((View) -> setupTemperature());
         b = findViewById(R.id.hall_calib_button);
@@ -35,8 +37,13 @@ public class TSDZCfgActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void setupMotor() {
+    private void systemSetup() {
         Intent intent = new Intent(this, SystemSetupActivity.class);
+        startActivity(intent);
+    }
+
+    private void setupTorque() {
+        Intent intent = new Intent(this, TorqueSetupActivity.class);
         startActivity(intent);
     }
 

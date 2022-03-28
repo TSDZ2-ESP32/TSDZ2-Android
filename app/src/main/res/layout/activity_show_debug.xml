@@ -25,20 +25,26 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <ScrollView
+            android:id="@+id/scrollView"
+            android:layout_weight="0"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/buttonLayout">
 
         <LinearLayout
             android:id="@+id/mainDebugView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:orientation="vertical"
-            android:layout_margin="5dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/buttonLayout">
+            android:layout_margin="5dp">
 
             <TextView
                 android:id="@+id/commErrorTV"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="20sp"
                 android:padding="2sp"
                 android:layout_margin="4sp"
                 android:gravity="center"
@@ -54,6 +60,7 @@
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:textSize="20sp"
                     android:layout_weight="1"
                     android:textAlignment="textEnd"
                     android:layout_marginEnd="5sp"
@@ -63,6 +70,7 @@
                     android:id="@+id/rxlErrorsTV"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:textSize="20sp"
                     android:layout_weight="1"
                     android:textAlignment="textStart"
                     android:layout_marginStart="5sp"
@@ -71,6 +79,7 @@
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:textSize="20sp"
                     android:layout_weight="1"
                     android:textAlignment="textEnd"
                     android:layout_marginEnd="5sp"
@@ -80,6 +89,114 @@
                     android:id="@+id/rxcErrorsTV"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="1"
+                    android:textAlignment="textStart"
+                    android:layout_marginStart="5sp"
+                    android:text="@string/dash" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_margin="10sp"
+                android:background="?android:attr/listDivider" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:padding="2sp"
+                android:layout_margin="4sp"
+                android:gravity="center"
+                android:text="@string/torque_smooth" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2sp"
+                android:layout_margin="5sp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="2"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="5sp"
+                    android:text="@string/torque_smooth_pct" />
+
+                <TextView
+                    android:id="@+id/tsActiveTV"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="1"
+                    android:textAlignment="textStart"
+                    android:layout_marginStart="5sp"
+                    android:text="@string/dash" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="2"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="5sp"
+                    android:text="@string/average_adc" />
+
+                <TextView
+                    android:id="@+id/tsAverageTV"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="1"
+                    android:textAlignment="textStart"
+                    android:layout_marginStart="5sp"
+                    android:text="@string/dash" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2sp"
+                android:layout_margin="5sp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="2"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="5sp"
+                    android:text="@string/min_adc" />
+
+                <TextView
+                    android:id="@+id/minADCTV"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="1"
+                    android:textAlignment="textStart"
+                    android:layout_marginStart="5sp"
+                    android:text="@string/dash" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:layout_weight="2"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="5sp"
+                    android:text="@string/max_adc" />
+
+                <TextView
+                    android:id="@+id/maxADCTV"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
                     android:layout_weight="1"
                     android:textAlignment="textStart"
                     android:layout_marginStart="5sp"
@@ -255,6 +372,7 @@
                 android:background="?android:attr/listDivider" />
 
         </LinearLayout>
+        </ScrollView>
 
         <LinearLayout
             android:id="@+id/buttonLayout"
@@ -263,7 +381,7 @@
             android:orientation="horizontal"
             android:layout_weight="1"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/mainDebugView">
+            app:layout_constraintTop_toBottomOf="@id/scrollView">
 
             <Button
                 android:id="@+id/exitButton"

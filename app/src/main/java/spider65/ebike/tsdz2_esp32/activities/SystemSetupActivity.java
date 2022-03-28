@@ -29,8 +29,8 @@ public class SystemSetupActivity extends AppCompatActivity {
     private static final int DEFAULT_36V_FOC_MULTI = 27;
     private static final int DEFAULT_48V_FOC_MULTI = 35;
 
-    private TSDZ_Config cfg = new TSDZ_Config();
-    private IntentFilter mIntentFilter = new IntentFilter();
+    private final TSDZ_Config cfg = new TSDZ_Config();
+    private final IntentFilter mIntentFilter = new IntentFilter();
     private ActivitySystemSetupBinding binding;
 
 
@@ -65,40 +65,25 @@ public class SystemSetupActivity extends AppCompatActivity {
     }
 
     public void onOkCancelClick(View view) {
-        switch (view.getId()) {
-            case R.id.okButton:
-                saveCfg();
-                break;
-            case R.id.exitButton:
-                finish();
-                break;
-        }
+        if (view.getId() == R.id.okButton)
+            saveCfg();
+        else if (view.getId() == R.id.exitButton)
+            finish();
     }
 
     public void onClickInductance(View view) {
-        switch (view.getId()) {
-            case R.id.focMultip36BT:
-                binding.focMultipET.setText(String.valueOf(DEFAULT_36V_FOC_MULTI));
-                break;
-            case R.id.focMultip48BT:
-                binding.focMultipET.setText(String.valueOf(DEFAULT_48V_FOC_MULTI));
-                break;
-        }
+        if (view.getId() == R.id.focMultip36BT)
+            binding.focMultipET.setText(String.valueOf(DEFAULT_36V_FOC_MULTI));
+        else if (view.getId() == R.id.focMultip48BT)
+            binding.focMultipET.setText(String.valueOf(DEFAULT_48V_FOC_MULTI));
     }
 
     //  invalidate all to hide/show the checkbox dependant fields
     public void onCheckedChanged(View view, boolean checked) {
-        switch (view.getId()) {
-            case R.id.assistCB:
-                binding.assistWPRET.setEnabled(checked);
-                break;
-            case R.id.streetPowerCB:
-                binding.streetPowerET.setEnabled(checked);
-                break;
-            case R.id.torqueFixCB:
-                binding.torqueADCOffsetET.setEnabled(checked);
-                break;
-        }
+        if (view.getId() == R.id.assistCB)
+            binding.assistWPRET.setEnabled(checked);
+        else if (view.getId() == R.id.streetPowerCB)
+            binding.streetPowerET.setEnabled(checked);
     }
 
     private void saveCfg() {
@@ -140,22 +125,6 @@ public class SystemSetupActivity extends AppCompatActivity {
             cfg.ui8_assist_without_pedal_rotation_threshold = val;
         }
         cfg.assist_without_pedal_rotation = checked;
-
-        if ((val = checkRange(binding.torqueADCET, 0, 255)) == null) {
-            showDialog(getString(R.string.torque_adc_step), getString(R.string.range_error, 0, 255));
-            return;
-        }
-        cfg.ui8_pedal_torque_per_10_bit_ADC_step_x100 = val;
-
-        checked = binding.torqueFixCB.isChecked();
-        if (checked) {
-            if ((val = checkRange(binding.torqueADCOffsetET, 40, 300)) == null) {
-                showDialog(getString(R.string.torque_adc_offset), getString(R.string.range_error, 40, 300));
-                return;
-            }
-            cfg.ui16_torque_offset_ADC = val;
-        }
-        cfg.torque_offset_fix = checked;
 
         if ((val = checkRange(binding.wheelPerimeterET, 1000, 2500)) == null) {
             showDialog(getString(R.string.wheel_perimeter), getString(R.string.range_error, 1000, 2500));
@@ -220,7 +189,7 @@ public class SystemSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive " + intent.getAction());

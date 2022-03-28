@@ -29,7 +29,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 
 import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
-import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
+import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 
 
@@ -39,13 +39,11 @@ public class TSDZBTService extends Service {
 
     public static String TSDZ_SERVICE = "000000ff-0000-1000-8000-00805f9b34fb";
     public static String TSDZ_CHARACTERISTICS_STATUS = "0000ff01-0000-1000-8000-00805f9b34fb";
-    public static String TSDZ_CHARACTERISTICS_DEBUG = "0000ff02-0000-1000-8000-00805f9b34fb";
     public static String TSDZ_CHARACTERISTICS_CONFIG = "0000ff03-0000-1000-8000-00805f9b34fb";
     public static String TSDZ_CHARACTERISTICS_COMMAND = "0000ff04-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     public final static UUID UUID_TSDZ_SERVICE = UUID.fromString(TSDZ_SERVICE);
     public final static UUID UUID_STATUS_CHARACTERISTIC = UUID.fromString(TSDZ_CHARACTERISTICS_STATUS);
-    public final static UUID UUID_DEBUG_CHARACTERISTIC = UUID.fromString(TSDZ_CHARACTERISTICS_DEBUG);
     public final static UUID UUID_CONFIG_CHARACTERISTIC = UUID.fromString(TSDZ_CHARACTERISTICS_CONFIG);
     public final static UUID UUID_COMMAND_CHARACTERISTIC = UUID.fromString(TSDZ_CHARACTERISTICS_COMMAND);
 
@@ -61,7 +59,6 @@ public class TSDZBTService extends Service {
     public static final String CONNECTION_FAILURE_BROADCAST = "CONNECTION_FAILURE";
     public static final String CONNECTION_LOST_BROADCAST = "CONNECTION_LOST";
     public static final String TSDZ_STATUS_BROADCAST = "TSDZ_STATUS";
-    public static final String TSDZ_DEBUG_BROADCAST = "TSDZ_DEBUG";
     public static final String TSDZ_COMMAND_BROADCAST = "TSDZ_COMMAND";
     public static final String TSDZ_CFG_READ_BROADCAST = "TSDZ_CFG_READ";
     public static final String TSDZ_CFG_WRITE_BROADCAST = "TSDZ_CFG_WRITE";
@@ -79,7 +76,6 @@ public class TSDZBTService extends Service {
     private int connectionRetry = 0;
 
     private BluetoothGattCharacteristic tsdz_status_char = null;
-    private BluetoothGattCharacteristic tsdz_debug_char = null;
     private BluetoothGattCharacteristic tsdz_config_char = null;
     private BluetoothGattCharacteristic tsdz_command_char = null;
 
@@ -131,6 +127,7 @@ public class TSDZBTService extends Service {
                             disconnect();
                             stopped = true;
                             Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
+                            bi.putExtra("MESSAGE", "Connection Failed");
                             LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
                             stopSelf();
                         }
@@ -237,7 +234,7 @@ public class TSDZBTService extends Service {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
+            if (status == GATT_SUCCESS) {
                 List<BluetoothGattService> services = gatt.getServices();
                 Log.i(TAG, "Services: " + services.toString());
                 for (BluetoothGattService s:services) {
@@ -247,9 +244,6 @@ public class TSDZBTService extends Service {
                             if (c.getUuid().equals(UUID_STATUS_CHARACTERISTIC)) {
                                 tsdz_status_char = c;
                                 Log.d(TAG, "UUID_STATUS_CHARACTERISTIC enable notifications");
-                            } else if(c.getUuid().equals(UUID_DEBUG_CHARACTERISTIC)) {
-                                tsdz_debug_char = c;
-                                Log.d(TAG, "UUID_DEBUG_CHARACTERISTIC enable notifications");
                             } else if(c.getUuid().equals(UUID_CONFIG_CHARACTERISTIC)) {
                                 tsdz_config_char = c;
                             } else if(c.getUuid().equals(UUID_COMMAND_CHARACTERISTIC)) {
@@ -259,35 +253,49 @@ public class TSDZBTService extends Service {
                         }
                     }
                 }
-                if (tsdz_status_char == null || tsdz_debug_char == null || tsdz_config_char == null
-                        || tsdz_command_char == null) {
+                if (tsdz_status_char == null || tsdz_config_char == null || tsdz_command_char == null) {
                     Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
-                    // TODO bi.putExtra("MESSAGE", "Error Detail");
+                    bi.putExtra("MESSAGE", "Service not found!");
                     LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
-                    Log.e(TAG, "onServicesDiscovered Characteristic not found!");
+                    Log.e(TAG, "onServicesDiscovered Service not found!");
                     disconnect();
                     return;
                 }
-                // setCharacteristicNotification is asynchronous. Before to make a new call we
-                // must wait the end of the previous in the callback onDescriptorWrite
-                setCharacteristicNotification(tsdz_status_char,true);
+                // All requests are asynchronous, Before to do a new call we must wait the
+                // end of the previous (wait for onMtuChanged() callback)
+                mBluetoothGatt.requestMtu(Math.min(Math.max(23, STATUS_ADV_SIZE+3), 512));
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
         }
 
         @Override
+        public void onMtuChanged (BluetoothGatt gatt, int mtu, int status) {
+            if ((status != BluetoothGatt.GATT_SUCCESS) || (mtu < (STATUS_ADV_SIZE + 3))) {
+                Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
+                bi.putExtra("MESSAGE", "MTU Setup Failed");
+                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                Log.e(TAG, "onMtuChanged: MTU Setup FAILED");
+                disconnect();
+                return;
+            }
+            Log.d(TAG, "MTU Configuration success");
+            // setCharacteristicNotification is asynchronous. Before to make a new call we
+            // must wait the end of the previous (callback onDescriptorWrite)
+            setCharacteristicNotification(tsdz_status_char,true);
+        }
+
+
+        @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor,
                                       int status) {
-            //Log.d(TAG, "onDescriptorWrite:" + descriptor.getCharacteristic().getUuid().toString() +
-            //        " - " + descriptor.getUuid().toString());
-            if (status == BluetoothGatt.GATT_SUCCESS) {
+            Log.d(TAG, "onDescriptorWrite:" + descriptor.getCharacteristic().getUuid().toString() +
+                    " - " + descriptor.getUuid().toString() + " - " + status);
+            if (status == GATT_SUCCESS) {
                 if (descriptor.getUuid().equals(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG))) {
                     boolean enable = (descriptor.getValue()[0] & 0x01) == 1;
                     //Log.d(TAG, "onDescriptorWrite: value = " + descriptor.getValue()[0]);
                     if (descriptor.getCharacteristic().getUuid().equals(UUID_STATUS_CHARACTERISTIC))
-                        setCharacteristicNotification(tsdz_debug_char,enable);
-                    else if (descriptor.getCharacteristic().getUuid().equals(UUID_DEBUG_CHARACTERISTIC))
                         setCharacteristicNotification(tsdz_command_char,enable);
                     else if (descriptor.getCharacteristic().getUuid().equals(UUID_COMMAND_CHARACTERISTIC))
                         if (mConnectionState == ConnectionState.CONNECTING) {
@@ -307,7 +315,7 @@ public class TSDZBTService extends Service {
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
             //Log.d(TAG, "onCharacteristicRead:" + characteristic.getUuid().toString());
-            if (status == BluetoothGatt.GATT_SUCCESS) {
+            if (status == GATT_SUCCESS) {
                 if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
                     Intent bi = new Intent(TSDZ_CFG_READ_BROADCAST);
                     bi.putExtra(VALUE_EXTRA, characteristic.getValue());
@@ -331,14 +339,6 @@ public class TSDZBTService extends Service {
                 } else {
                     Log.e(TAG, "Wrong Status Advertising Size: " + data.length);
                 }
-            } else if (UUID_DEBUG_CHARACTERISTIC.equals(characteristic.getUuid())) {
-                if (data.length == DEBUG_ADV_SIZE) {
-                    Intent bi = new Intent(TSDZ_DEBUG_BROADCAST);
-                    bi.putExtra(VALUE_EXTRA, characteristic.getValue());
-                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
-                } else {
-                    Log.e(TAG, "Wrong Debug Advertising Size: " + data.length);
-                }
             } else if (UUID_COMMAND_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_COMMAND_BROADCAST);
                 bi.putExtra(VALUE_EXTRA, characteristic.getValue());
@@ -353,7 +353,7 @@ public class TSDZBTService extends Service {
             //Log.d(TAG, "onCharacteristicWrite:" + characteristic.getUuid().toString());
             if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 Intent bi = new Intent(TSDZ_CFG_WRITE_BROADCAST);
-                bi.putExtra(VALUE_EXTRA, status == BluetoothGatt.GATT_SUCCESS);
+                bi.putExtra(VALUE_EXTRA, status == GATT_SUCCESS);
                 LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
             }
         }

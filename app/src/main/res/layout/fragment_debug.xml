@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".fragments.FragmentDebug">
     <data>
-        <variable name="tsdz_debug" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Debug"/>
+        <variable name="tsdz_debug" type="spider65.ebike.tsdz2_esp32.fragments.FragmentDebug.FragmentData"/>
     </data>
 
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -327,7 +327,7 @@
         android:id="@+id/adcTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/adc_value"
+        android:text="@string/torque_smooth"
         android:textAppearance="@android:style/TextAppearance.Material.Medium"
         app:layout_constraintTop_toTopOf="@+id/horiz4"
         app:layout_constraintBottom_toTopOf="@+id/adcValueTV"
@@ -339,7 +339,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="32sp"
-        android:text="@{String.valueOf(tsdz_debug.adcThrottle)}"
+        android:text="@{String.valueOf(tsdz_debug.torqueSmoothPct)}"
         android:textAppearance="@android:style/TextAppearance.Material.Large"
         app:layout_constraintBottom_toTopOf="@+id/horiz5"
         app:layout_constraintEnd_toStartOf="@+id/vert2"

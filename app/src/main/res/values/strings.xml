@@ -18,7 +18,11 @@
     <string name="error_controller_comm">Controller communication Error</string>
     <string name="comm_error">Communication CRC errors</string>
     <string name="lcd">LCD:</string>
-    <string name="controller">Controller:</string>
+    <string name="controller">Contr.:</string>
+    <string name="torque_smooth_pct">Active %:</string>
+    <string name="average_adc">Avg:</string>
+    <string name="min_adc">Min:</string>
+    <string name="max_adc">Max:</string>
     <string name="main_time">Main Loop time</string>
     <string name="ebike_loop">ebike Loop</string>
     <string name="motor_loop">motor Loop</string>
@@ -90,6 +94,10 @@
     <string name="adc_value">ADC value</string>
     <string name="controller_temp">Controller Temp.</string>
     <string name="fw_hall_offset">FW Hall Offset</string>
+    <string name="torque_smoot_pct">Torque smooth %</string>
+    <string name="torque_min">Torque Min</string>
+    <string name="torque_max">Torque Max</string>
+    <string name="torque_avg">Torque Avg</string>
 
     <string name="tsdz_cfg">Bike Configuration</string>
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
@@ -127,9 +135,11 @@
     <string name="system">System</string>
     <string name="battery">Battery</string>
     <string name="assist_levels">Assist Levels</string>
+    <string name="torque_sensor">Torque Sensor</string>
     <string name="temp_control">Temperature and Throttle</string>
     <string name="hall_calib">Hall calibration</string>
     <string name="title_activity_system_setup">System Setup</string>
+    <string name="title_activity_torque_setup">Torque Sensor Setup</string>
     <string name="motor">Motor</string>
     <string name="foc_multiplicator">FOC angle multipl.</string>
     <string name="field_weakening">Field Weakening</string>
@@ -141,9 +151,12 @@
     <string name="light">Light</string>
     <string name="ligth_config">Lights Configuration</string>
     <string name="assit_wpr">Assist without\npedal rot.</string>
-    <string name="torque_adc_step">Torque sensor ADC step</string>
-    <string name="torque_offset_fix">Torque Offset Fix</string>
-    <string name="torque_adc_offset">Torque offset</string>
+    <string name="torque_adc_step">Torque ADC factor</string>
+    <string name="torque_offset_fix">Torque ADC Offset Fix</string>
+    <string name="torque_adc_offset">Torque ADC offset</string>
+    <string name="torque_smooth">Torque Smooth</string>
+    <string name="torque_smooth_min">Min ADC threshold</string>
+    <string name="torque_smooth_max">Max ADC diff. threshold</string>
     <string name="threshold">Threshold</string>
     <string name="street_mode">Street Mode</string>
     <string name="cruise_mode_enabled">Cruise mode enabled</string>

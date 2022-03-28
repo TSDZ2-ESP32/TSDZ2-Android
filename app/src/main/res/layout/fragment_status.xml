@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".fragments.FragmentStatus">
     <data>
-        <variable name="tsdz_status" type="spider65.ebike.tsdz2_esp32.data.TSDZ_Status"/>
+        <variable name="tsdz_status" type="spider65.ebike.tsdz2_esp32.fragments.FragmentStatus.FragmentData"/>
     </data>
 
 <androidx.constraintlayout.widget.ConstraintLayout

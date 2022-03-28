@@ -13,19 +13,59 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-
 import org.jetbrains.annotations.NotNull;
 
 
-public class FragmentStatus extends Fragment implements View.OnLongClickListener, MyFragmentListener {
+//public class FragmentStatus extends Fragment implements View.OnLongClickListener, MyFragmentListener {
+public class FragmentStatus extends Fragment implements MyFragmentListener {
 
     private static final String TAG = "FragmentStatus";
 
-    //private IntentFilter mIntentFilter = new IntentFilter();
+    public static class FragmentData {
+        public float speed;
+        public short cadence;
+        public int pPower;
+        public float volts;
+        public float amperes;
+        public float motorTemperature;
+        public int wattHour;
 
-    private TSDZ_Status tsdz_status;
+        private boolean update(TSDZ_Status newStatus) {
+            boolean changed = false;
+            if (newStatus.speed != speed) {
+                speed = newStatus.speed;
+                changed = true;
+            }
+            if (newStatus.cadence != cadence) {
+                cadence = newStatus.cadence;
+                changed = true;
+            }
+            if (newStatus.pPower != pPower) {
+                pPower = newStatus.pPower;
+                changed = true;
+            }
+            if (newStatus.volts != volts) {
+                volts = newStatus.volts;
+                changed = true;
+            }
+            if (newStatus.amperes != amperes) {
+                amperes = newStatus.amperes;
+                changed = true;
+            }
+            if (newStatus.motorTemperature != motorTemperature) {
+                motorTemperature = newStatus.motorTemperature;
+                changed = true;
+            }
+            if (newStatus.wattHour != wattHour) {
+                wattHour = newStatus.wattHour;
+                changed = true;
+            }
+            return changed;
+        }
+    }
 
     private FragmentStatusBinding binding;
+    private final FragmentData viewData = new FragmentData();
 
     /**
      * Use this factory method to create a new instance of
@@ -38,7 +78,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
     }
 
     private FragmentStatus(TSDZ_Status tsdz_status) {
-        this.tsdz_status = tsdz_status;
+        viewData.update(tsdz_status);
     }
 
     @Override
@@ -46,7 +86,6 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
-        //mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
     }
 
     @Override
@@ -55,7 +94,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
         Log.d(TAG, "onCreateView");
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_status, container, false);
-        binding.setTsdzStatus(tsdz_status);
+        binding.setTsdzStatus(viewData);
         return binding.getRoot();
     }
 
@@ -68,6 +107,7 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
 
     // TODO
     // Visualizzazione grafici
+    /*
     @Override
     public boolean onLongClick(View v) {
         switch (v.getId()) {
@@ -77,9 +117,11 @@ public class FragmentStatus extends Fragment implements View.OnLongClickListener
         }
         return false;
     }
+    */
 
     @Override
-    public void refreshView() {
-        binding.invalidateAll();
+    public void refreshView(TSDZ_Status newStatus) {
+        if (viewData.update(newStatus) && isVisible())
+            binding.invalidateAll();
     }
 }

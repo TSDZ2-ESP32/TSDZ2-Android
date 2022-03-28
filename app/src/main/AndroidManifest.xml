@@ -44,6 +44,10 @@
             android:label="@string/title_activity_system_setup"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
+            android:name=".activities.TorqueSetupActivity"
+            android:label="@string/title_activity_torque_setup"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name=".activities.BatterySetupActivity"
             android:label="@string/title_activity_battery_setup"
             android:theme="@style/AppTheme.NoActionBar" />

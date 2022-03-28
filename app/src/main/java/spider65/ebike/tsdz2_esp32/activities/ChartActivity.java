@@ -2,16 +2,16 @@ package spider65.ebike.tsdz2_esp32.activities;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
@@ -76,17 +76,37 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private int currentInterval;
 
     private List<LogManager.LogStatusEntry> statusData = null;
-    private List<LogManager.LogDebugEntry>  debugData  = null;
     private long startTime = 0;
 
     private AlertDialog dataDialog = null;
-    ArrayList<DataType> selectedItemsList = new ArrayList<>();
-
+    private DataItemAdapter mAdapter;
+    private static final Set<DataType> selectedItemsList = EnumSet.of(DataType.speed, DataType.cadence);
+    private static final DataItem[] dialogItemList = new DataItem[] {
+            new DataItem(DataType.level, false, true),
+            new DataItem(DataType.speed, false, true),
+            new DataItem(DataType.cadence, false, true),
+            new DataItem(DataType.pPower, false, true),
+            new DataItem(DataType.pTorque, false, true),
+            new DataItem(DataType.mPower, false, true),
+            new DataItem(DataType.current, false, true),
+            new DataItem(DataType.volt, false, true),
+            new DataItem(DataType.energy, false, true),
+            new DataItem(DataType.mTemp, false, true),
+            new DataItem(DataType.cTemp, false, true),
+            new DataItem(DataType.dCycle, false, true),
+            new DataItem(DataType.erps, false, true),
+            new DataItem(DataType.focAngle,  false, true),
+            new DataItem(DataType.fwHallOffset, false, true),
+            new DataItem(DataType.tSmoothPct, false, true),
+            new DataItem(DataType.torqueMin, false, true),
+            new DataItem(DataType.torqueMax, false, true),
+            new DataItem(DataType.torqueAvg, false, true)
+    };
 
     private enum DataType {
         level, speed, cadence, pPower, mPower, current,
         volt, energy, mTemp, cTemp, dCycle, erps,
-        focAngle, pTorque, fwHallOffset;
+        focAngle, pTorque, fwHallOffset, tSmoothPct, torqueMin, torqueMax, torqueAvg;
 
         public String getName() {
             switch (this) {
@@ -120,20 +140,42 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     return MyApp.getInstance().getString(R.string.pedal_torque);
                 case fwHallOffset:
                     return MyApp.getInstance().getString(R.string.fw_hall_offset);
+                case tSmoothPct:
+                    return MyApp.getInstance().getString(R.string.torque_smoot_pct);
+                case torqueMin:
+                    return MyApp.getInstance().getString(R.string.torque_min);
+                case torqueMax:
+                    return MyApp.getInstance().getString(R.string.torque_max);
+                case torqueAvg:
+                    return MyApp.getInstance().getString(R.string.torque_avg);
+
             }
             return "";
         }
-    }
-    private static final Set<DataType> STATUS_DATA_TYPES = new HashSet<>(Arrays.asList(
-            DataType.level, DataType.speed, DataType.cadence, DataType.pPower, DataType.mPower,
-            DataType.mTemp, DataType.volt, DataType.current, DataType.energy));
-    private static final Set<DataType> DEBUG_DATA_TYPES = new HashSet<>(Arrays.asList(
-            DataType.dCycle, DataType.erps, DataType.focAngle, DataType.pTorque, DataType.cTemp, DataType.fwHallOffset));
-    private static final Set<DataType> POWER_DATA_TYPES = new HashSet<>(Arrays.asList(
-            DataType.mPower, DataType.pPower));
-    private static final Set<DataType> TEMPERATURE_DATA_TYPES = new HashSet<>(Arrays.asList(
-            DataType.mTemp, DataType.cTemp));
 
+        public boolean compatible(Set<DataType> selectedItems) {
+
+            if (selectedItems.isEmpty())
+                return true;
+
+            switch (this) {
+                case pPower:
+                case mPower:
+                    return (selectedItems.contains(mPower) || selectedItems.contains(pPower));
+                case mTemp:
+                case cTemp:
+                    return (selectedItems.contains(mTemp) || selectedItems.contains(cTemp));
+                case torqueMin:
+                case torqueMax:
+                case torqueAvg:
+                    for (DataType item : selectedItems)
+                        if ((item == torqueMin) || (item == torqueMax) || (item == torqueAvg))
+                            return true;
+            }
+
+            return false;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,7 +195,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                Log.d(TAG,"onItemSelected: position=" + position);
                 if (intervals == null)
                     return;
                 currentInterval = position;
@@ -262,7 +303,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
         l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         l.setDrawInside(false);
-//        l.setYOffset(11f);
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setTypeface(tfLight);
@@ -272,9 +312,7 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         xAxis.setDrawAxisLine(true);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawLabels(true);
-        xAxis.setAxisMinimum(0f);
-        xAxis.setAxisMaximum(30f);
-        xAxis.setGranularity(1f);
+        xAxis.setGranularity(.25f);
 
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
@@ -283,11 +321,16 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             }
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
-                //return String.format(Locale.ITALY,"%.1f",value);
-
+                // X Axis: minutes
+                // startTime:  milliseconds from January 1, 1970 UTC
+                // tzOffset:  Time Zone offset in minutes
                 long l = (long)(value)+(startTime/1000L/60L)+tzOffset;
                 int minutes = (int) (l % 60L);
                 int hours   = (int) ((l / 60L) % 24L);
+                if ((chart.getXAxis().mAxisMaximum / chart.getViewPortHandler().getScaleX()) < 1.3333) {
+                    int seconds = (int)(value * 60F) % 60;
+                    return String.format(Locale.ITALY,"%02d:%02d:%02d",hours,minutes,seconds);
+                }
                 return String.format(Locale.ITALY,"%02d:%02d",hours,minutes);
             }
         });
@@ -306,18 +349,15 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         rightAxis.setTypeface(tfLight);
         rightAxis.setTextColor(Color.RED);
         rightAxis.setTextSize(14f);
-        rightAxis.setAxisMaximum(100);
-        rightAxis.setAxisMinimum(0);
+        rightAxis.setAxisMaximum(100f);
+        rightAxis.setAxisMinimum(0f);
         rightAxis.setDrawGridLines(false);
         rightAxis.setDrawZeroLine(false);
         rightAxis.setGranularityEnabled(false);
         rightAxis.setEnabled(false);
 
-        chart.getViewPortHandler().setMaximumScaleY(1f);
-        chart.getViewPortHandler().setMaximumScaleX(6f);
+        chart.setScaleMinima(1f,1f);
 
-        selectedItemsList.add(DataType.speed);
-        selectedItemsList.add(DataType.pPower);
         logManager.queryLogIntervals();
     }
 
@@ -349,39 +389,6 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             showDataSelectionDialog();
             return true;
         }
-        /*
-        switch (item.getItemId()) {
-            case R.id.menu_edit:
-                showDataSelectionDialog();
-                break;
-            case R.id.actionToggleHighlight: {
-                if (chart.getData() != null) {
-                    chart.getData().setHighlightEnabled(!chart.getData().isHighlightEnabled());
-                    chart.invalidate();
-                }
-                break;
-            }
-            case R.id.actionToggleFilled: {
-                List<ILineDataSet> sets = chart.getData().getDataSets();
-                for (ILineDataSet iSet : sets) {
-                    LineDataSet set = (LineDataSet) iSet;
-                    set.setDrawFilled(!set.isDrawFilledEnabled());
-                }
-                chart.invalidate();
-                break;
-            }
-            case R.id.actionTogglePinch: {
-                chart.setPinchZoom(!chart.isPinchZoomEnabled());
-                chart.invalidate();
-                break;
-            }
-            case R.id.actionToggleAutoScaleMinMax: {
-                chart.setAutoScaleMinMaxEnabled(!chart.isAutoScaleMinMaxEnabled());
-                chart.notifyDataSetChanged();
-                break;
-            }
-        }
-        */
         return true;
     }
 
@@ -448,83 +455,80 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     private ArrayList<Entry> fillData(DataType dataType, YAxis yAxis, float maxY) {
         ArrayList<Entry> values = new ArrayList<>();
         float prevx = -1;
-        if (STATUS_DATA_TYPES.contains(dataType)) {
-            for (int i = 0; i < statusData.size(); i++) {
-                float x = (float) ((statusData.get(i).time - startTime) / 1000) / 60f;
-                if ((x - prevx) > 0.2f) {
-                    values.add(new Entry(prevx + 1 / 60f, 0));
-                    values.add(new Entry(x - 1 / 60f, 0));
-                }
-                prevx = x;
-                float y = 0;
-                switch (dataType) {
-                    case level:
-                        y = statusData.get(i).status.assistLevel;
-                        break;
-                    case speed:
-                        y = statusData.get(i).status.speed;
-                        break;
-                    case cadence:
-                        y = statusData.get(i).status.cadence;
-                        break;
-                    case mTemp:
-                        y = statusData.get(i).status.motorTemperature;
-                        break;
-                    case pPower:
-                        y = statusData.get(i).status.pPower;
-                        break;
-                    case mPower:
-                        y = statusData.get(i).status.volts * statusData.get(i).status.amperes;
-                        break;
-                    case volt:
-                        y = statusData.get(i).status.volts;
-                        break;
-                    case current:
-                        y = statusData.get(i).status.amperes;
-                        break;
-                    case energy:
-                        y = statusData.get(i).status.wattHour;
-                        break;
-                }
-                //float y = (float) (40 + 10 * Math.sin(x));
-                if (y > maxY)
-                    maxY = y;
-                values.add(new Entry(x, y));
+        for (int i = 0; i < statusData.size(); i++) {
+            float x = (float) ((statusData.get(i).time - startTime) / 1000) / 60f;
+            if ((x - prevx) > 0.2f) {
+                values.add(new Entry(prevx + 1 / 60f, 0));
+                values.add(new Entry(x - 1 / 60f, 0));
             }
-        } else if (DEBUG_DATA_TYPES.contains(dataType)) {
-            for (int i = 0; i < debugData.size(); i++) {
-                float x = (float) ((debugData.get(i).time - startTime) / 1000) / 60f;
-                if ((x - prevx) > 0.1f) {
-                    values.add(new Entry(prevx + 1 / 60f, 0));
-                    values.add(new Entry(x - 1 / 60f, 0));
-                }
-                prevx = x;
-                float y = 0;
-                switch (dataType) {
-                    case dCycle:
-                        y = debugData.get(i).debug.dutyCycle;
-                        break;
-                    case erps:
-                        y = debugData.get(i).debug.motorERPS;
-                        break;
-                    case focAngle:
-                        y = debugData.get(i).debug.focAngle;
-                        break;
-                    case pTorque:
-                        y = debugData.get(i).debug.pTorque;
-                        break;
-                    case cTemp:
-                        y = debugData.get(i).debug.pcbTemperature;
-                        break;
-                    case fwHallOffset:
-                        y = debugData.get(i).debug.fwOffset;
-                        break;
-                }
-                if (y > maxY)
-                    maxY = y;
-                values.add(new Entry(x, y));
+
+            prevx = x;
+            float y = 0;
+            switch (dataType) {
+                case level:
+                    y = statusData.get(i).status.assistLevel;
+                    break;
+                case speed:
+                    y = statusData.get(i).status.speed;
+                    break;
+                case cadence:
+                    y = statusData.get(i).status.cadence;
+                    break;
+                case mTemp:
+                    y = statusData.get(i).status.motorTemperature;
+                    break;
+                case pPower:
+                    y = statusData.get(i).status.pPower;
+                    break;
+                case mPower:
+                    y = statusData.get(i).status.volts * statusData.get(i).status.amperes;
+                    break;
+                case volt:
+                    y = statusData.get(i).status.volts;
+                    break;
+                case current:
+                    y = statusData.get(i).status.amperes;
+                    break;
+                case energy:
+                    y = statusData.get(i).status.wattHour;
+                    break;
+                case dCycle:
+                    y = statusData.get(i).status.dutyCycle;
+                    break;
+                case erps:
+                    y = statusData.get(i).status.motorERPS;
+                    break;
+                case focAngle:
+                    y = statusData.get(i).status.focAngle;
+                    break;
+                case pTorque:
+                    y = statusData.get(i).status.pTorque;
+                    break;
+                case cTemp:
+                    y = statusData.get(i).status.pcbTemperature;
+                    break;
+                case fwHallOffset:
+                    y = statusData.get(i).status.fwOffset;
+                    break;
+                case tSmoothPct:
+                    y = statusData.get(i).status.torqueSmoothPct;
+                    break;
+                case torqueAvg:
+                    y = statusData.get(i).status.torqueSmoothAvg;
+                    break;
+                case torqueMin:
+                    y = statusData.get(i).status.torqueSmoothMin;
+                    break;
+                case torqueMax:
+                    y = statusData.get(i).status.torqueSmoothMax;
+                    break;
             }
+            //float y = (float) (40 + 10 * Math.sin(x));
+            if (y > maxY)
+                maxY = y;
+            values.add(new Entry(x, y));
         }
+
         if ((maxY * 0.1f) < 1f)
             maxY += 1f;
         else
@@ -564,36 +568,45 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     // Must be synchronized because could be called from the Runnable started by the Data selection Dialog or
     // by the LogManager Handler Thread (Query result)
     private synchronized void drawData() {
+        Log.d(TAG, "X Scale = " + chart.getViewPortHandler().getScaleX());
+        Log.d(TAG, "Y Scale = " + chart.getViewPortHandler().getScaleY());
+        //Log.d(TAG, "X mAxisMinimum = " + chart.getXAxis().mAxisMinimum);
+        //Log.d(TAG, "X mAxisMaximum = " + chart.getXAxis().mAxisMaximum);
+        //Log.d(TAG, "X mAxisRange = " + chart.getXAxis().mAxisRange);
+        final Set<DataType> leftAxis = EnumSet.noneOf(DataType.class);
+        final Set<DataType> rightAxis = EnumSet.noneOf(DataType.class);
+
         chart.getData().clearValues();
         chart.getAxisRight().setEnabled(false);
 
-        float maxX, val = 0;
-        maxX = updateDataSet(selectedItemsList.get(0), 0, YAxis.AxisDependency.LEFT, Color.BLUE, true);
+        float maxX = 0;
+        float val;
 
-        if (selectedItemsList.size() > 1) {
-            if ((TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(0)) && TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(1))) ||
-                (POWER_DATA_TYPES.contains(selectedItemsList.get(0)) && POWER_DATA_TYPES.contains(selectedItemsList.get(1)))) {
-                val = updateDataSet(selectedItemsList.get(1), 1, YAxis.AxisDependency.LEFT, 0xFF0090FF, false);
+        int i = 0;
+        for (DataType data : selectedItemsList) {
+            if (data.compatible(leftAxis)) {
+                int color = 0xFF0000FF; // Color.Blue
+                color |= ((0x50*leftAxis.size()) & 0xff) << 8;
+                val = updateDataSet(data, i, YAxis.AxisDependency.LEFT, color, leftAxis.isEmpty());
+                leftAxis.add(data);
             } else {
-                val = updateDataSet(selectedItemsList.get(1), 1, YAxis.AxisDependency.RIGHT, Color.RED, true);
+                int color = 0xFFFF0000; // Color.Red
+                color |= ((0x50*rightAxis.size()) & 0xff) << 8;
+                val = updateDataSet(data, i, YAxis.AxisDependency.RIGHT, color, rightAxis.isEmpty());
+                rightAxis.add(data);
             }
+            maxX = Math.max(maxX, val);
+            i++;
         }
-        maxX = Math.max(maxX, val);
 
-        if (selectedItemsList.size() > 2) {
-            if ((TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(1)) && TEMPERATURE_DATA_TYPES.contains(selectedItemsList.get(2))) ||
-                (POWER_DATA_TYPES.contains(selectedItemsList.get(1)) && POWER_DATA_TYPES.contains(selectedItemsList.get(2)))) {
-                val = updateDataSet(selectedItemsList.get(2), 2, YAxis.AxisDependency.RIGHT, 0xFFB84000, false);
-            } else {
-                val = updateDataSet(selectedItemsList.get(2), 2, YAxis.AxisDependency.RIGHT, Color.RED, true);
-            }
-        }
-        maxX = Math.max(maxX, val);
         if (maxX < 2)
             maxX = 2f;
+        chart.getXAxis().setAxisMinimum(0f);
         chart.getXAxis().setAxisMaximum(maxX);
-        chart.getViewPortHandler().setMaximumScaleY(2f);
-        chart.getViewPortHandler().setMaximumScaleX(maxX / 2f);
+        chart.getViewPortHandler().setMaximumScaleY(4f);
+        chart.getViewPortHandler().setMaximumScaleX(maxX*2);
+        if (selectedItemsList.size() > 3)
+            chart.getLegend().setWordWrapEnabled(true);
         chart.getData().notifyDataChanged();
         chart.notifyDataSetChanged();
         chart.postInvalidate();
@@ -631,16 +644,14 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
     // Callabck called by the LogManager Class at the end of the queryLogData
     // The callback is called by the LogManager Handler Thread (not the Main Thread!)
     @Override
-    public void logDataResult(List<LogManager.LogStatusEntry> statusList, List<LogManager.LogDebugEntry>  debugList) {
-        if (statusList.size() == 0 || debugList.size() == 0) {
-            Log.d(TAG, "logDataResult - no data found. Num status records=" + statusList.size()
-                    + " Num debug records=" + debugList.size());
+    public void logDataResult(List<LogManager.LogStatusEntry> statusList) {
+        if (statusList.size() == 0) {
+            Log.d(TAG, "logDataResult - no data found. Num status records=" + statusList.size());
             return;
         }
 
         synchronized (this) {
             statusData = statusList;
-            debugData = debugList;
         }
 
         /*
@@ -654,46 +665,29 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
         endQuery();
     }
 
-    // follows Classes and interfaces used by the Data Type selection dialog
-    public interface ChekedItemInterface {
-        void onItemChecked(int position, boolean checked, int numChecked);
-    }
-
     public static class DataItem {
         private final DataType type;
         private final String name;
         private Boolean checked;
+        private Boolean enabled;
 
-        DataItem(DataType type, Boolean isChecked) {
+        DataItem(DataType type, Boolean isChecked, Boolean isEnabled) {
             this.type = type;
             this.name = type.getName();
             this.checked = isChecked;
+            this.enabled = isEnabled;
         }
     }
 
-    private static class DataItemAdapter extends BaseAdapter {
+    private class DataItemAdapter extends BaseAdapter {
         private final DataItem[] mData;
-        private Context mContext;
-        private ChekedItemInterface listener;
-        private int numChecked = 0;
-        private int powerCheched = 0;
-        private int temperatureChecked = 0;
-        private static final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        private final Context mContext;
+        private final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         private final int cbId;
 
-        DataItemAdapter(DataItem[] items, Context context, ChekedItemInterface listener) {
-            for (DataItem i: items) {
-                if (i.checked) {
-                    numChecked++;
-                    if (i.type==DataType.mPower || i.type==DataType.pPower)
-                        powerCheched++;
-                    if (i.type==DataType.mTemp || i.type==DataType.cTemp)
-                        temperatureChecked++;
-                }
-            }
+        DataItemAdapter(DataItem[] items, Context context) {
             this.mData = items;
             this.mContext = context;
-            this.listener = listener;
             // generate CheckBox view id
             cbId = View.generateViewId();
             // sel left margin to 20dp
@@ -722,88 +716,64 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 convertView.setLayoutParams(params);
                 CheckBox cb = new CheckBox(mContext);
                 cb.setTextSize(TypedValue.COMPLEX_UNIT_SP,18f);
+                cb.setOnClickListener(v -> {
+                    mData[(int)(v.getTag())].checked = ((CheckBox)v).isChecked();
+                    notifyDataSetChanged();
+                });
                 cb.setId(cbId);
                 ((LinearLayout)convertView).addView(cb, params);
             }
             CheckBox cb = convertView.findViewById(cbId);
-            cb.setChecked(mData[position].checked);
             cb.setText(mData[position].name);
-            cb.setOnClickListener(v -> {
-                if (((CheckBox)v).isChecked()) {
-                    numChecked++;
-                    if (mData[position].type == DataType.mTemp || mData[position].type == DataType.cTemp)
-                        temperatureChecked++;
-                    if (mData[position].type == DataType.mPower || mData[position].type == DataType.pPower)
-                        powerCheched++;
-                } else {
-                    numChecked--;
-                    if (mData[position].type == DataType.mTemp || mData[position].type == DataType.cTemp)
-                        temperatureChecked--;
-                    if (mData[position].type == DataType.mPower || mData[position].type == DataType.pPower)
-                        powerCheched--;
-                }
-                super.notifyDataSetChanged();
-                //Log.d(TAG,"toggle: " + " numChecked=" + numChecked + " powerCheched="+powerCheched+" temperatureChecked="+temperatureChecked);
-                this.listener.onItemChecked(position, ((CheckBox)v).isChecked(), numChecked);
-            });
-
-            if ((numChecked < 2) || cb.isChecked() || (numChecked==2 && (powerCheched==2 || temperatureChecked==2))) {
-                cb.setEnabled(true);
-            } else if (numChecked > 2) {
-                cb.setEnabled(false);
-            } else if ((powerCheched>0 && (
-                            mData[position].type==DataType.mPower ||
-                            mData[position].type==DataType.pPower)) ||
-                       (temperatureChecked>0 && (
-                            mData[position].type==DataType.mTemp ||
-                            mData[position].type==DataType.cTemp))) {
-                cb.setEnabled(true);
-            } else {
-                cb.setEnabled(false);
-            }
+            cb.setTag(position);
+            cb.setChecked(mData[position].checked);
+            cb.setEnabled(mData[position].enabled);
             return convertView;
+        }
+
+        @Override
+        public void notifyDataSetChanged() {
+            Set<DataType> set1 = EnumSet.noneOf(DataType.class);
+            Set<DataType> set2 = EnumSet.noneOf(DataType.class);
+            int numDataSets = 1;
+            for (DataItem item : dialogItemList) {
+                if (item.checked) {
+                    if (item.type.compatible(set1))
+                        set1.add(item.type);
+                    else {
+                        set2.add(item.type);
+                        numDataSets = 2;
+                        break;
+                    }
+                }
+            }
+
+            set1.addAll(set2);
+            for (DataItem item : dialogItemList) {
+                if ((numDataSets < 2) || item.checked) {
+                    item.enabled = true;
+                } else {
+                    item.enabled = item.type.compatible(set1);
+                }
+            }
+            dataDialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(!set1.isEmpty() && (statusData != null));
+            super.notifyDataSetChanged();
         }
     }
 
     private void showDataSelectionDialog() {
         if (dataDialog == null) {
-            DataItem[] dialogItemList = new DataItem[] {
-                    new DataItem(DataType.level, false),
-                    new DataItem(DataType.speed, true),
-                    new DataItem(DataType.cadence, false),
-                    new DataItem(DataType.pPower, true),
-                    new DataItem(DataType.pTorque, false),
-                    new DataItem(DataType.mPower, false),
-                    new DataItem(DataType.current, false),
-                    new DataItem(DataType.volt, false),
-                    new DataItem(DataType.energy, false),
-                    new DataItem(DataType.mTemp, false),
-                    new DataItem(DataType.cTemp, false),
-                    new DataItem(DataType.dCycle, false),
-                    new DataItem(DataType.erps, false),
-                    new DataItem(DataType.focAngle,  false),
-                    new DataItem(DataType.fwHallOffset, false)
-            };
+            mAdapter = new DataItemAdapter(dialogItemList, this);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(false);
             builder.setTitle(getString(R.string.data_select));
-
-            DataItemAdapter mAdapter = new DataItemAdapter(dialogItemList, this, (position, checked, numChecked) -> {
-                    dialogItemList[position].checked = (checked);
-                    if (numChecked > 0)
-                        dataDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                    else
-                        dataDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-
-            });
             builder.setAdapter(mAdapter, null);
             builder.setPositiveButton(getString(R.string.ok), (dialogInterface, which) -> new Thread(() -> {
                 synchronized (ChartActivity.this) {
                     selectedItemsList.clear();
-                    for (DataItem i:dialogItemList) {
-                        if (i.checked)
-                            selectedItemsList.add(i.type);
-                    }
+                    for (DataItem item : dialogItemList)
+                        if (item.checked)
+                            selectedItemsList.add(item.type);
                     drawData();
                 }
             }).start());
@@ -813,6 +783,9 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             listView.setDivider(new ColorDrawable(Color.GRAY));
             listView.setDividerHeight(2);
         }
+        for (DataItem item: dialogItemList)
+            item.checked = selectedItemsList.contains(item.type);
         dataDialog.show();
+        mAdapter.notifyDataSetChanged();
     }
 }

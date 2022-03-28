@@ -51,8 +51,7 @@ public interface TSDZConst {
     byte MAX_DS18B20_PIN = 31;
 
     // size in bytes of the Status/Debug BT notifications
-    int DEBUG_ADV_SIZE = 20;
-    int STATUS_ADV_SIZE = 20;
+    int STATUS_ADV_SIZE = 39;
 
     // Default Hall Counter Offset values
     int[] DEFAULT_HALL_OFFSET = {44,23,44,23,44,23};

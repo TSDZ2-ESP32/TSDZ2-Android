@@ -32,7 +32,6 @@ import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
 import spider65.ebike.tsdz2_esp32.activities.MotorTestActivity;
 import spider65.ebike.tsdz2_esp32.activities.ShowDebugInfo;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
-import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.ota.Esp32_Ota;
 import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
@@ -56,7 +55,6 @@ import java.util.Arrays;
 
 import static java.util.Arrays.copyOfRange;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.CMD_GET_APP_VERSION;
-import static spider65.ebike.tsdz2_esp32.TSDZConst.DEBUG_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.TSDZConst.STATUS_ADV_SIZE;
 import static spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity.KEY_DEVICE_MAC;
 
@@ -65,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private static final String TAG = "MainActivity";
 
-    private static final String KEY_SCREEN_ON = "SCREEN_ON";
+    public static final String KEY_SCREEN_ON = "SCREEN_ON";
 
     private TextView mTitle;
     private boolean serviceRunning;
@@ -78,11 +76,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     IntentFilter mIntentFilter = new IntentFilter();
 
     private ViewPager viewPager;
-    private final byte[] lastStatusData = new byte[STATUS_ADV_SIZE];
-    private final byte[] lastDebugData = new byte[DEBUG_ADV_SIZE];
+    private byte[] lastStatusData = new byte[STATUS_ADV_SIZE];
 
     private final TSDZ_Status status = new TSDZ_Status();
-    private final TSDZ_Debug debug = new TSDZ_Debug();
 
     private TextView modeLevelTV;
     private TextView statusTV;
@@ -114,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         else
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        mainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager(), status, debug);
+        mainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager(), status);
         viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(mainPagerAdapter);
         viewPager.setOnTouchListener(this);
@@ -261,7 +257,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
         mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         checkBT();
         updateUIStatus();
@@ -468,65 +463,88 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         return false;
     }
 
+
+    private boolean s_brake;
+    private short s_status = 0;
+    private boolean s_controllerCommError;
+    private boolean s_lcdCommError;
+    private boolean s_streetMode;
+    private TSDZ_Status.RidingMode s_ridingMode = TSDZ_Status.RidingMode.OFF_MODE;
+    private short s_assistLevel = 0;
+
     private void refreshView() {
-        if (status.brake)
-            brakeIV.setVisibility(View.VISIBLE);
-        else
-            brakeIV.setVisibility(View.INVISIBLE);
-
-        // Motor Status are in the bits 0-5
-        if (status.status != 0) {
-            statusTV.setVisibility(View.VISIBLE);
-            statusTV.setText(String.valueOf(status.status));
-        } else
-            statusTV.setVisibility(View.INVISIBLE);
-
-        // Communication Status are in the bits 6-7
-        if ((status.controllerCommError || status.lcdCommError) && !commError) {
-            commError = true;
-            updateStatusIcons();
-        } else if ((!status.controllerCommError && !status.lcdCommError) && commError) {
-            commError = false;
-            updateStatusIcons();
+        if (status.brake != s_brake) {
+            s_brake = status.brake;
+            if (status.brake)
+                brakeIV.setVisibility(View.VISIBLE);
+            else
+                brakeIV.setVisibility(View.INVISIBLE);
         }
 
-        if (status.streetMode)
-            streetModeIV.setImageResource(R.mipmap.street_icon_on);
-        else
-            streetModeIV.setImageResource(R.mipmap.street_icon_off);
+        if (status.status != s_status) {
+            s_status = status.status;
+            if (status.status != 0) {
+                statusTV.setVisibility(View.VISIBLE);
+                statusTV.setText(String.valueOf(status.status));
+            } else
+                statusTV.setVisibility(View.INVISIBLE);
+        }
 
-        switch (status.ridingMode) {
-            case OFF_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
-                modeLevelTV.setText("0");
-                break;
-            case eMTB_ASSIST_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.emtb_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
-            case WALK_ASSIST_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.walk_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
-            case POWER_ASSIST_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.power_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
-            case TORQUE_ASSIST_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.torque_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
-            case CADENCE_ASSIST_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cadence_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
-            case CRUISE_MODE:
-                modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cruise_mode_icon, 0, 0, 0);
-                modeLevelTV.setText(String.valueOf(status.assistLevel));
-                break;
+        if ((status.controllerCommError != s_controllerCommError) || (status.lcdCommError != s_lcdCommError)) {
+            s_controllerCommError = status.controllerCommError;
+            s_lcdCommError = status.lcdCommError;
+            if ((status.controllerCommError || status.lcdCommError) && !commError) {
+                commError = true;
+                updateStatusIcons();
+            } else if ((!status.controllerCommError && !status.lcdCommError) && commError) {
+                commError = false;
+                updateStatusIcons();
+            }
+        }
+
+        if (status.streetMode != s_streetMode) {
+            s_streetMode = status.streetMode;
+            if (status.streetMode)
+                streetModeIV.setImageResource(R.mipmap.street_icon_on);
+            else
+                streetModeIV.setImageResource(R.mipmap.street_icon_off);
+        }
+
+        if ((status.ridingMode != s_ridingMode) || (status.assistLevel != s_assistLevel)) {
+            s_ridingMode = status.ridingMode;
+            s_assistLevel = status.assistLevel;
+            switch (status.ridingMode) {
+                case OFF_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.off_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText("0");
+                    break;
+                case eMTB_ASSIST_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.emtb_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText(String.valueOf(status.assistLevel));
+                    break;
+                case WALK_ASSIST_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.walk_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText(String.valueOf(status.assistLevel));
+                    break;
+                case POWER_ASSIST_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.power_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText(String.valueOf(status.assistLevel));
+                    break;
+                case TORQUE_ASSIST_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.torque_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText(String.valueOf(status.assistLevel));
+                    break;
+                case CADENCE_ASSIST_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cadence_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText(String.valueOf(status.assistLevel));
+                    break;
+                case CRUISE_MODE:
+                    modeLevelTV.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.cruise_mode_icon, 0, 0, 0);
+                    modeLevelTV.setText(String.valueOf(status.assistLevel));
+                    break;
+            }
         }
     }
-
 
     private void updateStatusIcons() {
         switch (btStatus) {
@@ -610,7 +628,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         builder.show();
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             //Log.d(TAG, "onReceive " + intent.getAction());
@@ -666,22 +684,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
                     if (!Arrays.equals(lastStatusData, data)) {
                         if (status.setData(data)) {
-                            System.arraycopy(data, 0, lastStatusData, 0, STATUS_ADV_SIZE);
-                            // refresh Bottom data, and Status Fragmnt if visibile
+                            lastStatusData = data;
                             refreshView();
-                            if (viewPager.getCurrentItem() == 0)
-                                mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
-                        }
-                    }
-                    break;
-                case TSDZBTService.TSDZ_DEBUG_BROADCAST:
-                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (!Arrays.equals(lastDebugData, data)) {
-                        // refresh Debug Fragment if visibile
-                        if (debug.setData(data)) {
-                            System.arraycopy(data, 0, lastDebugData, 0, DEBUG_ADV_SIZE);
-                            if (viewPager.getCurrentItem() == 1)
-                                mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView();
+                            //mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView(status);
+                            mainPagerAdapter.getMyFragment(0).refreshView(status);
+                            mainPagerAdapter.getMyFragment(1).refreshView(status);
                         }
                     }
                     break;

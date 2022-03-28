@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -17,25 +19,25 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.util.Arrays;
 import java.util.Locale;
 
+import spider65.ebike.tsdz2_esp32.MainActivity;
+import spider65.ebike.tsdz2_esp32.MyApp;
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
-import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 
 
 public class ShowDebugInfo extends AppCompatActivity {
 
+    private static final String TAG = "ShowDebugInfo";
     private final IntentFilter mIntentFilter = new IntentFilter();
 
     private LinearLayout mainTimeLL, pwmTimeLL, hallErrLL;
     private TextView mainLoopTV, pwmTV, hallErrTV;
-    private TextView rxcTV, rxlTV, ebikeTimeTV, pwmDownTV, pwmUpTV, hallStateErrTV, hallSeqErrTV;
+    private TextView rxcTV, rxlTV, tsActiveTV, tsAvgTV, tsMinTV, tsMaxTV,  ebikeTimeTV, pwmDownTV, pwmUpTV, hallStateErrTV, hallSeqErrTV;
     private View div1, div2, div3;
     private final TSDZ_Status status = new TSDZ_Status();
-    private final TSDZ_Debug debug = new TSDZ_Debug();
 
-    private boolean pwmDebug = false;
-    private boolean mainDebug = false;
+    private boolean timeDebug = false;
     private boolean hallDebug = false;
 
     @Override
@@ -45,8 +47,18 @@ public class ShowDebugInfo extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        boolean screenOn = MyApp.getPreferences().getBoolean(MainActivity.KEY_SCREEN_ON, false);
+        if (screenOn)
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         rxcTV  = findViewById(R.id.rxcErrorsTV);
         rxlTV  = findViewById(R.id.rxlErrorsTV);
+        tsActiveTV = findViewById(R.id.tsActiveTV);
+        tsAvgTV = findViewById(R.id.tsAverageTV);
+        tsMinTV = findViewById(R.id.minADCTV);
+        tsMaxTV = findViewById(R.id.maxADCTV);
 
         mainTimeLL = findViewById(R.id.mainTimeLinearLayout);
         mainLoopTV = findViewById(R.id.mainTimeTV);
@@ -75,7 +87,6 @@ public class ShowDebugInfo extends AppCompatActivity {
         div3.setVisibility(View.GONE);
 
         mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_DEBUG_BROADCAST);
 
         if (TSDZBTService.getBluetoothService() == null || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -89,6 +100,7 @@ public class ShowDebugInfo extends AppCompatActivity {
     public void onStop() {
         super.onStop();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        Log.i(TAG, "onStop");
     }
 
     @Override
@@ -102,75 +114,66 @@ public class ShowDebugInfo extends AppCompatActivity {
             finish();
     }
 
-    private void refreshDebug() {
-        if (!mainDebug && (debug.debugFlags & 0x40) != 0) {
-            mainDebug = true;
+    private void refreshStatus() {
+        tsActiveTV.setText(String.format(Locale.getDefault(),"%d", status.torqueSmoothPct));
+        tsAvgTV.setText(String.format(Locale.getDefault(),"%d", status.torqueSmoothAvg));
+        tsMinTV.setText(String.format(Locale.getDefault(),"%d", status.torqueSmoothMin));
+        tsMaxTV.setText(String.format(Locale.getDefault(),"%d", status.torqueSmoothMax));
+
+        if (!timeDebug && status.timeDebug) {
+            timeDebug = true;
             mainTimeLL.setVisibility(View.VISIBLE);
             mainLoopTV.setVisibility(View.VISIBLE);
             div1.setVisibility(View.VISIBLE);
-        }
-        if (!pwmDebug && (debug.debugFlags & 0x80) != 0) {
-            pwmDebug = true;
             pwmTimeLL.setVisibility(View.VISIBLE);
             pwmTV.setVisibility(View.VISIBLE);
             div2.setVisibility(View.VISIBLE);
         }
-        if (!hallDebug && (debug.debugFlags & 0x20) != 0) {
+
+        if (!hallDebug && status.hallDebug) {
             hallDebug = true;
             hallErrLL.setVisibility(View.VISIBLE);
             hallErrTV.setVisibility(View.VISIBLE);
             div3.setVisibility(View.VISIBLE);
         }
 
-        if (pwmDebug) {
-            int upIRQ = ((debug.debug4 & 255) << 8) + (debug.debug3 & 255);
-            int dnIRQ = ((debug.debug6 & 255) << 8) + (debug.debug5 & 255);
+        if (timeDebug) {
+            ebikeTimeTV.setText(String.format(Locale.getDefault(),"%d", status.debug1));
+            int upIRQ = ((status.debug3 & 255) << 8) + (status.debug2 & 255);
+            int dnIRQ = ((status.debug5 & 255) << 8) + (status.debug4 & 255);
             pwmUpTV.setText(String.format(Locale.getDefault(),"%d", upIRQ));
             pwmDownTV.setText(String.format(Locale.getDefault(),"%d", dnIRQ));
         }
 
-        if (mainDebug) {
-            ebikeTimeTV.setText(String.format(Locale.getDefault(),"%d", debug.debug2));
-        }
-
         if (hallDebug) {
-            hallStateErrTV.setText(String.format(Locale.getDefault(),"%d", debug.debug5));
-            hallSeqErrTV.setText(String.format(Locale.getDefault(),"%d", debug.debug6));
+            hallStateErrTV.setText(String.format(Locale.getDefault(),"%d", status.debug1));
+            hallSeqErrTV.setText(String.format(Locale.getDefault(),"%d", status.debug2));
         }
-    }
 
-    private void refreshStatus() {
         rxcTV.setText(String.format(Locale.getDefault(),"%d", status.rxcErrors));
         rxlTV.setText(String.format(Locale.getDefault(),"%d", status.rxlErrors));
     }
 
-
-    private byte[] lastStatusData, lastDebugData;
+    private byte[] lastStatusData;
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() == null) return;
             byte[] data;
-            switch (intent.getAction()) {
-                case TSDZBTService.TSDZ_STATUS_BROADCAST:
-                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (!Arrays.equals(lastStatusData, data)) {
-                        if (status.setData(data)) {
-                            lastStatusData = data;
-                            runOnUiThread(() -> refreshStatus());
-                        }
+            if (intent.getAction().equals(TSDZBTService.TSDZ_STATUS_BROADCAST)) {
+                data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                if (status.setData(data)) {
+                    runOnUiThread(() -> refreshStatus());
+                }
+
+                /*
+                if (!Arrays.equals(lastStatusData, data)) {
+                    if (status.setData(data)) {
+                        lastStatusData = data;
+                        runOnUiThread(() -> refreshStatus());
                     }
-                    break;
-                case TSDZBTService.TSDZ_DEBUG_BROADCAST:
-                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (!Arrays.equals(lastDebugData, data)) {
-                        // refresh Debug Fragment if visibile
-                        if (debug.setData(data)) {
-                            lastDebugData = data;
-                            runOnUiThread(() -> refreshDebug());
-                        }
-                        break;
-                    }
+                }
+                */
             }
         }
     };

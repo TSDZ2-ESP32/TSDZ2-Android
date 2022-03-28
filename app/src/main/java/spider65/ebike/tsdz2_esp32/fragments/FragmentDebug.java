@@ -6,8 +6,8 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
 import spider65.ebike.tsdz2_esp32.R;
+import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.databinding.FragmentDebugBinding;
-import spider65.ebike.tsdz2_esp32.data.TSDZ_Debug;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,23 +28,68 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
 
     private static final String TAG = "FragmentDebug";
 
-    //private IntentFilter mIntentFilter = new IntentFilter();
+    public static class FragmentData {
+        public short dutyCycle;
+        public int motorERPS;
+        public short focAngle;
+        public int torqueADCValue;
+        public float pTorque;
+        public short fwOffset;
+        public short torqueSmoothPct;
+        public float pcbTemperature;
 
-    private TSDZ_Debug tsdz_debug;
+        private boolean update(TSDZ_Status newStatus) {
+            boolean changed = false;
+            if (newStatus.dutyCycle != dutyCycle) {
+                dutyCycle = newStatus.dutyCycle;
+                changed = true;
+            }
+            if (newStatus.motorERPS != motorERPS) {
+                motorERPS = newStatus.motorERPS;
+                changed = true;
+            }
+            if (newStatus.focAngle != focAngle) {
+                focAngle = newStatus.focAngle;
+                changed = true;
+            }
+            if (newStatus.torqueADCValue != torqueADCValue) {
+                torqueADCValue = newStatus.torqueADCValue;
+                changed = true;
+            }
+            if (newStatus.pTorque != pTorque) {
+                pTorque = newStatus.pTorque;
+                changed = true;
+            }
+            if (newStatus.fwOffset != fwOffset) {
+                fwOffset = newStatus.fwOffset;
+                changed = true;
+            }
+            if (newStatus.torqueSmoothPct != torqueSmoothPct) {
+                torqueSmoothPct = newStatus.torqueSmoothPct;
+                changed = true;
+            }
+            if (newStatus.pcbTemperature != pcbTemperature) {
+                pcbTemperature = newStatus.pcbTemperature;
+                changed = true;
+            }
+            return changed;
+        }
+    }
 
     private FragmentDebugBinding binding;
+    private final FragmentDebug.FragmentData viewData = new FragmentDebug.FragmentData();
 
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      * @return A new instance of fragment FragmentDebug.
      */
-    public static FragmentDebug newInstance(TSDZ_Debug debug) {
-        return new FragmentDebug(debug);
+    public static FragmentDebug newInstance(TSDZ_Status status) {
+        return new FragmentDebug(status);
     }
 
-    private FragmentDebug(TSDZ_Debug tsdz_debug) {
-        this.tsdz_debug = tsdz_debug;
+    private FragmentDebug(TSDZ_Status tsdz_status) {
+        viewData.update(tsdz_status);
     }
 
     @Override
@@ -62,7 +107,7 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
         // Inflate the layout for this fragment
         binding = DataBindingUtil.inflate(
                 inflater, R.layout.fragment_debug, container, false);
-        binding.setTsdzDebug(tsdz_debug);
+        binding.setTsdzDebug(viewData);
         return binding.getRoot();
     }
 
@@ -74,7 +119,8 @@ public class FragmentDebug extends Fragment implements MyFragmentListener {
     }
 
     @Override
-    public void refreshView() {
-        binding.invalidateAll();
+    public void refreshView(TSDZ_Status newStatus) {
+        if (viewData.update(newStatus) && isVisible())
+            binding.invalidateAll();
     }
 }
