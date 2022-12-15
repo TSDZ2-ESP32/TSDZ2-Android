@@ -141,6 +141,9 @@ public class SystemSetupActivity extends AppCompatActivity {
         checked = binding.cruiseModeCB.isChecked();
         cfg.ui8_cruise_enabled = checked;
 
+        checked = binding.streetModeStartupEnableCB.isChecked();
+        cfg.streetModeStartupEnable = checked;
+
         if ((val = checkRange(binding.maxStreetSpeedET, 10, 45)) == null) {
             showDialog(getString(R.string.max_speed), getString(R.string.range_error, 10, 45));
             return;
