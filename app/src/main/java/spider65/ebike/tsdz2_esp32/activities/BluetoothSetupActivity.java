@@ -206,7 +206,7 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         @SuppressLint("MissingPermission")
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.d(TAG, "onScanResult " + result.getDevice().getName());
+            Log.d(TAG, "onScanResult " + result.getDevice().getName() + " - " + result.getDevice().getAddress());
             String devName = result.getDevice().getName();
             if (devName != null && !devName.isEmpty()) {
                 devName = devName.concat(" - ").concat(result.getDevice().getAddress());
