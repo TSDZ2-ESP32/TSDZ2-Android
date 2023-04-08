@@ -6,12 +6,6 @@ public class Cramer {
     double []B;
     int size;
 
-    public Cramer() {
-        A = null;
-        B = null;
-        size = 0;
-    }
-
     public Cramer (double[][] m2, double[] x) {
         this.A = m2;
         this.B = x;
@@ -24,9 +18,7 @@ public class Cramer {
         double detCohef = this.calculateCoeficientsMatrixDeterminant();
         for (int i=0;i<size;i++) {
             for (int k=0;k<size;k++) {
-                for (int l=0;l<size;l++) {
-                    tempMatrix[k][l] = A[k][l];
-                }
+                System.arraycopy(A[k], 0, tempMatrix[k], 0, size);
             }
             for (int k=0;k<size;k++) {
                 tempMatrix[k][i] = B[k];

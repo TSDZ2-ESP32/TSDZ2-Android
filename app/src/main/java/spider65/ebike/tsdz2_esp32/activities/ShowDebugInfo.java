@@ -1,11 +1,6 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
@@ -14,9 +9,10 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 import spider65.ebike.tsdz2_esp32.MainActivity;
@@ -27,9 +23,6 @@ import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 
 
 public class ShowDebugInfo extends AppCompatActivity {
-
-    private static final String TAG = "ShowDebugInfo";
-    private final IntentFilter mIntentFilter = new IntentFilter();
 
     private LinearLayout mainTimeLL, pwmTimeLL, hallErrLL;
     private TextView mainLoopTV, pwmTV, hallErrTV;
@@ -86,8 +79,6 @@ public class ShowDebugInfo extends AppCompatActivity {
         hallErrTV.setVisibility(View.GONE);
         div3.setVisibility(View.GONE);
 
-        mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
-
         if (TSDZBTService.getBluetoothService() == null || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(R.string.connection_error);
@@ -99,14 +90,13 @@ public class ShowDebugInfo extends AppCompatActivity {
 
     public void onStop() {
         super.onStop();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-        Log.i(TAG, "onStop");
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     public void onButtonClick(View view) {
@@ -154,27 +144,12 @@ public class ShowDebugInfo extends AppCompatActivity {
         rxlTV.setText(String.format(Locale.getDefault(),"%d", status.rxlErrors));
     }
 
-    private byte[] lastStatusData;
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction() == null) return;
-            byte[] data;
-            if (intent.getAction().equals(TSDZBTService.TSDZ_STATUS_BROADCAST)) {
-                data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                if (status.setData(data)) {
-                    runOnUiThread(() -> refreshStatus());
-                }
-
-                /*
-                if (!Arrays.equals(lastStatusData, data)) {
-                    if (status.setData(data)) {
-                        lastStatusData = data;
-                        runOnUiThread(() -> refreshStatus());
-                    }
-                }
-                */
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        if (event.eventType == TSDZBTService.BTEventType.TSDZ_STATUS) {
+            if (status.setData(event.data)) {
+                runOnUiThread(this::refreshStatus);
             }
         }
-    };
+    }
 }

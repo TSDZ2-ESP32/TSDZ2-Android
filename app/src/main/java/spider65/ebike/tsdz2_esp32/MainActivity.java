@@ -5,17 +5,14 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.tabs.TabLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -26,9 +23,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.viewpager.widget.ViewPager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager2.widget.ViewPager2;
 import spider65.ebike.tsdz2_esp32.activities.BluetoothSetupActivity;
 import spider65.ebike.tsdz2_esp32.activities.ChartActivity;
 import spider65.ebike.tsdz2_esp32.activities.ESP32ConfigActivity;
@@ -36,6 +36,7 @@ import spider65.ebike.tsdz2_esp32.activities.MotorTestActivity;
 import spider65.ebike.tsdz2_esp32.activities.ShowDebugInfo;
 import spider65.ebike.tsdz2_esp32.activities.TSDZCfgActivity;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
+import spider65.ebike.tsdz2_esp32.fragments.MyFragmentListener;
 import spider65.ebike.tsdz2_esp32.ota.Esp32_Ota;
 import spider65.ebike.tsdz2_esp32.ota.Stm8_Ota;
 import spider65.ebike.tsdz2_esp32.utils.OnSwipeListener;
@@ -75,8 +76,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private static final int APP_PERMISSION_REQUEST = 1;
 
-    IntentFilter mIntentFilter = new IntentFilter();
-
     private byte[] lastStatusData = new byte[STATUS_ADV_SIZE];
 
     private final TSDZ_Status status = new TSDZ_Status();
@@ -93,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         Connecting,
         Connected
     }
+    private MyFragmentListener mCurrentFragment;
 
     private BTStatus btStatus = BTStatus.Disconnected;
     private boolean commError = false;
@@ -111,12 +111,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         else
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        mainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager(), status);
-        ViewPager viewPager = findViewById(R.id.view_pager);
+        mainPagerAdapter = new MainPagerAdapter(this, status);
+        ViewPager2 viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(mainPagerAdapter);
         viewPager.setOnTouchListener(this);
 
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        viewPager.registerOnPageChangeCallback(new  ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
 
@@ -130,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         mTitle.setText(R.string.debug_data);
                         break;
                 }
+                mCurrentFragment = mainPagerAdapter.getItem(position);
             }
 
             @Override
@@ -153,8 +154,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
-        TabLayout tabs = findViewById(R.id.tabs);
-        tabs.setupWithViewPager(viewPager);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -252,14 +251,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         checkPermissions();
 
-        mIntentFilter.addAction(TSDZBTService.SERVICE_STARTED_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_SUCCESS_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_FAILURE_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
-
         checkBT();
         updateUIStatus();
     }
@@ -268,13 +259,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     protected void onResume() {
         super.onResume();
         updateUIStatus();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -311,6 +302,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         return true;
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent intent;
@@ -362,6 +354,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public void onCreateContextMenu (ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         TSDZBTService service = TSDZBTService.getBluetoothService();
@@ -385,6 +378,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onContextItemSelected(MenuItem item){
         TSDZBTService service = TSDZBTService.getBluetoothService();
@@ -642,73 +636,64 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         builder.show();
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //Log.d(TAG, "onReceive " + intent.getAction());
-            if (intent.getAction() == null)
-                return;
-            byte [] data;
-            switch (intent.getAction()) {
-                case TSDZBTService.SERVICE_STARTED_BROADCAST:
-                    Log.d(TAG, "SERVICE_STARTED_BROADCAST");
-                    fabButton.setImageResource(android.R.drawable.ic_media_pause);
-                    TSDZBTService service = TSDZBTService.getBluetoothService();
-                    if (service != null && service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
-                        btStatus = BTStatus.Connecting;
-                        updateStatusIcons();
-                    }
-                    serviceRunning = true;
-					invalidateOptionsMenu();
-                    break;
-                case TSDZBTService.SERVICE_STOPPED_BROADCAST:
-                    Log.d(TAG, "SERVICE_STOPPED_BROADCAST");
-                    fabButton.setImageResource(android.R.drawable.ic_media_play);
-                    btStatus = BTStatus.Disconnected;
-                    updateStatusIcons();
-                    serviceRunning = false;
-					invalidateOptionsMenu();
-                    break;
-                case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
-                    Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
-                    btStatus = BTStatus.Connected;
-                    updateStatusIcons();
-					invalidateOptionsMenu();
-					break;
-                case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
-                    Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
-                    Toast.makeText(getApplicationContext(), "TSDZ-ESP32 Connection Failure.", Toast.LENGTH_LONG).show();
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        Log.d(TAG, "onReceive " + event.eventType);
+        switch (event.eventType) {
+            case SERVICE_STARTED:
+                Log.d(TAG, "SERVICE_STARTED_BROADCAST");
+                fabButton.setImageResource(android.R.drawable.ic_media_pause);
+                TSDZBTService service = TSDZBTService.getBluetoothService();
+                if (service != null && service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
                     btStatus = BTStatus.Connecting;
                     updateStatusIcons();
-					invalidateOptionsMenu();
-					break;
-                case TSDZBTService.CONNECTION_LOST_BROADCAST:
-                    Log.d(TAG, "CONNECTION_LOST_BROADCAST");
-                    Toast.makeText(getApplicationContext(), "TSDZ-ESP32 Connection Lost.", Toast.LENGTH_LONG).show();
-                    btStatus = BTStatus.Connecting;
-                    updateStatusIcons();
-					invalidateOptionsMenu();
-					break;
-				case TSDZBTService.TSDZ_COMMAND_BROADCAST:
-                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (data[0] == CMD_GET_APP_VERSION)
-				        showVersions(data);
-                    break;
-                case TSDZBTService.TSDZ_STATUS_BROADCAST:
-                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (!Arrays.equals(lastStatusData, data)) {
-                        if (status.setData(data)) {
-                            lastStatusData = data;
-                            refreshView();
-                            //mainPagerAdapter.getMyFragment(viewPager.getCurrentItem()).refreshView(status);
-                            mainPagerAdapter.getMyFragment(0).refreshView(status);
-                            mainPagerAdapter.getMyFragment(1).refreshView(status);
-                        }
+                }
+                serviceRunning = true;
+                invalidateOptionsMenu();
+                break;
+            case SERVICE_STOPPED:
+                Log.d(TAG, "SERVICE_STOPPED_BROADCAST");
+                fabButton.setImageResource(android.R.drawable.ic_media_play);
+                btStatus = BTStatus.Disconnected;
+                updateStatusIcons();
+                serviceRunning = false;
+                invalidateOptionsMenu();
+                break;
+            case CONNECTION_SUCCESS:
+                Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
+                btStatus = BTStatus.Connected;
+                updateStatusIcons();
+                invalidateOptionsMenu();
+                break;
+            case CONNECTION_FAILURE:
+                Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
+                Toast.makeText(getApplicationContext(), "TSDZ2-ESP32 Connection Failure.", Toast.LENGTH_LONG).show();
+                btStatus = BTStatus.Connecting;
+                updateStatusIcons();
+                invalidateOptionsMenu();
+                break;
+            case CONNECTION_LOST:
+                Log.d(TAG, "CONNECTION_LOST_BROADCAST");
+                Toast.makeText(getApplicationContext(), "TSDZ2-ESP32 Connection Lost.", Toast.LENGTH_LONG).show();
+                btStatus = BTStatus.Connecting;
+                updateStatusIcons();
+                invalidateOptionsMenu();
+                break;
+            case TSDZ_COMMAND:
+                if (event.data[0] == CMD_GET_APP_VERSION)
+                    showVersions(event.data);
+                break;
+            case TSDZ_STATUS:
+                if (!Arrays.equals(lastStatusData, event.data)) {
+                    if (status.setData(event.data)) {
+                        lastStatusData = event.data;
+                        refreshView();
+                        mCurrentFragment.refreshView(status);
                     }
-                    break;
-            }
+                }
+                break;
         }
-    };
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override

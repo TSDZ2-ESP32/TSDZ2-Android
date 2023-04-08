@@ -1,5 +1,6 @@
 package spider65.ebike.tsdz2_esp32;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
 
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 
@@ -53,15 +54,7 @@ public class TSDZBTService extends Service {
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
 
-    public static final String SERVICE_STARTED_BROADCAST = "SERVICE_STARTED";
-    public static final String SERVICE_STOPPED_BROADCAST = "SERVICE_STOPPED";
-    public static final String CONNECTION_SUCCESS_BROADCAST = "CONNECTION_SUCCESS";
-    public static final String CONNECTION_FAILURE_BROADCAST = "CONNECTION_FAILURE";
-    public static final String CONNECTION_LOST_BROADCAST = "CONNECTION_LOST";
-    public static final String TSDZ_STATUS_BROADCAST = "TSDZ_STATUS";
-    public static final String TSDZ_COMMAND_BROADCAST = "TSDZ_COMMAND";
-    public static final String TSDZ_CFG_READ_BROADCAST = "TSDZ_CFG_READ";
-    public static final String TSDZ_CFG_WRITE_BROADCAST = "TSDZ_CFG_WRITE";
+
 
     private static final int MAX_CONNECTION_RETRY = 10;
     private static TSDZBTService mService = null;
@@ -89,6 +82,31 @@ public class TSDZBTService extends Service {
         CONNECTED,
         DISCONNECTING
     }
+
+    public enum BTEventType {
+        SERVICE_STARTED,
+        SERVICE_STOPPED,
+        CONNECTION_SUCCESS,
+        CONNECTION_FAILURE,
+        CONNECTION_LOST,
+        TSDZ_STATUS,
+        TSDZ_COMMAND,
+        TSDZ_CFG_READ,
+        TSDZ_CFG_WRITE_OK,
+        TSDZ_CFG_WRITE_KO
+    }
+
+    /* Event Bus event sent to notify new BT events */
+    public static class BTServiceEvent {
+        public BTEventType eventType;
+        public byte[] data;
+        BTServiceEvent(BTEventType type, byte[] data) {
+            eventType = type;
+            this.data = data;
+        }
+
+    }
+
 
     public TSDZBTService() {
         Log.d(TAG, "TSDZBTService()");
@@ -126,9 +144,7 @@ public class TSDZBTService extends Service {
                         else {
                             disconnect();
                             stopped = true;
-                            Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
-                            bi.putExtra("MESSAGE", "Connection Failed");
-                            LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
+                            EventBus.getDefault().post(new BTServiceEvent(BTEventType.CONNECTION_FAILURE, null));
                             stopSelf();
                         }
                         break;
@@ -150,7 +166,7 @@ public class TSDZBTService extends Service {
 
         // Create notification default intent.
         Intent intent = new Intent();
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         String channelId = getString(R.string.app_name);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -173,7 +189,7 @@ public class TSDZBTService extends Service {
         // Add Disconnect button intent in notification.
         Intent stopIntent = new Intent(this, TSDZBTService.class);
         stopIntent.setAction(ACTION_STOP_FOREGROUND_SERVICE);
-        PendingIntent pendingStopIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+        PendingIntent pendingStopIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Action prevAction = new NotificationCompat.Action(android.R.drawable.ic_media_pause, "Disconnect", pendingStopIntent);
         builder.addAction(prevAction);
 
@@ -183,8 +199,7 @@ public class TSDZBTService extends Service {
         // Start foreground service.
         startForeground(1, notification);
 
-        Intent bi = new Intent(SERVICE_STARTED_BROADCAST);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
+        EventBus.getDefault().post(new BTServiceEvent(BTEventType.SERVICE_STARTED, null));
         mService = this;
     }
 
@@ -195,8 +210,7 @@ public class TSDZBTService extends Service {
         // Stop foreground service and remove the notification.
         stopForeground(true);
 
-        Intent bi = new Intent(SERVICE_STOPPED_BROADCAST);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(bi);
+        EventBus.getDefault().post(new BTServiceEvent(BTEventType.SERVICE_STOPPED, null));
         mService = null;
 
         // Stop the foreground service.
@@ -206,6 +220,7 @@ public class TSDZBTService extends Service {
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+        @SuppressLint("MissingPermission")
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -222,8 +237,7 @@ public class TSDZBTService extends Service {
                         stopForegroundService();
                     } else {
                         connect(address);
-                        Intent bi = new Intent(CONNECTION_LOST_BROADCAST);
-                        LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                        EventBus.getDefault().post(new BTServiceEvent(BTEventType.CONNECTION_LOST, null));
                     }
                 else {
                     mBluetoothGatt.close();
@@ -232,6 +246,7 @@ public class TSDZBTService extends Service {
             }
         }
 
+        @SuppressLint("MissingPermission")
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == GATT_SUCCESS) {
@@ -254,9 +269,7 @@ public class TSDZBTService extends Service {
                     }
                 }
                 if (tsdz_status_char == null || tsdz_config_char == null || tsdz_command_char == null) {
-                    Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
-                    bi.putExtra("MESSAGE", "Service not found!");
-                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                    EventBus.getDefault().post(new BTServiceEvent(BTEventType.CONNECTION_FAILURE, null));
                     Log.e(TAG, "onServicesDiscovered Service not found!");
                     disconnect();
                     return;
@@ -272,9 +285,7 @@ public class TSDZBTService extends Service {
         @Override
         public void onMtuChanged (BluetoothGatt gatt, int mtu, int status) {
             if ((status != BluetoothGatt.GATT_SUCCESS) || (mtu < (STATUS_ADV_SIZE + 3))) {
-                Intent bi = new Intent(CONNECTION_FAILURE_BROADCAST);
-                bi.putExtra("MESSAGE", "MTU Setup Failed");
-                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                EventBus.getDefault().post(new BTServiceEvent(BTEventType.CONNECTION_FAILURE, null));
                 Log.e(TAG, "onMtuChanged: MTU Setup FAILED");
                 disconnect();
                 return;
@@ -286,6 +297,7 @@ public class TSDZBTService extends Service {
         }
 
 
+        @SuppressLint("MissingPermission")
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor,
                                       int status) {
@@ -300,8 +312,7 @@ public class TSDZBTService extends Service {
                     else if (descriptor.getCharacteristic().getUuid().equals(UUID_COMMAND_CHARACTERISTIC))
                         if (mConnectionState == ConnectionState.CONNECTING) {
                             mConnectionState = ConnectionState.CONNECTED;
-                            Intent bi = new Intent(CONNECTION_SUCCESS_BROADCAST);
-                            LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                            EventBus.getDefault().post(new BTServiceEvent(BTEventType.CONNECTION_SUCCESS, null));
                         } else {
                             // DISCONNECTING
                             mBluetoothGatt.disconnect();
@@ -317,9 +328,7 @@ public class TSDZBTService extends Service {
             //Log.d(TAG, "onCharacteristicRead:" + characteristic.getUuid().toString());
             if (status == GATT_SUCCESS) {
                 if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
-                    Intent bi = new Intent(TSDZ_CFG_READ_BROADCAST);
-                    bi.putExtra(VALUE_EXTRA, characteristic.getValue());
-                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                    EventBus.getDefault().post(new BTServiceEvent(BTEventType.TSDZ_CFG_READ, characteristic.getValue()));
                 }
             } else {
                 Log.e(TAG, "Characteristic read Error: " + status);
@@ -333,16 +342,12 @@ public class TSDZBTService extends Service {
             byte [] data = characteristic.getValue();
             if (UUID_STATUS_CHARACTERISTIC.equals(characteristic.getUuid())) {
                 if (data.length == STATUS_ADV_SIZE) {
-                    Intent bi = new Intent(TSDZ_STATUS_BROADCAST);
-                    bi.putExtra(VALUE_EXTRA, data);
-                    LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                    EventBus.getDefault().post(new BTServiceEvent(BTEventType.TSDZ_STATUS, data));
                 } else {
                     Log.e(TAG, "Wrong Status Advertising Size: " + data.length);
                 }
             } else if (UUID_COMMAND_CHARACTERISTIC.equals(characteristic.getUuid())) {
-                Intent bi = new Intent(TSDZ_COMMAND_BROADCAST);
-                bi.putExtra(VALUE_EXTRA, characteristic.getValue());
-                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                EventBus.getDefault().post(new BTServiceEvent(BTEventType.TSDZ_COMMAND, data));
             }
         }
 
@@ -352,13 +357,15 @@ public class TSDZBTService extends Service {
                                          int status) {
             //Log.d(TAG, "onCharacteristicWrite:" + characteristic.getUuid().toString());
             if (UUID_CONFIG_CHARACTERISTIC.equals(characteristic.getUuid())) {
-                Intent bi = new Intent(TSDZ_CFG_WRITE_BROADCAST);
-                bi.putExtra(VALUE_EXTRA, status == GATT_SUCCESS);
-                LocalBroadcastManager.getInstance(TSDZBTService.this).sendBroadcast(bi);
+                if (status == GATT_SUCCESS)
+                    EventBus.getDefault().post(new BTServiceEvent(BTEventType.TSDZ_CFG_WRITE_OK, null));
+                else
+                    EventBus.getDefault().post(new BTServiceEvent(BTEventType.TSDZ_CFG_WRITE_KO, null));
             }
         }
     };
 
+    @SuppressLint("MissingPermission")
     private boolean connect(String address) {
         Log.d(TAG, "connect");
         // Initializes Bluetooth adapter.
@@ -391,6 +398,7 @@ public class TSDZBTService extends Service {
         return true;
     }
 
+    @SuppressLint("MissingPermission")
     private void disconnect() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -412,6 +420,7 @@ public class TSDZBTService extends Service {
      * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
      * callback.
      */
+    @SuppressLint("MissingPermission")
     public void readCfg() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null || tsdz_command_char == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -420,6 +429,7 @@ public class TSDZBTService extends Service {
         mBluetoothGatt.readCharacteristic(tsdz_config_char);
     }
 
+    @SuppressLint("MissingPermission")
     public void writeCfg(TSDZ_Config cfg) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null || tsdz_command_char == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -429,6 +439,7 @@ public class TSDZBTService extends Service {
         mBluetoothGatt.writeCharacteristic(tsdz_config_char);
     }
 
+    @SuppressLint("MissingPermission")
     public void writeCommand(byte[] command) {
         //Log.d(TAG,"Sending command: " + Utils.bytesToHex(command));
         if (mBluetoothAdapter == null || mBluetoothGatt == null || tsdz_command_char == null) {
@@ -445,6 +456,7 @@ public class TSDZBTService extends Service {
      * @param characteristic Characteristic to act on.
      * @param enabled If true, enable notification.  False otherwise.
      */
+    @SuppressLint("MissingPermission")
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {

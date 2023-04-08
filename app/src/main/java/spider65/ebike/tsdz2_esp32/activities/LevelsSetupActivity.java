@@ -1,9 +1,5 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,8 +9,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.databinding.DataBindingUtil;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import spider65.ebike.tsdz2_esp32.R;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
 import spider65.ebike.tsdz2_esp32.databinding.ActivityLevelsSetupBinding;
@@ -39,7 +36,6 @@ public class LevelsSetupActivity extends AppCompatActivity {
 
     private static final String TAG = "LevelsSetupActivity";
     private final TSDZ_Config cfg = new TSDZ_Config();
-    private final IntentFilter mIntentFilter = new IntentFilter();
     private ActivityLevelsSetupBinding binding;
 
 
@@ -51,8 +47,7 @@ public class LevelsSetupActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_READ_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_WRITE_BROADCAST);
+
         TSDZBTService service = TSDZBTService.getBluetoothService();
         if (service != null && service.getConnectionStatus() == TSDZBTService.ConnectionState.CONNECTED)
             service.readCfg();
@@ -64,13 +59,13 @@ public class LevelsSetupActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
     }
 
     public void onOkCancelClick(View view) {
@@ -239,24 +234,20 @@ public class LevelsSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "onReceive " + intent.getAction());
-        if (intent.getAction() == null)
-            return;
-        switch (intent.getAction()) {
-            case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA)))
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        Log.d(TAG, "onReceive " + event.eventType);
+        switch (event.eventType) {
+            case TSDZ_CFG_READ:
+                if (cfg.setData(event.data))
                     binding.setCfg(cfg);
                 break;
-            case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
-                if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
-                    finish();
-                else
-                    showDialog(getString(R.string.error), getString(R.string.write_cfg_error));
+            case TSDZ_CFG_WRITE_OK:
+                finish();
                 break;
-         }
+            case TSDZ_CFG_WRITE_KO:
+                showDialog(getString(R.string.error), getString(R.string.write_cfg_error));
+                break;
         }
-    };
+    }
 }

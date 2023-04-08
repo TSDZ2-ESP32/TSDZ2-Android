@@ -1,10 +1,5 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
-import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,7 +9,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.databinding.DataBindingUtil;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
@@ -27,7 +24,6 @@ public class TorqueSetupActivity extends AppCompatActivity {
     private static final String TAG = "TorqueSetupActivity";
 
     private final TSDZ_Config cfg = new TSDZ_Config();
-    private final IntentFilter mIntentFilter = new IntentFilter();
     private ActivityTorqueSetupBinding binding;
 
     private final TSDZ_Status status = new TSDZ_Status();
@@ -43,9 +39,6 @@ public class TorqueSetupActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_READ_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_WRITE_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
         TSDZBTService service = TSDZBTService.getBluetoothService();
         if (service != null && service.getConnectionStatus() == TSDZBTService.ConnectionState.CONNECTED)
             service.readCfg();
@@ -57,13 +50,13 @@ public class TorqueSetupActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
     }
 
     public void onOkCancelClick(View view) {
@@ -145,40 +138,33 @@ public class TorqueSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @SuppressLint("SetTextI18n")
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive " + intent.getAction());
-            if (intent.getAction() == null)
-                return;
-            byte [] data;
-            switch (intent.getAction()) {
-                case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                    if (cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
-                        binding.setCfg(cfg);
-                    }
-                    break;
-                case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
-                    if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
-                        finish();
-                    else
-                        showDialog(getString(R.string.error), getString(R.string.write_cfg_error));
-                    break;
-                case TSDZBTService.TSDZ_STATUS_BROADCAST:
-                    data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    if (status.setData(data)) {
-                        if (status.torqueADCValue < minADC)
-                            minADC = status.torqueADCValue;
-                        if (status.torqueADCValue > maxADC)
-                            maxADC = status.torqueADCValue;
-                        binding.setCurrADC(status.torqueADCValue);
-                        binding.setMaxDelta(maxADC - minADC);
-                        binding.setMinADC(minADC);
-                        binding.setMaxADC(maxADC);
-                    }
-                    break;
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        Log.d(TAG, "onReceive " + event.eventType);
+        switch (event.eventType) {
+            case TSDZ_CFG_READ:
+                if (cfg.setData(event.data)) {
+                    binding.setCfg(cfg);
+                }
+                break;
+            case TSDZ_CFG_WRITE_OK:
+                finish();
+                break;
+            case TSDZ_CFG_WRITE_KO:
+                showDialog(getString(R.string.error), getString(R.string.write_cfg_error));
+                break;
+            case TSDZ_STATUS:
+                if (status.setData(event.data)) {
+                    if (status.torqueADCValue < minADC)
+                        minADC = status.torqueADCValue;
+                    if (status.torqueADCValue > maxADC)
+                        maxADC = status.torqueADCValue;
+                    binding.setCurrADC(status.torqueADCValue);
+                    binding.setMaxDelta(maxADC - minADC);
+                    binding.setMinADC(minADC);
+                    binding.setMaxADC(maxADC);
+                }
+                break;
             }
         }
-    };
 }

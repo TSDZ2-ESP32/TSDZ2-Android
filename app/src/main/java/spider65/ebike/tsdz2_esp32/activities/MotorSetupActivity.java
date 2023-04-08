@@ -1,9 +1,5 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 
 import android.view.View;
@@ -12,7 +8,9 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Config;
@@ -23,7 +21,6 @@ public class MotorSetupActivity extends AppCompatActivity {
     private static final int MAX_ANGLE = 10;
     private static final int MAX_OFFSET = 10;
 
-    private final IntentFilter mIntentFilter = new IntentFilter();
     private TextView angleValTV, offsetValTV;
     private final TSDZ_Config cfg = new TSDZ_Config();
 
@@ -38,9 +35,6 @@ public class MotorSetupActivity extends AppCompatActivity {
         angleValTV = findViewById(R.id.angleValTV);
         offsetValTV = findViewById(R.id.offsetValTV);
 
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_READ_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_WRITE_BROADCAST);
-
         if (TSDZBTService.getBluetoothService() == null
                 || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
             showDialog("", getString(R.string.connection_error), true);
@@ -53,13 +47,13 @@ public class MotorSetupActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
     }
 
     public void onButtonClick(View view) {
@@ -122,32 +116,29 @@ public class MotorSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction() == null)
-                return;
-            switch (intent.getAction()) {
-                case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                    if (!cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
-                        showDialog(getString(R.string.error), getString(R.string.cfgReadError), false);
-                        break;
-                    }
-                    int v = cfg.ui8_phase_angle_adj;
-                    if (v >= 128) v-=256;
-                    angleValTV.setText(String.valueOf(v));
-                    v = cfg.ui8_hall_offset_adj;
-                    if (v >= 128) v-=256;
-                    offsetValTV.setText(String.valueOf(v));
-                    findViewById(R.id.saveButton).setEnabled(true);
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+
+        switch (event.eventType) {
+            case TSDZ_CFG_READ:
+                if (!cfg.setData(event.data)) {
+                    showDialog(getString(R.string.error), getString(R.string.cfgReadError), false);
                     break;
-                case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
-                    if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
-                        showDialog("", getString(R.string.cfgSaved), true);
-                    else
-                        showDialog(getString(R.string.error), getString(R.string.cfgSaveError), false);
-                    break;
-            }
+                }
+                int v = cfg.ui8_phase_angle_adj;
+                if (v >= 128) v-=256;
+                angleValTV.setText(String.valueOf(v));
+                v = cfg.ui8_hall_offset_adj;
+                if (v >= 128) v-=256;
+                offsetValTV.setText(String.valueOf(v));
+                findViewById(R.id.saveButton).setEnabled(true);
+                break;
+            case TSDZ_CFG_WRITE_OK:
+                showDialog("", getString(R.string.cfgSaved), true);
+                break;
+            case TSDZ_CFG_WRITE_KO:
+                showDialog(getString(R.string.error), getString(R.string.cfgSaveError), false);
+                break;
         }
-    };
+    }
 }

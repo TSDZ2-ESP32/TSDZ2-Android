@@ -1,5 +1,6 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -22,8 +23,6 @@ import spider65.ebike.tsdz2_esp32.R;
 
 import android.os.Handler;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -31,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED;
 
@@ -41,8 +41,8 @@ public class BluetoothSetupActivity extends AppCompatActivity {
     public static final String KEY_DEVICE_NAME = "DEVICE_NAME";
     public static final String KEY_DEVICE_MAC = "DEVICE_MAC";
 
-    private ArrayList<String> deviceList = new ArrayList<>();
-    private ArrayList<BluetoothDevice> btDeviceList = new ArrayList<>();
+    private final ArrayList<String> deviceList = new ArrayList<>();
+    private final ArrayList<BluetoothDevice> btDeviceList = new ArrayList<>();
     private ArrayAdapter<String> adapter;
 
     private String selectedDeviceString;
@@ -52,69 +52,61 @@ public class BluetoothSetupActivity extends AppCompatActivity {
     private TextView deviceTV;
 
     private static final long SCAN_PERIOD = 10000; // millisecond
-    private Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler();
 
     private BluetoothAdapter btAdapter;
     private BluetoothLeScanner btScanner;
 
-    private IntentFilter filter = new IntentFilter();
+    private final IntentFilter filter = new IntentFilter();
 
+    @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_setup);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
 
         deviceTV = findViewById(R.id.deviceTextView);
         scanButton = findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                scanButton.setEnabled(false);
-                startScanning();
-            }
+        scanButton.setOnClickListener(v -> {
+            scanButton.setEnabled(false);
+            startScanning();
         });
 
         Button okButton = findViewById(R.id.okButton);
-        okButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                stopScanning();
-                if (selectedDevice != null) {
-                    if (selectedDevice.getBondState() != BluetoothDevice.BOND_BONDED) {
-                        if (!selectedDevice.createBond())
-                            showDialog(getString(R.string.error), getString(R.string.pairing_error), true);
-                    } else {
-                        // device is already bonded
-                        SharedPreferences.Editor editor = MyApp.getPreferences().edit();
-                        editor.putString(KEY_DEVICE_NAME, selectedDeviceString);
-                        editor.putString(KEY_DEVICE_MAC, selectedDevice.getAddress());
-                        editor.apply();
-                        BluetoothSetupActivity.this.showDialog(null, getString(R.string.pairing_done),true);
-                    }
-                } else
-                    finish();
-            }
+        okButton.setOnClickListener(v -> {
+            stopScanning();
+            if (selectedDevice != null) {
+                if (selectedDevice.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    if (!selectedDevice.createBond())
+                        exitDialog(getString(R.string.error), getString(R.string.pairing_error));
+                } else {
+                    // device is already bonded
+                    SharedPreferences.Editor editor = MyApp.getPreferences().edit();
+                    editor.putString(KEY_DEVICE_NAME, selectedDeviceString);
+                    editor.putString(KEY_DEVICE_MAC, selectedDevice.getAddress());
+                    editor.apply();
+                    BluetoothSetupActivity.this.exitDialog(null, getString(R.string.pairing_done));
+                }
+            } else
+                finish();
         });
 
         Button cancelButton = findViewById(R.id.exitButton);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                stopScanning();
-                finish();
-            }
+        cancelButton.setOnClickListener(v -> {
+            stopScanning();
+            finish();
         });
 
         ListView listView = findViewById(R.id.devicesListView);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, deviceList);
         listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectedDeviceString = deviceList.get(position);
-                selectedDevice = btDeviceList.get(position);
-                updateDeviceTV();
-            }
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            selectedDeviceString = deviceList.get(position);
+            selectedDevice = btDeviceList.get(position);
+            updateDeviceTV();
         });
 
         BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -137,6 +129,7 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         unregisterReceiver(mMessageReceiver);
     }
 
+    @SuppressLint("MissingPermission")
     private void checkDevice() {
         String mac = MyApp.getPreferences().getString(KEY_DEVICE_MAC, null);
         if (mac != null) {
@@ -149,20 +142,19 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         }
     }
 
-    private void showDialog (String title, String message, boolean exit) {
+    private void exitDialog(String title, String message) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         if (title != null)
             builder.setTitle(title);
         builder.setMessage(message);
-        if (exit) {
-            builder.setOnCancelListener((dialog) -> BluetoothSetupActivity.this.finish());
-            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> BluetoothSetupActivity.this.finish());
-        } else
-            builder.setPositiveButton(android.R.string.ok, null);
+
+        builder.setOnCancelListener((dialog) -> BluetoothSetupActivity.this.finish());
+        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> BluetoothSetupActivity.this.finish());
+
         builder.show();
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             //Log.d(TAG, "onReceive " + intent.getAction());
@@ -175,11 +167,11 @@ public class BluetoothSetupActivity extends AppCompatActivity {
                         editor.putString(KEY_DEVICE_NAME, selectedDeviceString);
                         editor.putString(KEY_DEVICE_MAC, selectedDevice.getAddress());
                         editor.apply();
-                        BluetoothSetupActivity.this.showDialog(null, getString(R.string.pairing_done),true);
+                        BluetoothSetupActivity.this.exitDialog(null, getString(R.string.pairing_done));
                         break;
                     case BluetoothDevice.BOND_NONE:
                         Log.d(TAG, "ACTION_BOND_STATE_CHANGED: BOND_BONDED");
-                        BluetoothSetupActivity.this.showDialog(getString(R.string.error), getString(R.string.pairing_error),true);
+                        BluetoothSetupActivity.this.exitDialog(getString(R.string.error), getString(R.string.pairing_error));
                         break;
                     default:
                         Log.d(TAG, "ACTION_BOND_STATE_CHANGED: state = " + state);
@@ -195,35 +187,23 @@ public class BluetoothSetupActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("MissingPermission")
     public void startScanning() {
         deviceList.clear();
         btDeviceList.clear();
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                btScanner.startScan(leScanCallback);
-            }
-        });
+        AsyncTask.execute(() -> btScanner.startScan(leScanCallback));
 
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                stopScanning();
-            }
-        }, SCAN_PERIOD);
+        mHandler.postDelayed(this::stopScanning, SCAN_PERIOD);
     }
 
+    @SuppressLint("MissingPermission")
     public void stopScanning() {
         scanButton.setEnabled(true);
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                btScanner.stopScan(leScanCallback);
-            }
-        });
+        AsyncTask.execute(() -> btScanner.stopScan(leScanCallback));
     }
 
-    private ScanCallback leScanCallback = new ScanCallback() {
+    private final ScanCallback leScanCallback = new ScanCallback() {
+        @SuppressLint("MissingPermission")
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             Log.d(TAG, "onScanResult " + result.getDevice().getName());

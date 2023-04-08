@@ -1,13 +1,11 @@
 package spider65.ebike.tsdz2_esp32.ota;
 
-import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -15,27 +13,17 @@ import fi.iki.elonen.NanoHTTPD;
 public class HttpdServer extends NanoHTTPD {
     private static final String TAG = "HttpdServer";
 
-    private File updateFile;
-    private Context context;
-    private ProgressInputStreamListener listener = null;
+    private final File updateFile;
+    private final ProgressInputStreamListener listener;
 
-    public HttpdServer(File file, Context context, ProgressInputStreamListener listener) {
+    public HttpdServer(File file, ProgressInputStreamListener listener) {
         super(8089);
         updateFile = file;
-        this.context = context;
         this.listener = listener;
     }
 
-    private HttpdServer() {
-        super(8089);
-    }
-
-
     @Override
-    public Response serve(String uri, Method method,
-                          Map<String, String> header, Map<String, String> parameters,
-                          Map<String, String> files) {
-
+    public Response serve(IHTTPSession session) {
         ProcessInputStream pis = null;
         long size = 0;
         try {
@@ -47,21 +35,20 @@ public class HttpdServer extends NanoHTTPD {
             pis = new ProcessInputStream(inStream, size);
             pis.setListener(listener);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Log.e(TAG,e.toString());
         }
         return newFixedLengthResponse(Response.Status.OK, "application/octet-stream", pis, size);
-        //return newChunkedResponse(Response.Status.OK, "application/octet-stream", inStream);
     }
 
     public static class ProcessInputStream extends InputStream{
 
-        private InputStream in;
-        private long length,sumRead;
+        private final InputStream in;
+        private final long length;
+        private long sumRead;
         private ProgressInputStreamListener listener = null;
         private int percent;
 
-        public ProcessInputStream(InputStream inputStream, long length) throws IOException {
+        public ProcessInputStream(InputStream inputStream, long length) {
             this.in=inputStream;
             sumRead=0;
             this.length=length;
@@ -97,9 +84,8 @@ public class HttpdServer extends NanoHTTPD {
             return read;
         }
 
-        public ProcessInputStream setListener(ProgressInputStreamListener listener){
+        public void setListener(ProgressInputStreamListener listener){
             this.listener = listener;
-            return this;
         }
 
         private void evaluatePercent(long readCount){

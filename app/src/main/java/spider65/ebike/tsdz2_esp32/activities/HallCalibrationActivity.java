@@ -1,9 +1,5 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,7 +12,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Locale;
 
@@ -40,7 +38,6 @@ public class HallCalibrationActivity extends AppCompatActivity {
     private static final int AVG_SIZE = 100;
 
     private final TSDZ_Config cfg = new TSDZ_Config();
-    private final IntentFilter mIntentFilter = new IntentFilter();
 
     private TextView erpsTV, hallValuesTV, hallUpDnDiffTV;
     private final TextView[] angleTV = new TextView[6];
@@ -107,13 +104,6 @@ public class HallCalibrationActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         progressTV = findViewById(R.id.progressTV);
 
-        mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_READ_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_CFG_WRITE_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_FAILURE_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
-
         if (TSDZBTService.getBluetoothService() == null
                 || TSDZBTService.getBluetoothService().getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED)
             showDialog(getString(R.string.error), getString(R.string.connection_error), true);
@@ -134,13 +124,13 @@ public class HallCalibrationActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -422,77 +412,73 @@ public class HallCalibrationActivity extends AppCompatActivity {
             startCalib();
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction() == null)
-                return;
-            switch (intent.getAction()) {
-                case TSDZBTService.CONNECTION_LOST_BROADCAST:
-                case TSDZBTService.SERVICE_STOPPED_BROADCAST:
-                case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
-                    calibrationRunning = false;
-                    updateUI();
-                    Toast.makeText(getApplicationContext(), "BT Connection Lost.", Toast.LENGTH_LONG).show();
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        switch (event.eventType) {
+            case CONNECTION_LOST:
+            case SERVICE_STOPPED:
+            case CONNECTION_FAILURE:
+                calibrationRunning = false;
+                updateUI();
+                Toast.makeText(getApplicationContext(), "BT Connection Lost.", Toast.LENGTH_LONG).show();
+                break;
+            case TSDZ_CFG_READ:
+                if (!cfg.setData(event.data)) {
+                    showDialog(getString(R.string.error), getString(R.string.calibrationSaveError), false);
                     break;
-                case TSDZBTService.TSDZ_CFG_READ_BROADCAST:
-                    if (!cfg.setData(intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA))) {
-                        showDialog(getString(R.string.error), getString(R.string.calibrationSaveError), false);
-                        break;
-                    }
+                }
 
-                    System.arraycopy(cfg.ui8_hall_ref_angles, 0, phaseAngles, 0, 6);
-                    System.arraycopy(cfg.ui8_hall_counter_offset, 0, hallTOffset, 0, 6);
-                    refresValues();
-                    break;
-                case TSDZBTService.TSDZ_CFG_WRITE_BROADCAST:
-                    if (intent.getBooleanExtra(TSDZBTService.VALUE_EXTRA,false))
-                        showDialog("", getString(R.string.calibrationApplied), true);
-                    else
-                        showDialog(getString(R.string.error), getString(R.string.calibrationSaveError), false);
-                    break;
-                case TSDZBTService.TSDZ_COMMAND_BROADCAST:
-                    byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    //Log.d(TAG,"TSDZ_COMMAND_BROADCAST: " + Utils.bytesToHex(data));
-                    if (data[0] == CMD_MOTOR_TEST) {
-                        switch(data[1]) {
-                            case TEST_START:
-                                if (data[2] != (byte)0x0)
-                                    showDialog(getString(R.string.error), getString(R.string.motorTestStartError), false);
-                                else
-                                    calibrationRunning = true;
-                                updateUI();
-                                break;
-                            case TEST_STOP:
-                                if (data[2] != (byte)0x0) {
-                                    showDialog(getString(R.string.error), getString(R.string.motorTestStopError), false);
-                                }
-                                break;
-                            case (byte)0xff:
-                                showDialog(getString(R.string.error), getString(R.string.commandError), false);
-                                break;
-                        }
-                    } else if (data[0] == CMD_HALL_DATA) {
-                        if (!calibrationRunning) {
-                            return;
-                        }
-                        msgCounter++;
-                        long progress = (100 * (step * (AVG_SIZE + SETUP_STEPS) + msgCounter)) / (4 * (AVG_SIZE + SETUP_STEPS));
-                        progressTV.setText(String.format(Locale.getDefault(), "%d%%", progress));
-                        if (msgCounter <= SETUP_STEPS) {
-                            return;
-                        }
-                        long sum = 0;
-                        for (int i=0; i<6; i++) {
-                            avg[i].add(((data[i*2+2] & 255) << 8) + (data[i*2+1] & 255));
-                            sum += avg[i].getAverage();
-                        }
-                        erpsTV.setText(String.format(Locale.getDefault(), "%.2f", 250000D/sum));
-                        if (avg[0].getIndex() == 0)
-                            nextStep(sum);
+                System.arraycopy(cfg.ui8_hall_ref_angles, 0, phaseAngles, 0, 6);
+                System.arraycopy(cfg.ui8_hall_counter_offset, 0, hallTOffset, 0, 6);
+                refresValues();
+                break;
+            case TSDZ_CFG_WRITE_OK:
+                showDialog("", getString(R.string.calibrationApplied), true);
+                break;
+            case TSDZ_CFG_WRITE_KO:
+                showDialog(getString(R.string.error), getString(R.string.calibrationSaveError), false);
+                break;
+            case TSDZ_COMMAND:
+                byte[] data = event.data;
+                //Log.d(TAG,"TSDZ_COMMAND_BROADCAST: " + Utils.bytesToHex(data));
+                if (data[0] == CMD_MOTOR_TEST) {
+                    switch(data[1]) {
+                        case TEST_START:
+                            if (data[2] != (byte)0x0)
+                                showDialog(getString(R.string.error), getString(R.string.motorTestStartError), false);
+                            else
+                                calibrationRunning = true;
+                            updateUI();
+                            break;
+                        case TEST_STOP:
+                            if (data[2] != (byte)0x0) {
+                                showDialog(getString(R.string.error), getString(R.string.motorTestStopError), false);
+                            }
+                            break;
+                        case (byte)0xff:
+                            showDialog(getString(R.string.error), getString(R.string.commandError), false);
+                            break;
                     }
-                    break;
-            }
+                } else if (data[0] == CMD_HALL_DATA) {
+                    if (!calibrationRunning) {
+                        return;
+                    }
+                    msgCounter++;
+                    long progress = (100 * ((long) step * (AVG_SIZE + SETUP_STEPS) + msgCounter)) / (4 * (AVG_SIZE + SETUP_STEPS));
+                    progressTV.setText(String.format(Locale.getDefault(), "%d%%", progress));
+                    if (msgCounter <= SETUP_STEPS) {
+                        return;
+                    }
+                    long sum = 0;
+                    for (int i=0; i<6; i++) {
+                        avg[i].add(((data[i*2+2] & 255) << 8) + (data[i*2+1] & 255));
+                        sum += avg[i].getAverage();
+                    }
+                    erpsTV.setText(String.format(Locale.getDefault(), "%.2f", 250000D/sum));
+                    if (avg[0].getIndex() == 0)
+                        nextStep(sum);
+                }
+                break;
         }
-    };
+    }
 }

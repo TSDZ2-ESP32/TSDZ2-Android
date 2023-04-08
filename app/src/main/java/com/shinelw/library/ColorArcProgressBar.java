@@ -40,7 +40,7 @@ public class ColorArcProgressBar extends View{
     private SweepGradient sweepGradient;
     private Matrix rotateMatrix;
 
-    private float startAngle = 135;
+    private final float startAngle = 135;
     private float sweepAngle = 270;
     private float currentAngle = 0;
     private float lastAngle;
@@ -51,16 +51,16 @@ public class ColorArcProgressBar extends View{
     private float progressWidth = dipToPx(10);
     private float textSize = dipToPx(60);
     private float hintSize = dipToPx(15);
-    private float curSpeedSize = dipToPx(13);
-    private int aniSpeed = 1000;
-    private float longdegree = dipToPx(13);
-    private float shortdegree = dipToPx(5);
+    private final float curSpeedSize = dipToPx(13);
+    private final int aniSpeed = 1000;
+    private final float longdegree = dipToPx(13);
+    private final float shortdegree = dipToPx(5);
     private final int DEGREE_PROGRESS_DISTANCE = dipToPx(8);
 
-    private String hintColor = "#676767";
-    private String longDegreeColor = "#111111";
-    private String shortDegreeColor = "#111111";
-    private String bgArcColor = "#111111";
+    private final String hintColor = "#676767";
+    private final String longDegreeColor = "#111111";
+    private final String shortDegreeColor = "#111111";
+    private final String bgArcColor = "#111111";
     private String titleString;
     private String hintString;
 

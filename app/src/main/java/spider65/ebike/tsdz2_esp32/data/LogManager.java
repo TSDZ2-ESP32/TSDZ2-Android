@@ -1,9 +1,5 @@
 package spider65.ebike.tsdz2_esp32.data;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -25,7 +21,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import spider65.ebike.tsdz2_esp32.MyApp;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
 
@@ -91,10 +89,6 @@ public class LogManager {
     }
 
     private LogManager() {
-        final IntentFilter mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.TSDZ_STATUS_BROADCAST);
 
         // to avoid performance issues (e.g. log file switch can take some time), data logging
         // is asyncronous and handled by a dedicated thread
@@ -128,51 +122,45 @@ public class LogManager {
         };
 
         initLogFiles();
+        EventBus.getDefault().register(this);
+    }
 
-        final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, @NotNull Intent intent) {
-                if (intent.getAction() == null)
-                    return;
-                byte[] data;
-                long now;
-                switch (intent.getAction()) {
-                    case TSDZBTService.CONNECTION_LOST_BROADCAST:
-                        Log.d(TAG, "CONNECTION_LOST_BROADCAST - flush Logs");
-                    case TSDZBTService.SERVICE_STOPPED_BROADCAST:
-                        Log.d(TAG, "SERVICE_STOPPED_BROADCAST - flush Logs");
-                        if (statusBuffer != null) {
-                            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
-                            mHandler.sendMessage(msg);
-                            statusBuffer = null;
-                        }
-                        break;
-                    case TSDZBTService.TSDZ_STATUS_BROADCAST:
-                        now = System.currentTimeMillis();
-                        // log 1 msg/sec
-                        if ((now - lastStatusTimestamp) <= 900)
-                            return;
-                        lastStatusTimestamp = now;
-                        data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                        if (data.length != STATUS_ADV_SIZE) {
-                            Log.w(TAG, "TSDZ_STATUS_BROADCAST: Wrong data size!");
-                            return;
-                        }
-                        // StatusBuffer could be overwritten if a new notification arrives before statusBuffer
-                        // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
-                        if (statusBuffer == null)
-                            statusBuffer = StatusBuffer.obtain();
-                        if (statusBuffer.addRecord(data, now)) {
-                            // statusBuffer is full, write it to disk
-                            Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
-                            mHandler.sendMessage(msg);
-                            statusBuffer = null;
-                        }
-                        break;
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        long now;
+        switch (event.eventType) {
+            case CONNECTION_LOST:
+                Log.d(TAG, "CONNECTION_LOST_BROADCAST - flush Logs");
+            case SERVICE_STOPPED:
+                Log.d(TAG, "SERVICE_STOPPED_BROADCAST - flush Logs");
+                if (statusBuffer != null) {
+                    Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
+                    mHandler.sendMessage(msg);
+                    statusBuffer = null;
                 }
-            }
-        };
-        LocalBroadcastManager.getInstance(MyApp.getInstance()).registerReceiver(mMessageReceiver, mIntentFilter);
+                break;
+            case TSDZ_STATUS:
+                now = System.currentTimeMillis();
+                // log 1 msg/sec
+                if ((now - lastStatusTimestamp) <= 900)
+                    return;
+                lastStatusTimestamp = now;
+                if (event.data.length != STATUS_ADV_SIZE) {
+                    Log.w(TAG, "TSDZ_STATUS_BROADCAST: Wrong data size!");
+                    return;
+                }
+                // StatusBuffer could be overwritten if a new notification arrives before statusBuffer
+                // is written to the log. To avoid this potential problem, a recycling buffer pool is used.
+                if (statusBuffer == null)
+                    statusBuffer = StatusBuffer.obtain();
+                if (statusBuffer.addRecord(event.data, now)) {
+                    // statusBuffer is full, write it to disk
+                    Message msg = mHandler.obtainMessage(MSG_STATUS_LOG, statusBuffer);
+                    mHandler.sendMessage(msg);
+                    statusBuffer = null;
+                }
+                break;
+        }
     }
 
     public void setListener (LogResultListener listener) {

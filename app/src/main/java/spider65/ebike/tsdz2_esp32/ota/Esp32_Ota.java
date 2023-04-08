@@ -2,11 +2,9 @@ package spider65.ebike.tsdz2_esp32.ota;
 
 import android.Manifest;
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
@@ -40,7 +38,9 @@ import java.nio.charset.StandardCharsets;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import spider65.ebike.tsdz2_esp32.R;
 import spider65.ebike.tsdz2_esp32.TSDZBTService;
@@ -71,7 +71,6 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     private String ssid,pwd;
 
     private HttpdServer httpdServer = null;
-    private IntentFilter mIntentFilter = new IntentFilter();
 
     private Button selFileButton, startUpdateBT;
     private TextView fileNameTV, currVerTV, newVerTV, messageTV;
@@ -126,14 +125,9 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         if (Build.VERSION.SDK_INT < 26) {
             if (!Settings.System.canWrite(getApplicationContext())) {
                  Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
-                 startActivityForResult(intent, 200);
+                 startActivity(intent);
              }
         }
-
-        mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_SUCCESS_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_FAILURE_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
     }
 
     @Override
@@ -143,7 +137,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             httpdServer.stop();
             httpdServer = null;
         }
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
         stopAP();
     }
 
@@ -151,7 +145,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
     public void onStart() {
         super.onStart();
         startAP();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
         // get current ESP32 SW version
         TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_GET_APP_VERSION});
     }
@@ -163,6 +157,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == READ_EXTERNAL_STORAGE_PERMISION_REQUEST) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -308,7 +303,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
 
     private void startUpdate() {
         try {
-            httpdServer = new HttpdServer(updateFile, this, this);
+            httpdServer = new HttpdServer(updateFile, this);
             httpdServer.start();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -419,62 +414,58 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         }
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive " + intent.getAction());
-            if (intent.getAction() == null)
-                return;
-            switch (intent.getAction()) {
-                case TSDZBTService.TSDZ_COMMAND_BROADCAST:
-                    byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    Log.d(TAG, "TSDZ_COMMAND_BROADCAST Data: " + Utils.bytesToHex(data));
-                    switch (data[0]) {
-                        // Start Update response
-                        case CMD_ESP_OTA_START:
-                            // check if update started
-                            if (data[1] != (byte)0x0) {
-                                stopUpdate();
-                                showDialog(getString(R.string.error), getString(R.string.updateError), false);
-                            }
-                            break;
-                        // Get Version response
-                        case CMD_GET_APP_VERSION:
-                            String tmp = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
-                            String[] versions = tmp.split("\\|");
-                            if (versions.length != 2) {
-                                Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
-                                return;
-                            }
-                            mainAppVersion = versions[1];
-                            if (updateInProgress) {
-                                stopUpdate();
-                                showDialog(getString(R.string.rebootDone), getString(R.string.new_version, mainAppVersion), false);
-                            }
-                            currVerTV.setText(getString(R.string.current_version, mainAppVersion));
-                            break;
-                        case CMD_ESP_OTA_STATUS:
-                            if (data[1] != 0) {
-                                showDialog(getString(R.string.rebootDone), getString(R.string.upload_error, data[1]), false);
-                                stopUpdate();
-                            } else
-                                messageTV.setText(getString(R.string.waitingReboot));
-                            break;
-                    }
-                    break;
-                case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
-                    if (updateInProgress) {
-                        messageTV.setText(getString(R.string.rebootDone));
-                        final Handler handler = new Handler();
-                        handler.postDelayed(() ->
-                                TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_GET_APP_VERSION})
-                                ,3000);
-                    }
-                    break;
-                case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
-                case TSDZBTService.CONNECTION_LOST_BROADCAST:
-                    break;
-            }
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        Log.d(TAG, "onReceive " + event.eventType);
+        switch (event.eventType) {
+            case TSDZ_COMMAND:
+                byte[] data = event.data;
+                Log.d(TAG, "TSDZ_COMMAND_BROADCAST Data: " + Utils.bytesToHex(data));
+                switch (data[0]) {
+                    // Start Update response
+                    case CMD_ESP_OTA_START:
+                        // check if update started
+                        if (data[1] != (byte)0x0) {
+                            stopUpdate();
+                            showDialog(getString(R.string.error), getString(R.string.updateError), false);
+                        }
+                        break;
+                    // Get Version response
+                    case CMD_GET_APP_VERSION:
+                        String tmp = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
+                        String[] versions = tmp.split("\\|");
+                        if (versions.length != 2) {
+                            Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
+                            return;
+                        }
+                        mainAppVersion = versions[1];
+                        if (updateInProgress) {
+                            stopUpdate();
+                            showDialog(getString(R.string.rebootDone), getString(R.string.new_version, mainAppVersion), false);
+                        }
+                        currVerTV.setText(getString(R.string.current_version, mainAppVersion));
+                        break;
+                    case CMD_ESP_OTA_STATUS:
+                        if (data[1] != 0) {
+                            showDialog(getString(R.string.rebootDone), getString(R.string.upload_error, data[1]), false);
+                            stopUpdate();
+                        } else
+                            messageTV.setText(getString(R.string.waitingReboot));
+                        break;
+                }
+                break;
+            case CONNECTION_SUCCESS:
+                if (updateInProgress) {
+                    messageTV.setText(getString(R.string.rebootDone));
+                    final Handler handler = new Handler();
+                    handler.postDelayed(() ->
+                            TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_GET_APP_VERSION})
+                            ,3000);
+                }
+                break;
+            case CONNECTION_FAILURE:
+            case CONNECTION_LOST:
+                break;
         }
-    };
+    }
 }

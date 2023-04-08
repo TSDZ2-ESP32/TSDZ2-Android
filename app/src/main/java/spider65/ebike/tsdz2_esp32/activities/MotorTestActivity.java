@@ -1,10 +1,7 @@
 package spider65.ebike.tsdz2_esp32.activities;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -16,10 +13,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.FileOutputStream;
 import java.util.Locale;
@@ -45,15 +46,11 @@ public class MotorTestActivity extends AppCompatActivity {
     private static final int MAX_DUTY_CYCLE = 254;
     private static final int MAX_ANGLE = 10;
 
-    private static final int CREATE_FILE_REQUEST_CODE = 40;
-
     private enum TestStatus {
         stopped,
         starting,
         running
     }
-
-    private final IntentFilter mIntentFilter = new IntentFilter();
     TextView erpsTV, angleValTV, resultsTV;
     EditText dcValET;
     Button startBT, stopBT, exitBT, dcAddBT, dcSubBT, angleAddBT, angleSubBT;
@@ -92,10 +89,6 @@ public class MotorTestActivity extends AppCompatActivity {
         resultsTV = findViewById(R.id.resultsTV);
         resultsTV.setMovementMethod(new ScrollingMovementMethod());
 
-        mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.SERVICE_STOPPED_BROADCAST);
-
         service = TSDZBTService.getBluetoothService();
         if (service == null || service.getConnectionStatus() != TSDZBTService.ConnectionState.CONNECTED) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -119,13 +112,13 @@ public class MotorTestActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -223,23 +216,23 @@ public class MotorTestActivity extends AppCompatActivity {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TITLE, "motorTest.txt");
-        startActivityForResult(intent, CREATE_FILE_REQUEST_CODE);
+        createDocumentActivityLauncher.launch(intent);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        super.onActivityResult(requestCode, resultCode, resultData);
-        Uri currentUri;
-
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == CREATE_FILE_REQUEST_CODE) {
-                if (resultData != null) {
-                    currentUri =  resultData.getData();
-                    writeFileContent(currentUri);
+    ActivityResultLauncher<Intent> createDocumentActivityLauncher = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Uri currentUri;
+                    // There are no request codes
+                    Intent resultData = result.getData();
+                    if (resultData != null) {
+                        currentUri = resultData.getData();
+                        writeFileContent(currentUri);
+                    }
                 }
-            }
-        }
-    }
+            });
+
 
     private void writeFileContent(Uri uri)
     {
@@ -277,12 +270,12 @@ public class MotorTestActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (TSDZBTService.CONNECTION_LOST_BROADCAST.equals(intent.getAction())
-                    || TSDZBTService.SERVICE_STOPPED_BROADCAST.equals(intent.getAction())
-                    || TSDZBTService.CONNECTION_FAILURE_BROADCAST.equals(intent.getAction())) {
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        switch(event.eventType) {
+            case CONNECTION_LOST:
+            case SERVICE_STOPPED:
+            case CONNECTION_FAILURE:
                 service = TSDZBTService.getBluetoothService();
                 status = TestStatus.stopped;
                 resetTimer();
@@ -294,8 +287,9 @@ public class MotorTestActivity extends AppCompatActivity {
                 angleSubBT.setEnabled(true);
                 stopBT.setEnabled(false);
                 Toast.makeText(getApplicationContext(), "BT Connection Lost.", Toast.LENGTH_LONG).show();
-            } else if (TSDZBTService.TSDZ_COMMAND_BROADCAST.equals(intent.getAction())) {
-                byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
+                break;
+            case TSDZ_COMMAND:
+                byte[] data = event.data;
                 if (data[0] == CMD_MOTOR_TEST) {
                     switch(data[1]) {
                         case TEST_START:
@@ -342,9 +336,9 @@ public class MotorTestActivity extends AppCompatActivity {
                         erpsTV.setText(String.format(Locale.getDefault(), "%.2f", 250000D/avg.getAverage()));
                     }
                 }
-            }
+                break;
         }
-    };
+    }
 
     private Timer timer;
     private class TimerExpired extends TimerTask {

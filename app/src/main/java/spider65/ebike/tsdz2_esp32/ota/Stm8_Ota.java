@@ -1,11 +1,9 @@
 package spider65.ebike.tsdz2_esp32.ota;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
@@ -28,7 +26,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import com.obsez.android.lib.filechooser.ChooserDialog;
 
@@ -69,7 +69,6 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     private String ssid,pwd;
 
     private HttpdServer httpdServer = null;
-    private IntentFilter mIntentFilter = new IntentFilter();
 
     private Button selFileButton, startUpdateBT;
     private TextView currVerTV, fileNameTV,messageTV;
@@ -126,14 +125,9 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         if (Build.VERSION.SDK_INT < 26) {
             if (!Settings.System.canWrite(getApplicationContext())) {
                  Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
-                 startActivityForResult(intent, 200);
+                 startActivity(intent);
              }
         }
-
-        mIntentFilter.addAction(TSDZBTService.TSDZ_COMMAND_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_SUCCESS_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_FAILURE_BROADCAST);
-        mIntentFilter.addAction(TSDZBTService.CONNECTION_LOST_BROADCAST);
     }
 
     @Override
@@ -143,7 +137,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             httpdServer.stop();
             httpdServer = null;
         }
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
         stopAP();
     }
 
@@ -151,7 +145,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     public void onStart() {
         super.onStart();
         startAP();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, mIntentFilter);
+        EventBus.getDefault().register(this);
         // get current ESP32 SW version
         TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_GET_APP_VERSION});
     }
@@ -163,6 +157,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == READ_EXTERNAL_STORAGE_PERMISION_REQUEST) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -362,7 +357,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
 
     private void startUpdate() {
         try {
-            httpdServer = new HttpdServer(updateFile, this, this);
+            httpdServer = new HttpdServer(updateFile, this);
             httpdServer.start();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -455,71 +450,67 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         }
     }
 
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive " + intent.getAction());
-            if (intent.getAction() == null)
-                return;
-            switch (intent.getAction()) {
-                case TSDZBTService.TSDZ_COMMAND_BROADCAST:
-                    byte[] data = intent.getByteArrayExtra(TSDZBTService.VALUE_EXTRA);
-                    Log.d(TAG, "TSDZ_COMMAND_BROADCAST Data: " + Utils.bytesToHex(data));
-                    switch (data[0]) {
-                        // Start Update response
-                        case CMD_STM8S_OTA_START:
-                            Log.d(TAG, "CMD_STM8S_OTA_START");
-                            // check if update started
-                            if (data[1] != (byte)0x0) {
-                                stopUpdate();
-                                showDialog(getString(R.string.error), getString(R.string.updateError), false);
-                            }
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
+        Log.d(TAG, "onReceive " + event.eventType);
+        switch (event.eventType) {
+            case TSDZ_COMMAND:
+                byte[] data = event.data;
+                Log.d(TAG, "TSDZ_COMMAND_BROADCAST Data: " + Utils.bytesToHex(data));
+                switch (data[0]) {
+                    // Start Update response
+                    case CMD_STM8S_OTA_START:
+                        Log.d(TAG, "CMD_STM8S_OTA_START");
+                        // check if update started
+                        if (data[1] != (byte)0x0) {
+                            stopUpdate();
+                            showDialog(getString(R.string.error), getString(R.string.updateError), false);
+                        }
+                        break;
+                    // Get Version response
+                    case CMD_GET_APP_VERSION:
+                        Log.d(TAG, "CMD_GET_APP_VERSION");
+                        String s = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
+                        String[] versions = s.split("\\|");
+                        if (versions.length != 2) {
+                            Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
+                            return;
+                        }
+                        if ("255".equals(versions[0]))
+                            versions[0] = "n/a";
+                        currVerTV.setText(getString(R.string.current_version, versions[0]));
+                        break;
+                    case CMD_STM8_OTA_STATUS:
+                        int status = data[1];
+                        int value = data[2];
+                        Log.d(TAG, "CMD_STM_OTA_STATUS: status=" + status + " value=" + value);
+                        if (data[1] == 4) { // Error!
+                            showDialog(getString(R.string.error), getString(R.string.update_error, value), false);
+                            stopUpdate();
                             break;
-                        // Get Version response
-                        case CMD_GET_APP_VERSION:
-                            Log.d(TAG, "CMD_GET_APP_VERSION");
-                            String s = new String(copyOfRange(data, 1, data.length), StandardCharsets.UTF_8);
-                            String[] versions = s.split("\\|");
-                            if (versions.length != 2) {
-                                Log.e(TAG, "CMD_GET_APP_VERSION: wrong string");
-                                return;
-                            }
-                            if ("255".equals(versions[0]))
-                                versions[0] = "n/a";
-                            currVerTV.setText(getString(R.string.current_version, versions[0]));
-                            break;
-                        case CMD_STM8_OTA_STATUS:
-                            int status = data[1];
-                            int value = data[2];
-                            Log.d(TAG, "CMD_STM_OTA_STATUS: status=" + status + " value=" + value);
-                            if (data[1] == 4) { // Error!
-                                showDialog(getString(R.string.error), getString(R.string.update_error, value), false);
-                                stopUpdate();
-                                break;
-                            }
-                            showStatus(status, value);
-                            break;
-                    }
-                    break;
-                case TSDZBTService.CONNECTION_SUCCESS_BROADCAST:
-                    Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
-                    if (updateInProgress == UpdateProgess.uploading) {
-                        messageTV.setText(getString(R.string.uploadDone));
-                        updateInProgress = UpdateProgess.uploaded;
-                    }
-                    break;
-                case TSDZBTService.CONNECTION_FAILURE_BROADCAST:
-                    Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
-                    // TODO
-                    break;
-                case TSDZBTService.CONNECTION_LOST_BROADCAST:
-                    Log.d(TAG, "CONNECTION_LOST_BROADCAST");
-                    if (updateInProgress == UpdateProgess.started) {
-                        messageTV.setText(getString(R.string.rebooting));
-                        updateInProgress = UpdateProgess.rebooting;
-                    }
-                    break;
-            }
+                        }
+                        showStatus(status, value);
+                        break;
+                }
+                break;
+            case CONNECTION_SUCCESS:
+                Log.d(TAG, "CONNECTION_SUCCESS_BROADCAST");
+                if (updateInProgress == UpdateProgess.uploading) {
+                    messageTV.setText(getString(R.string.uploadDone));
+                    updateInProgress = UpdateProgess.uploaded;
+                }
+                break;
+            case CONNECTION_FAILURE:
+                Log.d(TAG, "CONNECTION_FAILURE_BROADCAST");
+                // TODO
+                break;
+            case CONNECTION_LOST:
+                Log.d(TAG, "CONNECTION_LOST_BROADCAST");
+                if (updateInProgress == UpdateProgess.started) {
+                    messageTV.setText(getString(R.string.rebooting));
+                    updateInProgress = UpdateProgess.rebooting;
+                }
+                break;
         }
-    };
+    }
 }

@@ -148,7 +148,7 @@ public class IntelHexReader extends AbstractReader
         else
         {
           // Decrease the number of hex-bytes we've got to read...
-          this.checksum.add( ( byte )dataByte );
+          this.checksum.add(dataByte);
 
           this.dataLength--;
           this.address++;

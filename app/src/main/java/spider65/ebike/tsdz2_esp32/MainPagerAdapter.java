@@ -1,58 +1,46 @@
 package spider65.ebike.tsdz2_esp32;
 
+import androidx.annotation.NonNull;
 
-import androidx.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
-import android.content.Context;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentActivity;
 
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 import spider65.ebike.tsdz2_esp32.data.TSDZ_Status;
 import spider65.ebike.tsdz2_esp32.fragments.FragmentDebug;
 import spider65.ebike.tsdz2_esp32.fragments.FragmentStatus;
 import spider65.ebike.tsdz2_esp32.fragments.MyFragmentListener;
 
-/**
- * A [FragmentPagerAdapter] that returns a fragment corresponding to
- * one of the sections/tabs/pages.
- */
-public class MainPagerAdapter extends FragmentPagerAdapter {
-    private static final Fragment[] TAB_FRAGMENTS = new Fragment[2];
-    private final Context mContext;
 
-    MainPagerAdapter(Context context, FragmentManager fm, TSDZ_Status status) {
-        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-        TAB_FRAGMENTS[0] = FragmentStatus.newInstance(status);
-        TAB_FRAGMENTS[1] = FragmentDebug.newInstance(status);
-        mContext = context;
+public class MainPagerAdapter extends FragmentStateAdapter {
+    private final MyFragmentListener[] fragments = new MyFragmentListener[2];
+    private final TSDZ_Status mStatus;
+
+    MainPagerAdapter(FragmentActivity fragmentActivity, TSDZ_Status status) {
+        super(fragmentActivity);
+        mStatus = status;
     }
 
-    @NotNull
-    @Override
-    public Fragment getItem(int position) {
+    public MyFragmentListener getItem(int position) {
         // getItem is called to instantiate the fragment for the given page.
-        return TAB_FRAGMENTS[position];
-    }
-
-    @Nullable
-    @Override
-    public CharSequence getPageTitle(int position) {
-        switch (position) {
-            case 0:
-                return mContext.getResources().getString(R.string.status_data);
-            case 1:
-                return mContext.getResources().getString(R.string.debug_data);
-        }
-        return null;
+        return fragments[position];
     }
 
     @Override
-    public int getCount() {
-        return TAB_FRAGMENTS.length;
+    public int getItemCount() {
+        return 2;
     }
 
-    MyFragmentListener getMyFragment(int position) {
-        return (MyFragmentListener)TAB_FRAGMENTS[position];
+
+    @NonNull
+    @Override
+    public Fragment createFragment(int position) {
+        Fragment f;
+        if (position == 0)
+            f = FragmentStatus.newInstance(mStatus);
+        else
+            f = FragmentDebug.newInstance(mStatus);
+        fragments[position] = (MyFragmentListener)f;
+        return f;
     }
 }
