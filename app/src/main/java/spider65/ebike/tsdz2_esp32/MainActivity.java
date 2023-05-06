@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mainPagerAdapter = new MainPagerAdapter(this, status);
         ViewPager2 viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(mainPagerAdapter);
-        viewPager.setOnTouchListener(this);
+        viewPager.getChildAt(0).setOnTouchListener(this);
 
         viewPager.registerOnPageChangeCallback(new  ViewPager2.OnPageChangeCallback() {
             @Override
