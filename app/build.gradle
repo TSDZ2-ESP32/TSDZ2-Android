@@ -7,8 +7,8 @@ android {
         applicationId "spider65.ebike.tsdz2_esp32"
         minSdkVersion 23
         targetSdkVersion 33
-        versionCode 20
-        versionName "2.2.0"
+        versionCode 21
+        versionName "2.2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -44,7 +44,6 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation "com.google.android.material:material:1.8.0"
     implementation group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
-    implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'org.jetbrains:annotations:15.0'
     implementation("org.greenrobot:eventbus:3.3.1")

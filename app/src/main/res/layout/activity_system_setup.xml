@@ -2,7 +2,8 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".activities.SystemSetupActivity">
+    tools:context=".activities.SystemSetupActivity"
+    tools:ignore="Autofill">
     <data>
         <variable name="cfg"     type="spider65.ebike.tsdz2_esp32.data.TSDZ_Config"/>
         <variable name="clickHandler" type="spider65.ebike.tsdz2_esp32.activities.SystemSetupActivity"/>
@@ -75,7 +76,8 @@
                         android:layout_weight="2"
                         android:ems="2"
                         android:inputType="number"
-                        android:text="@{String.valueOf(cfg.ui8_foc_angle_multiplicator)}" />
+                        android:text="@{String.valueOf(cfg.ui8_foc_angle_multiplicator)}"
+                        tools:ignore="LabelFor" />
 
                     <Button
                         android:id="@+id/focMultip36BT"
@@ -83,6 +85,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0.2"
                         android:onClick="@{clickHandler::onClickInductance}"
+                        tools:ignore="HardcodedText"
                         android:text="36V" />
 
                     <Button
@@ -91,6 +94,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0.2"
                         android:onClick="@{clickHandler::onClickInductance}"
+                        tools:ignore="HardcodedText"
                         android:text="48V" />
 
                 </LinearLayout>
@@ -103,6 +107,17 @@
                     android:layout_margin="5dp"
                     android:checked="@{cfg.fieldWeakeningEnabled}"
                     android:text="@string/field_weakening" />
+
+                <!--
+                <CheckBox
+                    android:id="@+id/brakeCB"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="5dp"
+                    android:checked="@{cfg.ignoreBrakeSignal}"
+                    android:text="@string/brake_ignore" />
+                -->
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -124,7 +139,8 @@
                         android:layout_marginStart="5dp"
                         android:ems="2"
                         android:text="@{String.valueOf(cfg.ui8_motor_acceleration)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -145,7 +161,8 @@
                         android:layout_marginStart="5dp"
                         android:ems="2"
                         android:text="@{String.valueOf(cfg.ui8_battery_max_current)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -166,7 +183,8 @@
                         android:layout_marginStart="5dp"
                         android:ems="3"
                         android:text="@{String.valueOf(cfg.ui8_target_max_battery_power_div25)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -200,7 +218,8 @@
                         android:ems="3"
                         android:text="@{String.valueOf(cfg.ui8_assist_without_pedal_rotation_threshold)}"
                         android:inputType="number"
-                        android:enabled="@{cfg.assist_without_pedal_rotation}"/>
+                        android:enabled="@{cfg.assist_without_pedal_rotation}"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <View
@@ -235,7 +254,8 @@
                         android:layout_marginStart="5dp"
                         android:ems="4"
                         android:text="@{String.valueOf(cfg.ui16_wheel_perimeter)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -256,7 +276,8 @@
                         android:layout_marginStart="5dp"
                         android:ems="4"
                         android:text="@{String.valueOf(cfg.ui8_max_speed)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <CheckBox
@@ -300,7 +321,8 @@
                         android:layout_marginStart="5dp"
                         android:ems="4"
                         android:text="@{String.valueOf(cfg.ui8_street_max_speed)}"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -327,7 +349,8 @@
                         android:text="@{String.valueOf(cfg.ui8_street_mode_power_limit_div25)}"
                         android:ems="3"
                         android:inputType="number"
-                        android:enabled="@{cfg.ui8_street_mode_power_limit_enabled}" />
+                        android:enabled="@{cfg.ui8_street_mode_power_limit_enabled}"
+                        tools:ignore="LabelFor" />
                 </LinearLayout>
 
                 <CheckBox

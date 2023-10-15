@@ -1,16 +1,19 @@
 package spider65.ebike.tsdz2_esp32.ota;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -19,23 +22,22 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import com.obsez.android.lib.filechooser.ChooserDialog;
-
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
@@ -76,8 +78,6 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
 
     private HotSpotCallback hotSpotCallback = null;
 
-    private static final int READ_EXTERNAL_STORAGE_PERMISION_REQUEST = 3;
-
     private UpdateProgess updateInProgress = UpdateProgess.notStarted;
 
     private enum UpdateProgess {
@@ -115,18 +115,21 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(INVISIBLE);
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    READ_EXTERNAL_STORAGE_PERMISION_REQUEST);
-        }
-
         if (Build.VERSION.SDK_INT < 26) {
             if (!Settings.System.canWrite(getApplicationContext())) {
-                 Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
-                 startActivity(intent);
-             }
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Location Permission not granted");
+            builder.setMessage("Ota update cannot be done");
+            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setOnDismissListener((DialogInterface dialog) -> finish());
+            builder.show();
         }
     }
 
@@ -153,22 +156,6 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     @Override
     public void onBackPressed() {
         cancel();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == READ_EXTERNAL_STORAGE_PERMISION_REQUEST) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Permission request failed");
-                builder.setMessage("Ota update cannot be done");
-                builder.setPositiveButton(android.R.string.ok, null);
-                builder.setOnDismissListener((DialogInterface dialog) -> finish());
-                builder.show();
-            }
-        }
     }
 
     private void cancel() {
@@ -206,6 +193,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                 setWifiApState(true);
             }
         }
+
     }
 
     public void stopAP() {
@@ -221,26 +209,30 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         }
     }
 
-
-    /**
-     * Fires an intent to spin up the "file chooser" UI and select an image.
-     */
     public void performFileSearch() {
-        new ChooserDialog(this)
-            .withFilterRegex(false, false, ".*\\.hex$")
-            .withStartFile(Environment.getExternalStorageDirectory().getAbsolutePath())
-            .withStringResources(getString(R.string.title_select_file,"bin"),
-                        getString(R.string.choose), getString(R.string.cancel))
-            .withChosenListener( (String path, File pathFile) -> checkFile( pathFile ))
-            .build()
-            .show();
+        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != Activity.RESULT_OK) {
+                        Intent  resultData = result.getData();
+                        if (resultData != null) {
+                            checkFile(resultData.getData());
+                        }
+                    }
+                });
+
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        activityResultLauncher.launch(intent);
     }
-    void checkFile(File f) {
+
+    void checkFile(Uri uri) {
         try {
-            FileReader fileReader = new FileReader(f);
             File outFile = null;
 
-            final IntelHexReader provider = new IntelHexReader(fileReader);
+            Reader reader = new InputStreamReader(getContentResolver().openInputStream(uri));
+            final IntelHexReader provider = new IntelHexReader(reader);
 
             byte[] binData = new byte[MAX_BIN_SIZE];
             boolean[] dataCheck = new boolean[MAX_BIN_SIZE];
@@ -278,7 +270,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                fileReader.close();
+                provider.close();
             }
 
             if (startAddress != START_ADDRESS)
@@ -311,12 +303,37 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                 case 0:
                     updateFile = outFile;
                     startUpdateBT.setEnabled(true);
-                    fileNameTV.setText(getString(R.string.file_name, f.getName()));
-                    Log.i(TAG, "Filename: " + f.getName());
+                    String fileName = getFileName(uri);
+                    fileNameTV.setText(getString(R.string.file_name, fileName));
+                    Log.i(TAG, "Filename: " + fileName);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @SuppressLint("Range")
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                assert cursor != null;
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
     }
 
     //check whether wifi hotspot on or off
@@ -425,6 +442,8 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             Stm8_Ota.this.reservation = reservation;
             ssid = cfg.SSID;
             pwd = cfg.preSharedKey;
+            Log.d(TAG, "SSID: " + ssid);
+            Log.d(TAG, "PWD: " + ssid);
         }
     }
 
@@ -452,7 +471,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMessageEvent(TSDZBTService.BTServiceEvent event) {
-        Log.d(TAG, "onReceive " + event.eventType);
+        //Log.d(TAG, "onReceive " + event.eventType);
         switch (event.eventType) {
             case TSDZ_COMMAND:
                 byte[] data = event.data;

@@ -8,6 +8,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 
 import androidx.databinding.DataBindingUtil;
@@ -74,7 +75,7 @@ public class SystemSetupActivity extends AppCompatActivity {
     }
 
     //  invalidate all to hide/show the checkbox dependant fields
-    public void onCheckedChanged(View view, boolean checked) {
+    public void onCheckedChanged(CompoundButton view, boolean checked) {
         if (view.getId() == R.id.assistCB)
             binding.assistWPRET.setEnabled(checked);
         else if (view.getId() == R.id.streetPowerCB)
@@ -92,6 +93,11 @@ public class SystemSetupActivity extends AppCompatActivity {
 
         checked = binding.fieldWeakeningCB.isChecked();
         cfg.fieldWeakeningEnabled = checked;
+
+        /* +++++++++
+        checked = binding.brakeCB.isChecked();
+        cfg.ignoreBrakeSignal = checked;
+        */
 
         if ((val = checkRange(binding.accelerationET, 0, 100)) == null) {
             showDialog(getString(R.string.acceleration), getString(R.string.range_error, 0, 100));

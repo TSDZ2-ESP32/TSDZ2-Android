@@ -143,6 +143,7 @@
     <string name="motor">Motor</string>
     <string name="foc_multiplicator">FOC angle multipl.</string>
     <string name="field_weakening">Field Weakening</string>
+    <string name="brake_ignore">Ignore brake signal</string>
     <string name="acceleration">Acceleration</string>
     <string name="max_current">Max current (A)</string>
     <string name="max_power">Max Power (W)</string>

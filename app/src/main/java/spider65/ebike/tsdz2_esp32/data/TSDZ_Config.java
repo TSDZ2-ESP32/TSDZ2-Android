@@ -75,6 +75,7 @@ public class TSDZ_Config {
     public int[] ui8_hall_ref_angles = new int[6];
     public int[] ui8_hall_counter_offset = new int[6];
     public boolean fieldWeakeningEnabled;
+    public boolean ignoreBrakeSignal;
     public boolean torqueSmoothEnable;
     public int ui8_torque_smooth_min;
     public int ui8_torque_smooth_max;
@@ -179,6 +180,7 @@ public class TSDZ_Config {
         torque_offset_fix = (data[53] & 0x01 ) != 0;
         fieldWeakeningEnabled = (data[53] & 0x02) != 0;
         torqueSmoothEnable = (data[53] & 0x04) != 0;
+        ignoreBrakeSignal = (data[53] & 0x08) != 0;
         ui16_torque_offset_ADC = (data[54] & 255) + ((data[55] & 255) << 8);
         for (int i=0;i<6;i++)
             ui8_hall_ref_angles[i] = (data[56+i] & 255);
@@ -239,6 +241,7 @@ public class TSDZ_Config {
         data[53] |= (byte)(torque_offset_fix? 1:0);
         data[53] |= (byte)(fieldWeakeningEnabled? 2:0);
         data[53] |= (byte)(torqueSmoothEnable? 4:0);
+        data[53] |= (byte)(ignoreBrakeSignal? 8:0);
         data[54] = (byte)ui16_torque_offset_ADC;
         data[55] = (byte)(ui16_torque_offset_ADC >>> 8);
         for (int i=0;i<6;i++)
