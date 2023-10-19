@@ -162,15 +162,22 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mTitle = toolbar.findViewById(R.id.toolbar_title);
         mTitle.setText(R.string.status_data);
         mTitle.setOnClickListener(v -> {
-            if (status.controllerCommError || status.lcdCommError) {
-                String title = getString(R.string.error);
+            if (status.esp32FromControllerReceiveError
+                    || status.esp32FromLDCReceiveError
+                    || status.controllerFromESP32ReceiveError) {
+                String title = getString(R.string.communicationError);
                 String message = "";
-                if (status.controllerCommError)
-                    message = getString(R.string.error_controller_comm);
-                if (status.lcdCommError) {
+                if (status.esp32FromControllerReceiveError)
+                    message = getString(R.string.error_esp32_from_controller_comm);
+                if (status.esp32FromLDCReceiveError) {
                     if (!message.isEmpty())
                         message += "\n";
-                    message += getString(R.string.error_lcd_comm);
+                    message += getString(R.string.error_esp32_from_lcd_comm);
+                }
+                if (status.controllerFromESP32ReceiveError) {
+                    if (!message.isEmpty())
+                        message += "\n";
+                    message += getString(R.string.error_controller_from_esp32_comm);
                 }
                 final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setTitle(title);
@@ -444,8 +451,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private boolean s_brake;
     private short s_status = 0;
-    private boolean s_controllerCommError;
-    private boolean s_lcdCommError;
+    private boolean s_esp32FromControllerCommError;
+    private boolean s_esp32FromLCDCommError;
+    private boolean s_controllerFromESP32CommError;
     private boolean s_streetMode;
     private TSDZ_Status.RidingMode s_ridingMode = TSDZ_Status.RidingMode.OFF_MODE;
     private short s_assistLevel = 0;
@@ -468,13 +476,20 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 statusTV.setVisibility(View.INVISIBLE);
         }
 
-        if ((status.controllerCommError != s_controllerCommError) || (status.lcdCommError != s_lcdCommError)) {
-            s_controllerCommError = status.controllerCommError;
-            s_lcdCommError = status.lcdCommError;
-            if ((status.controllerCommError || status.lcdCommError) && !commError) {
+        if ((status.esp32FromControllerReceiveError != s_esp32FromControllerCommError)
+                || (status.esp32FromLDCReceiveError != s_esp32FromLCDCommError)
+                || (status.controllerFromESP32ReceiveError != s_controllerFromESP32CommError)) {
+            s_esp32FromControllerCommError = status.esp32FromControllerReceiveError;
+            s_esp32FromLCDCommError = status.esp32FromLDCReceiveError;
+            s_controllerFromESP32CommError = status.controllerFromESP32ReceiveError;
+            if ((status.esp32FromControllerReceiveError
+                    || status.esp32FromLDCReceiveError
+                    || status.controllerFromESP32ReceiveError) && !commError) {
                 commError = true;
                 updateStatusIcons();
-            } else if ((!status.controllerCommError && !status.lcdCommError) && commError) {
+            } else if ((!status.esp32FromControllerReceiveError
+                    && !status.esp32FromLDCReceiveError
+                    && !status.controllerFromESP32ReceiveError) && commError) {
                 commError = false;
                 updateStatusIcons();
             }

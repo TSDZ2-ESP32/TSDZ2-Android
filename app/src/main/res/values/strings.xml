@@ -14,8 +14,9 @@
     <string name="check_limit_temperature">The motor power is limited</string>
     <string name="error_stop_temperature">Stop temperature!</string>
     <string name="check_stop_temperature">Turn off the motor and wait for it to cool down</string>
-    <string name="error_lcd_comm">LCD communication Error</string>
-    <string name="error_controller_comm">Controller communication Error</string>
+    <string name="error_esp32_from_lcd_comm">ESP32 from LCD Error</string>
+    <string name="error_esp32_from_controller_comm">ESP32 from Controller Error</string>
+    <string name="error_controller_from_esp32_comm">Controller from ESP32 Error</string>
     <string name="comm_error">Communication CRC errors</string>
     <string name="lcd">LCD:</string>
     <string name="controller">Contr.:</string>
@@ -98,6 +99,9 @@
     <string name="torque_min">Torque Min</string>
     <string name="torque_max">Torque Max</string>
     <string name="torque_avg">Torque Avg</string>
+    <string name="esp32_from_ct_err">ESP32 &lt;-CT comm. Error</string>
+    <string name="esp32_from_lcd_err">ESP32 &lt;-LCD comm. Error</string>
+    <string name="ct_from_esp32_err">CT &lt;-ESP32 comm. Error</string>
 
     <string name="tsdz_cfg">Bike Configuration</string>
     <string name="title_activity_esp32_ota">Esp32 Firmware Update</string>
@@ -108,6 +112,7 @@
     <string name="start_update">Start Update</string>
     <string name="title_select_file">Select the %1$s file</string>
     <string name="error">Error</string>
+    <string name="communicationError">Communication Error</string>
     <string name="fileNotValid">File is not valid</string>
     <string name="address_not_contiguous">non-contiguous addresses</string>
     <string name="wrong_start_address">wrong firmware addresses</string>

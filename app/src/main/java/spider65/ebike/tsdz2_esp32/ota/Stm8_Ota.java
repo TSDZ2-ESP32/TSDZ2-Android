@@ -209,7 +209,9 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         }
     }
 
+    private static final int FILE_SELECT_CODE = 11;
     public void performFileSearch() {
+        /*
         ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -220,11 +222,23 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                         }
                     }
                 });
+        */
 
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
-        activityResultLauncher.launch(intent);
+        startActivityForResult(intent,FILE_SELECT_CODE);
+        // activityResultLauncher.launch(intent);
+    }
+
+    @Override
+    protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == FILE_SELECT_CODE) {
+            if (data != null) {
+                checkFile(data.getData());
+            }
+        }
     }
 
     void checkFile(Uri uri) {

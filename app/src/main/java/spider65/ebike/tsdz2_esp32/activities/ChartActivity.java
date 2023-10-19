@@ -100,13 +100,17 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
             new DataItem(DataType.tSmoothPct, false, true),
             new DataItem(DataType.torqueMin, false, true),
             new DataItem(DataType.torqueMax, false, true),
-            new DataItem(DataType.torqueAvg, false, true)
+            new DataItem(DataType.torqueAvg, false, true),
+            new DataItem(DataType.esp32FromControllerErr, false, true),
+            new DataItem(DataType.esp32FromLCDErr, false, true),
+            new DataItem(DataType.controllerFromESP32Err, false, true)
     };
 
     private enum DataType {
         level, speed, cadence, pPower, mPower, current,
         volt, energy, mTemp, cTemp, dCycle, erps,
-        focAngle, pTorque, fwHallOffset, tSmoothPct, torqueMin, torqueMax, torqueAvg;
+        focAngle, pTorque, fwHallOffset, tSmoothPct, torqueMin, torqueMax, torqueAvg,
+        esp32FromControllerErr, esp32FromLCDErr, controllerFromESP32Err;
 
         public String getName() {
             switch (this) {
@@ -148,6 +152,12 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     return MyApp.getInstance().getString(R.string.torque_max);
                 case torqueAvg:
                     return MyApp.getInstance().getString(R.string.torque_avg);
+                case esp32FromControllerErr:
+                    return MyApp.getInstance().getString(R.string.esp32_from_ct_err);
+                case esp32FromLCDErr:
+                    return MyApp.getInstance().getString(R.string.esp32_from_lcd_err);
+                case controllerFromESP32Err:
+                    return MyApp.getInstance().getString(R.string.ct_from_esp32_err);
 
             }
             return "";
@@ -170,6 +180,12 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                 case torqueAvg:
                     for (DataType item : selectedItems)
                         if ((item == torqueMin) || (item == torqueMax) || (item == torqueAvg))
+                            return true;
+                case esp32FromControllerErr:
+                case esp32FromLCDErr:
+                case controllerFromESP32Err:
+                    for (DataType item : selectedItems)
+                        if ((item == esp32FromControllerErr) || (item == esp32FromLCDErr) || (item == controllerFromESP32Err))
                             return true;
             }
 
@@ -511,6 +527,15 @@ public class ChartActivity extends AppCompatActivity implements LogManager.LogRe
                     break;
                 case torqueMax:
                     y = statusData.get(i).status.torqueSmoothMax;
+                    break;
+                case esp32FromControllerErr:
+                    y = statusData.get(i).status.esp32FromControllerReceiveError? 1:0;
+                    break;
+                case esp32FromLCDErr:
+                    y = statusData.get(i).status.esp32FromLDCReceiveError? 1:0;
+                    break;
+                case controllerFromESP32Err:
+                    y = statusData.get(i).status.controllerFromESP32ReceiveError? 1:0;
                     break;
             }
             //float y = (float) (40 + 10 * Math.sin(x));

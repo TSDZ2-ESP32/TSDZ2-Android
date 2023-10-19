@@ -24,8 +24,9 @@ public class TSDZ_Status {
     public float amperes;
     public short status;
     public boolean brake;
-    public boolean controllerCommError;
-    public boolean lcdCommError;
+    public boolean controllerFromESP32ReceiveError;
+    public boolean esp32FromControllerReceiveError;
+    public boolean esp32FromLDCReceiveError;
     public int wattHour;
     public short rxcErrors;
     public short rxlErrors;
@@ -123,8 +124,9 @@ public class TSDZ_Status {
         assistLevel = (short)(data[1] & 255);
         status = (short)(data[2] & 0x0f);
         brake = (data[2] & 0x20) != 0;
-        controllerCommError = (data[2] & 0x80) != 0;
-        lcdCommError = (data[2] & 0x40) != 0;
+        controllerFromESP32ReceiveError = (data[2] & 0x10) != 0;
+        esp32FromControllerReceiveError = (data[2] & 0x80) != 0;
+        esp32FromLDCReceiveError = (data[2] & 0x40) != 0;
         speed = (float)(((data[4] & 255) << 8) + (data[3] & 255)) / 10;
         cadence = (short)(data[5] & 255);
         long l = ((data[7] & 255) << 8) + (data[6] & 255);
