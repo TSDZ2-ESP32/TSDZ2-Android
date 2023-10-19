@@ -2,7 +2,6 @@ package spider65.ebike.tsdz2_esp32.ota;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,6 +35,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Method;
@@ -66,6 +66,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     private File updateFile = null;
     private WifiManager.LocalOnlyHotspotReservation reservation = null;
     private boolean wifiState;
+
     private boolean apAlreadyOn = false;
 
     private String ssid,pwd;
@@ -104,7 +105,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         selFileButton.setOnClickListener((View view) -> performFileSearch());
 
         startUpdateBT = findViewById(R.id.startUpdateButton);
-        startUpdateBT.setOnClickListener((View view) -> startUpdate());
+        startUpdateBT.setOnClickListener((View view) -> startAP());
         startUpdateBT.setEnabled(false);
         fileNameTV = findViewById(R.id.fileNameTV);
         fileNameTV.setText(getString(R.string.file_name, ""));
@@ -147,7 +148,6 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     @Override
     public void onStart() {
         super.onStart();
-        startAP();
         EventBus.getDefault().register(this);
         // get current ESP32 SW version
         TSDZBTService.getBluetoothService().writeCommand(new byte[] {CMD_GET_APP_VERSION});
@@ -177,8 +177,17 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
     }
 
     private void startAP() {
+        updateInProgress = UpdateProgess.started;
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        selFileButton.setEnabled(false);
+        startUpdateBT.setEnabled(false);
+        progressBar.setVisibility(View.VISIBLE);
+        messageTV.setText(getString(R.string.waitingUploadStart));
+
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (!wifiManager.isWifiEnabled()) {
+        int wifiState = wifiManager.getWifiState();
+        Log.d(TAG, "WiFi State = " + wifiState);
+        if (wifiState !=  WifiManager.WIFI_STATE_ENABLED) {
             showDialog(getString(R.string.error), getString(R.string.enable_wifi), true);
             return;
         }
@@ -193,7 +202,6 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                 setWifiApState(true);
             }
         }
-
     }
 
     public void stopAP() {
@@ -209,43 +217,29 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         }
     }
 
-    private static final int FILE_SELECT_CODE = 11;
-    public void performFileSearch() {
-        /*
-        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() != Activity.RESULT_OK) {
-                        Intent  resultData = result.getData();
-                        if (resultData != null) {
-                            checkFile(resultData.getData());
-                        }
+    private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Intent  resultData = result.getData();
+                    if (resultData != null) {
+                        checkFile(resultData.getData());
                     }
-                });
-        */
+                }
+            });
 
+    public void performFileSearch() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
-        startActivityForResult(intent,FILE_SELECT_CODE);
-        // activityResultLauncher.launch(intent);
-    }
-
-    @Override
-    protected void onActivityResult (int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == FILE_SELECT_CODE) {
-            if (data != null) {
-                checkFile(data.getData());
-            }
-        }
+        activityResultLauncher.launch(intent);
     }
 
     void checkFile(Uri uri) {
         try {
             File outFile = null;
-
-            Reader reader = new InputStreamReader(getContentResolver().openInputStream(uri));
+            InputStream ins = getContentResolver().openInputStream(uri);
+            Reader reader = new InputStreamReader(ins);
             final IntelHexReader provider = new IntelHexReader(reader);
 
             byte[] binData = new byte[MAX_BIN_SIZE];
@@ -322,6 +316,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                     Log.i(TAG, "Filename: " + fileName);
             }
         } catch (Exception e) {
+            Log.d(TAG, "checkFile Exception: " + e.toString());
             e.printStackTrace();
         }
     }
@@ -407,16 +402,11 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         System.arraycopy(PORT.getBytes(),0,command,pos,PORT.getBytes().length);
         Log.i(TAG, "Update start: "+ new String(command));
         TSDZBTService.getBluetoothService().writeCommand(command);
-        updateInProgress = UpdateProgess.started;
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        selFileButton.setEnabled(false);
-        startUpdateBT.setEnabled(false);
-        progressBar.setVisibility(View.VISIBLE);
-        messageTV.setText(getString(R.string.waitingUploadStart));
     }
 
     private void stopUpdate() {
         updateInProgress = UpdateProgess.notStarted;
+        stopAP();
         if (httpdServer != null) {
             httpdServer.stop();
             httpdServer = null;
@@ -458,6 +448,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             pwd = cfg.preSharedKey;
             Log.d(TAG, "SSID: " + ssid);
             Log.d(TAG, "PWD: " + ssid);
+            startUpdate();
         }
     }
 
