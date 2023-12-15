@@ -229,6 +229,8 @@
     <string name="ds18b2_pin_nr">DS18B20 GPIO Pin</string>
     <string name="logLevel">Log Level</string>
 
+    <string name="error_wifi">Wifi Error</string>
+    <string name="error_access_point">Unable to start the Acces Point</string>
     <string name="enable_wifi">Wifi is disabled\nEnable Wifi and try again</string>
     <string name="cannot_change_pin">Image is signed\n cannot change BT PIN %1$d</string>
     <string name="wrong_app_name">Bin image App Name is wrong</string>

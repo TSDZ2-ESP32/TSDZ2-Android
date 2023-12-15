@@ -199,7 +199,16 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             if (isApOn()) {
                 apAlreadyOn = true;
             } else {
-                setWifiApState(true);
+                if (setWifiApState(true))
+                    startUpdate();
+                else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle(getString(R.string.error_wifi));
+                    builder.setMessage(getString(R.string.error_access_point));
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.setOnDismissListener((DialogInterface dialog) -> finish());
+                    builder.show();
+                }
             }
         }
     }
@@ -316,7 +325,6 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
                     Log.i(TAG, "Filename: " + fileName);
             }
         } catch (Exception e) {
-            Log.d(TAG, "checkFile Exception: " + e.toString());
             e.printStackTrace();
         }
     }
@@ -357,7 +365,7 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
         return false;
     }
 
-    private void setWifiApState(boolean enable) {
+    private boolean setWifiApState(boolean enable) {
         WifiManager wifimanager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         try {
             if (enable) {
@@ -378,7 +386,9 @@ public class Stm8_Ota extends AppCompatActivity implements ProgressInputStreamLi
             }
         } catch (Exception e) {
             Log.e(TAG, "", e);
+            return false;
         }
+        return true;
     }
 
     private void startUpdate() {

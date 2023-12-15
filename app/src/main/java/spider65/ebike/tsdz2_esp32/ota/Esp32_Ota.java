@@ -201,7 +201,16 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             if (isApOn()) {
                 apAlreadyOn = true;
             } else {
-                setWifiApState(true);
+                if (setWifiApState(true))
+                    startUpdate();
+                else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle(getString(R.string.error_wifi));
+                    builder.setMessage(getString(R.string.error_access_point));
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.setOnDismissListener((DialogInterface dialog) -> finish());
+                    builder.show();
+                }
             }
         }
     }
@@ -321,7 +330,7 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
         return false;
     }
 
-    private void setWifiApState(boolean enable) {
+    private boolean setWifiApState(boolean enable) {
         WifiManager wifimanager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         try {
             if (enable) {
@@ -343,7 +352,9 @@ public class Esp32_Ota extends AppCompatActivity implements ProgressInputStreamL
             }
         } catch (Exception e) {
             Log.e(TAG, "", e);
+            return false;
         }
+        return true;
     }
 
     private void startUpdate() {
